@@ -1,0 +1,204 @@
+/**
+ * ViralObj — niches.js
+ * 10-niche library with object lists, personalities, validated prompts
+ */
+
+export const NICHES = {
+  casa: {
+    name_pt: "Casa & Limpeza",
+    name_en: "Home & Cleaning",
+    emoji: "🏠",
+    tone_default: "angry",
+    objects: [
+      { pt: "água sanitária", en: "bleach", emoji: "🧴", personality: "ressentida, indignada" },
+      { pt: "celular", en: "smartphone", emoji: "📱", personality: "raiva com nojo" },
+      { pt: "garrafa pet", en: "plastic bottle", emoji: "🍶", personality: "alarmada, urgente" },
+      { pt: "lixeira", en: "trash can", emoji: "🗑️", personality: "furiosa, explosiva" },
+      { pt: "esponja de pia", en: "kitchen sponge", emoji: "🧽", personality: "enojada consigo mesma" },
+      { pt: "pano de prato", en: "dish cloth", emoji: "🧻", personality: "histérica, urgente" },
+      { pt: "tábua de corte", en: "cutting board", emoji: "🪵", personality: "preocupada, séria" },
+      { pt: "travesseiro", en: "pillow", emoji: "🛏️", personality: "exausto, sofrendo" },
+      { pt: "toalha de banho", en: "bath towel", emoji: "🏳️", personality: "resignada, cansada" },
+      { pt: "escova de dentes", en: "toothbrush", emoji: "🪥", personality: "abandonada, triste" },
+    ],
+    prompts_base: "Brazilian home interior, Pixar 3D render, warm/cool lighting per room, human character in background making mistake",
+  },
+  plantas: {
+    name_pt: "Plantas & Jardinagem",
+    name_en: "Plants & Gardening",
+    emoji: "🌿",
+    tone_default: "educational",
+    objects: [
+      { pt: "adenium (rosa do deserto)", en: "desert rose", emoji: "🌸", personality: "orgulhosa, resiliente" },
+      { pt: "jibóia", en: "pothos", emoji: "🪴", personality: "dramática, engraçada" },
+      { pt: "rosa", en: "rose", emoji: "🌹", personality: "séria mas carinhosa" },
+      { pt: "cacto", en: "cactus", emoji: "🌵", personality: "sarcástico, sobrevivente" },
+      { pt: "orquídea", en: "orchid", emoji: "🌺", personality: "delicada, exigente" },
+      { pt: "samambaia", en: "fern", emoji: "🌿", personality: "ansiosa, úmida" },
+      { pt: "suculenta", en: "succulent", emoji: "🪴", personality: "despretenciosa, casual" },
+      { pt: "ficus", en: "ficus", emoji: "🌳", personality: "dramática, saudosista" },
+    ],
+    prompts_base: "Garden or indoor setting, Pixar 3D render, golden hour warm light, gardener character in background",
+  },
+  financeiro: {
+    name_pt: "Finanças & Dinheiro",
+    name_en: "Finance & Money",
+    emoji: "💰",
+    tone_default: "dramatic",
+    objects: [
+      { pt: "nota de R$50", en: "R$50 bill", emoji: "💵", personality: "dramática, sofrida" },
+      { pt: "moeda de R$1", en: "R$1 coin", emoji: "🪙", personality: "humilhada, resignada" },
+      { pt: "cartão de crédito", en: "credit card", emoji: "💳", personality: "exausta, sobrecarregada" },
+      { pt: "boleto", en: "bill/invoice", emoji: "📄", personality: "ameaçadora, séria" },
+      { pt: "poupança", en: "savings account", emoji: "🏦", personality: "triste, esquecida" },
+      { pt: "PIX", en: "instant payment", emoji: "⚡", personality: "rápido, impaciente" },
+      { pt: "nota fiscal", en: "receipt/invoice", emoji: "🧾", personality: "ignorada, importante" },
+      { pt: "imposto", en: "tax", emoji: "📊", personality: "inevitável, infeliz" },
+    ],
+    prompts_base: "Brazilian financial context, supermarket/home/office, Pixar 3D render, person making financial mistake in background",
+  },
+  culinaria: {
+    name_pt: "Culinária & Gastronomia",
+    name_en: "Cooking & Food",
+    emoji: "🍳",
+    tone_default: "educational",
+    objects: [
+      { pt: "tomate chef", en: "chef tomato", emoji: "🍅", personality: "alegre, ensinando" },
+      { pt: "frigideira", en: "frying pan", emoji: "🍳", personality: "exasperada, técnica" },
+      { pt: "colher de pau", en: "wooden spoon", emoji: "🥄", personality: "sábia, experiente" },
+      { pt: "azeite", en: "olive oil", emoji: "🫙", personality: "refinada, orgulhosa" },
+      { pt: "alho", en: "garlic", emoji: "🧄", personality: "poderoso, intenso" },
+      { pt: "açúcar", en: "sugar", emoji: "🍬", personality: "doce, sedutora" },
+      { pt: "fermento", en: "yeast/baking powder", emoji: "🌡️", personality: "ansioso, expansivo" },
+      { pt: "forno", en: "oven", emoji: "♨️", personality: "autoritário, preciso" },
+    ],
+    prompts_base: "Modern Brazilian kitchen, warm cooking atmosphere, Pixar 3D render, cook/chef character, ingredients on counter",
+  },
+  natureza: {
+    name_pt: "Natureza & Sobrevivência",
+    name_en: "Nature & Survival",
+    emoji: "🌱",
+    tone_default: "dramatic",
+    objects: [
+      { pt: "planta venenosa", en: "poisonous plant", emoji: "🌿", personality: "perigosa, sedutora" },
+      { pt: "inseto", en: "insect", emoji: "🐛", personality: "ameaçador, pequeno" },
+      { pt: "cogumelo silvestre", en: "wild mushroom", emoji: "🍄", personality: "traiçoeiro, belo" },
+      { pt: "cobra", en: "snake", emoji: "🐍", personality: "calma, perigosa" },
+      { pt: "abelha", en: "bee", emoji: "🐝", personality: "incompreendida, útil" },
+    ],
+    prompts_base: "Nature/outdoor setting, dramatic lighting, Pixar 3D render, person approaching dangerously in background",
+  },
+  saude: {
+    name_pt: "Saúde & Bem-estar",
+    name_en: "Health & Wellness",
+    emoji: "💊",
+    tone_default: "educational",
+    objects: [
+      { pt: "copo d'água", en: "glass of water", emoji: "💧", personality: "negligenciada, essencial" },
+      { pt: "comprimido", en: "pill/medicine", emoji: "💊", personality: "mal administrado, preocupado" },
+      { pt: "tensão arterial", en: "blood pressure monitor", emoji: "🩺", personality: "alertando, urgente" },
+      { pt: "termômetro", en: "thermometer", emoji: "🌡️", personality: "ignorado, preciso" },
+      { pt: "protetor solar", en: "sunscreen", emoji: "☀️", personality: "rejeitado, necessário" },
+      { pt: "vitamina", en: "vitamin supplement", emoji: "🔶", personality: "esquecida, esperançosa" },
+      { pt: "açúcar refinado", en: "refined sugar", emoji: "🍬", personality: "culpado, sedutor" },
+      { pt: "cigarro", en: "cigarette", emoji: "🚬", personality: "arrependido, honesto" },
+    ],
+    prompts_base: "Health/home context, Pixar 3D render, person ignoring health advice in background",
+  },
+  pets: {
+    name_pt: "Pets & Animais",
+    name_en: "Pets & Animals",
+    emoji: "🐾",
+    tone_default: "educational",
+    objects: [
+      { pt: "ração de pet", en: "pet food", emoji: "🦴", personality: "preocupada com nutrição" },
+      { pt: "coleira", en: "collar", emoji: "🦮", personality: "bem-intencionada, cuidadosa" },
+      { pt: "vacina", en: "vaccine", emoji: "💉", personality: "protetora, incompreendida" },
+      { pt: "brinquedo do pet", en: "pet toy", emoji: "🎾", personality: "entusiasmada, energética" },
+      { pt: "caixa de areia", en: "litter box", emoji: "📦", personality: "revoltada, insalubre" },
+      { pt: "antipulgas", en: "flea treatment", emoji: "🔬", personality: "séria, preventiva" },
+    ],
+    prompts_base: "Brazilian home with pet, Pixar 3D render, loving but confused pet owner in background",
+  },
+  fitness: {
+    name_pt: "Fitness & Academia",
+    name_en: "Fitness & Gym",
+    emoji: "🏋️",
+    tone_default: "funny",
+    objects: [
+      { pt: "halter", en: "dumbbell", emoji: "🏋️", personality: "frustrado com forma errada" },
+      { pt: "whey protein", en: "protein shake", emoji: "🥛", personality: "mal utilizado, preocupado" },
+      { pt: "tênis de corrida", en: "running shoes", emoji: "👟", personality: "abandonado, resiliente" },
+      { pt: "tapete de yoga", en: "yoga mat", emoji: "🧘", personality: "negligenciado, paciente" },
+      { pt: "esteira", en: "treadmill", emoji: "🏃", personality: "subutilizado, motivador" },
+      { pt: "garrafa de água", en: "water bottle", emoji: "💧", personality: "ignorado, vital" },
+      { pt: "luva de musculação", en: "gym gloves", emoji: "🥊", personality: "envelhecida, dedicada" },
+    ],
+    prompts_base: "Gym or home workout space, Pixar 3D render, person doing exercise incorrectly in background",
+  },
+  maternidade: {
+    name_pt: "Maternidade & Família",
+    name_en: "Parenting & Family",
+    emoji: "🍼",
+    tone_default: "educational",
+    objects: [
+      { pt: "fralda", en: "diaper", emoji: "🍼", personality: "urgente, sobrecarregada" },
+      { pt: "mamadeira", en: "baby bottle", emoji: "🍼", personality: "cuidadosa, higiênica" },
+      { pt: "termômetro de bebê", en: "baby thermometer", emoji: "🌡️", personality: "preocupada, precisa" },
+      { pt: "berço", en: "crib", emoji: "🛏️", personality: "cansado, dedicado" },
+      { pt: "chupeta", en: "pacifier", emoji: "😴", personality: "incompreendida, essencial" },
+      { pt: "carrinho de bebê", en: "stroller", emoji: "👶", personality: "orgulhosa, protetora" },
+    ],
+    prompts_base: "Baby room or family home, Pixar 3D render, tired but loving parent in background",
+  },
+  "saude-mental": {
+    name_pt: "Saúde Mental & Mindfulness",
+    name_en: "Mental Health & Mindfulness",
+    emoji: "🧘",
+    tone_default: "educational",
+    objects: [
+      { pt: "celular (dependência)", en: "smartphone (addiction)", emoji: "📱", personality: "viciante, honesta" },
+      { pt: "alarme do despertador", en: "alarm clock", emoji: "⏰", personality: "odiado, necessário" },
+      { pt: "travesseiro", en: "pillow", emoji: "😴", personality: "exausto, sábio" },
+      { pt: "diário", en: "journal", emoji: "📓", personality: "esperançoso, esquecido" },
+      { pt: "app de meditação", en: "meditation app", emoji: "🧘", personality: "ignorado, paciente" },
+      { pt: "café (excesso)", en: "coffee (excess)", emoji: "☕", personality: "culpado, dependente" },
+    ],
+    prompts_base: "Modern bedroom or office, Pixar 3D render, stressed person in background, mindfulness context",
+  },
+};
+
+export async function loadNicheData(niche) {
+  const data = NICHES[niche];
+  if (!data) {
+    const available = Object.keys(NICHES).join(", ");
+    throw new Error(`Unknown niche: "${niche}". Available: ${available}`);
+  }
+  return data;
+}
+
+export async function listNiches({ lang = "pt" } = {}) {
+  const list = Object.entries(NICHES).map(([key, n]) => ({
+    key,
+    name: lang === "en" ? n.name_en : n.name_pt,
+    emoji: n.emoji,
+    objects_count: n.objects.length,
+    tone_default: n.tone_default,
+    sample_objects: n.objects.slice(0, 3).map(o => lang === "en" ? o.en : o.pt),
+  }));
+
+  const text = lang === "en"
+    ? `🎭 ViralObj — Available Niches (${list.length} total)\n\n` +
+      list.map(n =>
+        `${n.emoji} ${n.key.padEnd(14)} | ${n.name.padEnd(25)} | ${n.objects_count} objects | tone: ${n.tone_default}\n   Objects: ${n.sample_objects.join(", ")}...`
+      ).join("\n\n")
+    : `🎭 ViralObj — Nichos Disponíveis (${list.length} total)\n\n` +
+      list.map(n =>
+        `${n.emoji} ${n.key.padEnd(14)} | ${n.name.padEnd(25)} | ${n.objects_count} objetos | tom: ${n.tone_default}\n   Objetos: ${n.sample_objects.join(", ")}...`
+      ).join("\n\n");
+
+  return {
+    content: [{ type: "text", text }],
+    niches: list,
+  };
+}

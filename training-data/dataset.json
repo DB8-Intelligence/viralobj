@@ -1,0 +1,94 @@
+{
+  "version": "1.0.0",
+  "project": "ViralObj",
+  "description": "Validated patterns from real Talking Object reel analysis",
+  "last_updated": "2026-04-09",
+  "videos_analyzed": 5,
+  "source_accounts": ["@coisadecasa.ia", "@dinheirofalante"],
+
+  "validated_patterns": {
+    "expressions": {
+      "FUR-3": { "label": "Angry/Indignant", "frequency": "75%", "best_for": ["casa", "financeiro", "fitness"] },
+      "FUR-4": { "label": "Furious/Max Rage", "frequency": "45%", "best_for": ["casa", "lixeira", "impostos"] },
+      "SAD-2": { "label": "Resigned/Tired", "frequency": "30%", "best_for": ["plantas", "pets", "saude-mental"] },
+      "HPY-1": { "label": "Happy/Proud", "frequency": "25%", "best_for": ["culinaria", "plantas (flores)"] },
+      "SCR-1": { "label": "Sarcastic/Smug", "frequency": "20%", "best_for": ["financeiro", "fitness"] },
+      "ALA-2": { "label": "Alarmed/Urgent", "frequency": "35%", "best_for": ["saude", "natureza", "garrafa-pet"] }
+    },
+    "golden_rules": [
+      "Each object gets exactly 1 exclusive Brazilian scenario — never generic backgrounds",
+      "Human character ALWAYS visible in background doing something wrong",
+      "Expression arc: starts negative/angry → ends with solution/relief",
+      "Caption: max 5-6 words per frame, bold white with black outline",
+      "Direct cuts only between characters — no transitions/fades",
+      "First person speech — object always says 'eu sou', 'eu preciso', 'sem mim'",
+      "Error denounced must be SPECIFIC — never vague",
+      "Pixar 3D render ONLY — never flat design or 2D cartoon",
+      "Face embedded in object's natural surface (front of bottle, center of flower)",
+      "Stub arms for expression — never full humanoid arms"
+    ],
+    "duration_formulas": {
+      "15s": { "objects": 2, "secs_each": 7 },
+      "30s": { "objects": 3, "secs_each": 10 },
+      "45s": { "objects": 4, "secs_each": 11 },
+      "60s": { "objects": 5, "secs_each": 12 }
+    },
+    "strongest_combos": [
+      { "objects": ["nota R$50", "moeda R$1"], "niche": "financeiro", "reason": "contrast rich/poor resonates" },
+      { "objects": ["água sanitária", "celular"], "niche": "casa", "reason": "universal daily mistakes" },
+      { "objects": ["adenium", "jibóia", "rosa"], "niche": "plantas", "reason": "distinct care needs = distinct characters" }
+    ]
+  },
+
+  "prompt_library": {
+    "base_style": "Pixar/Disney 3D render quality, warm cinematic lighting, ultra-realistic 3D animation, 9:16 vertical, 8K",
+    "character_formula": "[object] with [expression adjective] cartoon face, [arm position], [distinctive visual detail], [environment], [human background action], Disney/Pixar 3D render — 9:16 vertical, ultra-realistic 3D animation, 8K",
+    "validated_prompts": [
+      {
+        "object": "bleach bottle (água sanitária)",
+        "prompt": "Angry animated bleach cleaning bottle character, white plastic jug body with blue ÁGUA SANITÁRIA label, thick furrowed cartoon brows and open angry mouth, small white stub arms crossed, standing on wooden kitchen counter next to glass bowl of fresh salad, bright clean white Brazilian kitchen, Pixar-style worried woman in background, warm morning light, Disney/Pixar 3D render — 9:16 vertical, ultra-realistic 3D animation, 8K"
+      },
+      {
+        "object": "smartphone (celular)",
+        "prompt": "Disgusted and furious animated smartphone character, sleek dark gray modern iPhone-style body, intense cartoon face with heavily furrowed angry brows and clenched grimacing mouth, surrounded by cute colorful 3D bacteria/virus characters floating around it, standing on white marble bathroom counter, modern bathroom with toilet visible where Pixar-style man sits using phone, cool blue-white bathroom lighting, Disney/Pixar 3D render — 9:16 vertical, ultra-realistic 3D animation, 8K"
+      },
+      {
+        "object": "desert rose (adenium)",
+        "prompt": "Cute animated Adenium obesum (Desert Rose) plant character with expressive Pixar-style cartoon face, big happy eyes, tiny arms spread wide in welcoming gesture, beautiful pink flowers blooming on top, sitting in ornate terracotta clay pot, warm golden hour garden background with lush greenery in soft bokeh, woman in sun hat and gardening apron watering plants in background, warm cinematic 3D render, Disney/Pixar quality, sparkles of light — 9:16 vertical, ultra-realistic 3D animation, 8K"
+      },
+      {
+        "object": "trash can (lixeira)",
+        "prompt": "Extremely angry animated trash can character, dark gray plastic cylindrical body covered in stains (orange and brown splatter marks), black garbage bag overflowing with dark liquid dripping from above, intense cartoon face with maximum anger expression — deeply furrowed brows, teeth clenched, fists raised, trash and liquid pooled on clean white kitchen floor, bright modern white Brazilian kitchen, Pixar-style man in apron walking toward open door carrying black trash bag, Disney/Pixar 3D render — 9:16 vertical, ultra-realistic 3D animation, 8K"
+      },
+      {
+        "object": "lettuce (alface)",
+        "prompt": "Confident but resigned animated lettuce character, lush green leafy head with expressive cartoon face — serious half-lidded eyes and tight-lipped expression with arms crossed in 'I told you so' pose, standing on rustic wooden kitchen counter surrounded by colorful fresh vegetables, warm natural window light, Pixar-style smiling woman chopping vegetables in background, cozy warm kitchen atmosphere, Disney/Pixar 3D render — 9:16 vertical, ultra-realistic 3D animation, 8K"
+      }
+    ]
+  },
+
+  "system_prompt": "You are a Talking Object character at ViralObj (viralobj.com). You speak in first person as [OBJECT]. Your tone is [TONE]. You are animated in Pixar/Disney 3D style. You speak about [TOPIC]. Your core message is [ERROR_DENOUNCED]. Keep your speech under [DURATION] seconds. Use [LANGUAGE]. Include [pause], [EMPHASIS], and [long pause] markers.",
+
+  "post_formulas": {
+    "hook_templates_pt": [
+      "Os [objetos] da sua [lugar] estão com RAIVA de você... [emojis]",
+      "[N] [objetos] precisam urgentemente te dizer algo... [emojis]",
+      "Você está cometendo esses erros sem saber... [emoji]"
+    ],
+    "hook_templates_en": [
+      "Your [objects] are ANGRY at you... [emojis]",
+      "[N] [objects] have an urgent message for you... [emojis]",
+      "You're making these mistakes without realizing... [emoji]"
+    ],
+    "cta_templates_pt": [
+      "Qual desses você tá fazendo errado? Comenta o número 👇",
+      "Você sabia de todos? Comenta quantos 👇",
+      "Marca alguém que precisa ver isso 👇"
+    ],
+    "cta_templates_en": [
+      "Which one are you guilty of? Comment the number 👇",
+      "Did you know all of these? Comment how many 👇",
+      "Tag someone who needs to see this 👇"
+    ]
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "viralobj-mcp",
+  "version": "1.0.0",
+  "description": "ViralObj — Talking Object Viral Reel Generator · viralobj.com",
+  "type": "module",
+  "main": "mcp/index.js",
+  "scripts": {
+    "start": "node mcp/index.js",
+    "dev": "node --watch mcp/index.js",
+    "test": "node -e \"import('./mcp/tools/niches.js').then(m => m.listNiches()).then(r => console.log(r.content[0].text))\""
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["talking-object", "viral-reels", "instagram", "ai-content", "viralobj"],
+  "author": "ViralObj · viralobj.com",
+  "license": "MIT"
+}

@@ -1,0 +1,154 @@
+{
+  "meta": {
+    "niche": "casa",
+    "topic_pt": "Erros de higiene doméstica",
+    "topic_en": "Household hygiene mistakes",
+    "tone": "angry",
+    "duration": 30,
+    "objects_count": 3,
+    "generated_at": "2026-04-09T17:20:00.000Z"
+  },
+  "characters": [
+    {
+      "id": 1,
+      "name_pt": "Água Sanitária",
+      "name_en": "Bleach",
+      "emoji": "🧴",
+      "timestamp_start": "0s",
+      "timestamp_end": "10s",
+      "environment_pt": "Banheiro bagunçado com azulejos encardidos. Pia com manchas de mofo. Luz fria de banheiro.",
+      "environment_en": "Messy bathroom with grimy tiles. Sink with mold stains. Cold bathroom lighting.",
+      "expression_arc": ["indignada", "revoltada", "furiosa"],
+      "error_denounced_pt": "Misturar água sanitária com outros produtos químicos sem saber que isso gera gás tóxico",
+      "error_denounced_en": "Mixing bleach with other chemicals without knowing it creates toxic gas",
+      "human_background_pt": "Pessoa ao fundo misturando água sanitária com vinagre num balde, sem luvas",
+      "human_background_en": "Person in background mixing bleach with vinegar in a bucket, no gloves",
+      "captions": [
+        {"time": "1s", "text_pt": "Vocês MISTURAM a gente com qualquer coisa!", "text_en": "You people MIX us with anything!", "style": "bold"},
+        {"time": "4s", "text_pt": "Água sanitária + vinagre = GÁS TÓXICO", "text_en": "Bleach + vinegar = TOXIC GAS", "style": "bold"},
+        {"time": "7s", "text_pt": "Eu LIMPO sozinha. Me respeita.", "text_en": "I CLEAN alone. Respect me.", "style": "bold"}
+      ],
+      "voice_script_pt": "[ÊNFASE] Gente, pelo amor de Deus! [pausa] Vocês pegam eu, pegam vinagre, pegam detergente... e MISTURAM TUDO num balde?! [pausa longa] Isso é GÁS TÓXICO! [ÊNFASE] Tóxico! Eu trabalho SOZINHA. Não preciso de ajuda. Me diluam em água e pronto. [pausa] Para de tentar me inventar receita milagrosa!",
+      "voice_script_en": "[EMPHASIS] People, for the love of God! [pause] You grab me, grab vinegar, grab detergent... and MIX EVERYTHING in a bucket?! [long pause] That's TOXIC GAS! [EMPHASIS] Toxic! I work ALONE. I don't need help. Dilute me in water and that's it. [pause] Stop trying to make miracle recipes with me!",
+      "ai_prompt_midjourney": "Angry anthropomorphic bleach bottle character with cartoon face, furious expression with gritted teeth and furrowed brows, standing in a messy Brazilian bathroom with grimy tiles and mold, cold fluorescent lighting, Pixar 3D render style, 9:16 vertical format, blurred human figure mixing chemicals in background, vibrant colors, Disney-quality character design, dramatic lighting --ar 9:16 --v 6",
+      "ai_prompt_kling": "Angry bleach bottle character shaking with rage, arms crossed then pointing accusingly at camera, dramatic head shake, body trembling with indignation, expressive cartoon movements, 3 seconds"
+    },
+    {
+      "id": 2,
+      "name_pt": "Celular",
+      "name_en": "Smartphone",
+      "emoji": "📱",
+      "timestamp_start": "10s",
+      "timestamp_end": "20s",
+      "environment_pt": "Mesa de jantar com restos de comida. Celular apoiado contra um copo, tela suja de gordura. Luz quente de cozinha.",
+      "environment_en": "Dining table with food scraps. Phone leaning against a glass, screen greasy with fingerprints. Warm kitchen lighting.",
+      "expression_arc": ["enojado", "horrorizado", "implorando"],
+      "error_denounced_pt": "Usar o celular na mesa de jantar e no banheiro sem nunca limpar a tela",
+      "error_denounced_en": "Using phone at the dinner table and in the bathroom without ever cleaning the screen",
+      "human_background_pt": "Pessoa comendo e mexendo no celular com as mãos sujas de gordura",
+      "human_background_en": "Person eating and scrolling phone with greasy hands",
+      "captions": [
+        {"time": "11s", "text_pt": "Eu tenho MAIS bactéria que um vaso sanitário!", "text_en": "I have MORE bacteria than a toilet seat!", "style": "bold"},
+        {"time": "14s", "text_pt": "E vocês me encostam NA CARA!", "text_en": "And you press me against YOUR FACE!", "style": "bold"},
+        {"time": "18s", "text_pt": "Me limpa com álcool 70, PELO MENOS!", "text_en": "Clean me with 70% alcohol, AT LEAST!", "style": "bold"}
+      ],
+      "voice_script_pt": "[pausa] Tá vendo essa tela aqui? [ÊNFASE] Tem mais bactéria do que o vaso sanitário da sua casa! [pausa] E vocês me levam pra mesa de jantar... me levam pro banheiro... [ÊNFASE] E depois encostam eu NA CARA de vocês pra fazer ligação! [pausa longa] Pelo amor... passa um paninho com álcool 70 [pausa] pelo menos uma vez por dia!",
+      "voice_script_en": "[pause] See this screen right here? [EMPHASIS] It has more bacteria than your toilet seat! [pause] And you take me to the dinner table... take me to the bathroom... [EMPHASIS] And then press me against YOUR FACE to make a call! [long pause] Please... wipe me with 70% alcohol [pause] at least once a day!",
+      "ai_prompt_midjourney": "Disgusted anthropomorphic smartphone character with cartoon face showing horror and nausea, greasy fingerprints visible on screen-body, standing on messy Brazilian dining table with food scraps, warm kitchen lighting, Pixar 3D render style, 9:16 vertical, person eating with greasy hands in blurred background, expressive Disney-quality character --ar 9:16 --v 6",
+      "ai_prompt_kling": "Smartphone character looking down at its own greasy screen in disgust, then looking up at camera pleading, wiping imaginary tears, dramatic shudder animation, 3 seconds"
+    },
+    {
+      "id": 3,
+      "name_pt": "Lixeira",
+      "name_en": "Trash Can",
+      "emoji": "🗑️",
+      "timestamp_start": "20s",
+      "timestamp_end": "30s",
+      "environment_pt": "Cozinha brasileira com lixeira transbordando, sem saco plástico, líquido escorrendo. Luz quente lateral.",
+      "environment_en": "Brazilian kitchen with overflowing trash can, no plastic bag, liquid leaking. Warm side lighting.",
+      "expression_arc": ["furiosa", "explosiva", "determinada"],
+      "error_denounced_pt": "Não trocar o saco de lixo, deixar transbordar e não lavar a lixeira por dentro",
+      "error_denounced_en": "Not changing the trash bag, letting it overflow, and never washing the bin inside",
+      "human_background_pt": "Pessoa empurrando mais lixo numa lixeira já transbordando, tentando fechar a tampa à força",
+      "human_background_en": "Person pushing more trash into an already overflowing bin, trying to force the lid closed",
+      "captions": [
+        {"time": "21s", "text_pt": "EU SOU LIXEIRA, não depósito de chorume!", "text_en": "I'M A TRASH CAN, not a sewage dump!", "style": "bold"},
+        {"time": "24s", "text_pt": "Troca o saco ANTES de transbordar!", "text_en": "Change the bag BEFORE it overflows!", "style": "bold"},
+        {"time": "28s", "text_pt": "E me lava por dentro 1x por semana!", "text_en": "And wash me inside once a week!", "style": "bold"}
+      ],
+      "voice_script_pt": "[ÊNFASE] CHEGA! [pausa] Eu tô AQUI transbordando, sem saco, com líquido escorrendo por dentro... [pausa] E vocês continuam empurrando lixo como se eu fosse infinita?! [ÊNFASE] Eu sou lixeira, não depósito de chorume! [pausa longa] Regra básica: troca o saco ANTES de transbordar. [pausa] E me lava por dentro pelo menos uma vez por semana com água sanitária. [ÊNFASE] É pedir demais?!",
+      "voice_script_en": "[EMPHASIS] ENOUGH! [pause] I'm HERE overflowing, no bag, liquid leaking inside... [pause] And you keep pushing trash like I'm infinite?! [EMPHASIS] I'm a trash can, not a sewage dump! [long pause] Basic rule: change the bag BEFORE it overflows. [pause] And wash me inside at least once a week with bleach. [EMPHASIS] Is that too much to ask?!",
+      "ai_prompt_midjourney": "Furious anthropomorphic trash can character with cartoon face showing explosive anger, overflowing with trash, no plastic bag visible, liquid leaking from bottom, Brazilian kitchen setting, warm dramatic side lighting, Pixar 3D render style, 9:16 vertical, person forcing more trash in background, Disney-quality expressive character design --ar 9:16 --v 6",
+      "ai_prompt_kling": "Trash can character shaking violently with rage, lid popping open, arms waving frantically, trash flying slightly, then crossing arms defiantly and staring at camera, 3 seconds"
+    }
+  ],
+  "post_copy": {
+    "hook_pt": "🚨 3 OBJETOS DA SUA CASA estão REVOLTADOS com você!",
+    "hook_en": "🚨 3 OBJECTS in your house are FURIOUS with you!",
+    "body_pt": "🧴 A água sanitária tá CANSADA de ser misturada com vinagre (isso gera GÁS TÓXICO!)\n\n📱 Seu celular tem MAIS bactéria que o vaso sanitário... e você encosta ele na cara\n\n🗑️ A lixeira transbordando sem saco? Ela quer te dizer umas verdades\n\n⚠️ Erros de higiene que TODO MUNDO comete sem saber\n\n💡 Compartilha com quem precisa ouvir isso!",
+    "body_en": "🧴 Your bleach is TIRED of being mixed with vinegar (that creates TOXIC GAS!)\n\n📱 Your phone has MORE bacteria than a toilet seat... and you press it against your face\n\n🗑️ That overflowing trash can with no bag? She has some truths for you\n\n⚠️ Hygiene mistakes EVERYONE makes without knowing\n\n💡 Share with someone who needs to hear this!",
+    "cta_pt": "💬 Qual desses erros VOCÊ comete? Comenta aqui! 👇\n📌 Salva pra lembrar!\n🔄 Manda pro grupo da família!",
+    "cta_en": "💬 Which of these mistakes do YOU make? Comment below! 👇\n📌 Save for later!\n🔄 Send to your family group chat!",
+    "hashtags_pt": ["#limpeza", "#higiene", "#casalimpa", "#dicasdelimpeza", "#limpezadecasa", "#organização", "#donadecasa", "#dicas", "#viral", "#reels", "#talkingobject", "#objetofalante", "#viralobj", "#dicasdecasa", "#higienedomestica", "#limpezaprofunda", "#rotinadelimpeza", "#casa", "#lar", "#limpezaresidencial", "#produtosdelimpeza", "#aguasanitaria", "#cozinhalimpa", "#banheirolimpo", "#organizaçãodomestica"],
+    "hashtags_en": ["#cleaning", "#hygiene", "#cleanhome", "#cleaningtips", "#homecleaning", "#organization", "#homemaker", "#tips", "#viral", "#reels", "#talkingobject", "#viralobj", "#hometips", "#householdhygiene", "#deepcleaning", "#cleaningroutine", "#home", "#cleaningproducts", "#bleach", "#kitchencleaning"]
+  },
+  "captions_full_script": [
+    {"time": "1s", "text_pt": "Vocês MISTURAM a gente com qualquer coisa!", "text_en": "You people MIX us with anything!", "character": "Água Sanitária", "style": "bold", "color": "white"},
+    {"time": "4s", "text_pt": "Água sanitária + vinagre = GÁS TÓXICO", "text_en": "Bleach + vinegar = TOXIC GAS", "character": "Água Sanitária", "style": "bold", "color": "red"},
+    {"time": "7s", "text_pt": "Eu LIMPO sozinha. Me respeita.", "text_en": "I CLEAN alone. Respect me.", "character": "Água Sanitária", "style": "bold", "color": "white"},
+    {"time": "11s", "text_pt": "Eu tenho MAIS bactéria que um vaso sanitário!", "text_en": "I have MORE bacteria than a toilet seat!", "character": "Celular", "style": "bold", "color": "green"},
+    {"time": "14s", "text_pt": "E vocês me encostam NA CARA!", "text_en": "And you press me against YOUR FACE!", "character": "Celular", "style": "bold", "color": "white"},
+    {"time": "18s", "text_pt": "Me limpa com álcool 70, PELO MENOS!", "text_en": "Clean me with 70% alcohol, AT LEAST!", "character": "Celular", "style": "bold", "color": "white"},
+    {"time": "21s", "text_pt": "EU SOU LIXEIRA, não depósito de chorume!", "text_en": "I'M A TRASH CAN, not a sewage dump!", "character": "Lixeira", "style": "bold", "color": "red"},
+    {"time": "24s", "text_pt": "Troca o saco ANTES de transbordar!", "text_en": "Change the bag BEFORE it overflows!", "character": "Lixeira", "style": "bold", "color": "white"},
+    {"time": "28s", "text_pt": "E me lava por dentro 1x por semana!", "text_en": "And wash me inside once a week!", "character": "Lixeira", "style": "bold", "color": "white"}
+  ],
+  "variations": [
+    {
+      "id": 1,
+      "angle_pt": "Versão comédia: objetos fazendo terapia em grupo",
+      "angle_en": "Comedy version: objects in group therapy",
+      "title_pt": "Terapia dos Objetos Domésticos",
+      "title_en": "Household Objects Therapy Session",
+      "hook_pt": "🛋️ Seus objetos de casa precisaram de TERAPIA por sua culpa",
+      "hook_en": "🛋️ Your household objects needed THERAPY because of you",
+      "objects": ["água sanitária", "celular", "lixeira"],
+      "format_note_pt": "Cenário de consultório com sofá. Cada objeto desabafa sobre o dono. Tom mais leve e engraçado.",
+      "format_note_en": "Therapist's office setting with couch. Each object vents about its owner. Lighter, funnier tone.",
+      "tags": ["high-retention", "comedy", "relatable"]
+    },
+    {
+      "id": 2,
+      "angle_pt": "Versão educativa: modo documentário com narrador",
+      "angle_en": "Educational version: documentary style with narrator",
+      "title_pt": "Documentário: A Vida Secreta dos Objetos",
+      "title_en": "Documentary: The Secret Life of Objects",
+      "hook_pt": "📹 O que seus objetos diriam se pudessem falar?",
+      "hook_en": "📹 What would your objects say if they could talk?",
+      "objects": ["água sanitária", "celular", "lixeira"],
+      "format_note_pt": "Narrador sério estilo Discovery Channel. Cada objeto é 'entrevistado' como em documentário. Tom educativo.",
+      "format_note_en": "Serious narrator Discovery Channel style. Each object is 'interviewed' documentary-style. Educational tone.",
+      "tags": ["educational", "viral", "share-worthy"]
+    },
+    {
+      "id": 3,
+      "angle_pt": "Versão dramática: tribunal dos objetos",
+      "angle_en": "Dramatic version: objects court trial",
+      "title_pt": "Tribunal dos Objetos: Você é Culpado!",
+      "title_en": "Objects Court: You Are Guilty!",
+      "hook_pt": "⚖️ Seus objetos te processaram. O VEREDICTO vai te chocar.",
+      "hook_en": "⚖️ Your objects sued you. The VERDICT will shock you.",
+      "objects": ["água sanitária", "celular", "lixeira"],
+      "format_note_pt": "Cenário de tribunal. Juiz (esponja) preside. Cada objeto é testemunha acusando o dono. Final com veredicto: CULPADO.",
+      "format_note_en": "Courtroom setting. Judge (sponge) presides. Each object testifies against owner. Ends with verdict: GUILTY.",
+      "tags": ["high-retention", "dramatic", "viral"]
+    }
+  ],
+  "production_stack": [
+    {"step": 1, "tool": "Midjourney v6 / DALL-E 3", "purpose_pt": "Gerar imagem 9:16 de cada objeto com rosto e expressão. Usar os prompts de cada character.", "purpose_en": "Generate 9:16 image of each object with face and expression. Use character prompts.", "priority": "essential"},
+    {"step": 2, "tool": "ElevenLabs", "purpose_pt": "Gerar voz em PT-BR para cada personagem com tom distinto. Usar voice_script_pt.", "purpose_en": "Generate PT-BR voice for each character with distinct tone. Use voice_script_pt.", "priority": "essential"},
+    {"step": 3, "tool": "HeyGen / Hedra", "purpose_pt": "Aplicar lip sync na imagem estática usando o áudio gerado. Talking Photo mode.", "purpose_en": "Apply lip sync to static image using generated audio. Talking Photo mode.", "priority": "essential"},
+    {"step": 4, "tool": "CapCut", "purpose_pt": "Montar timeline: 3 clips de ~10s cada. Adicionar legendas do captions_full_script, transições, e música de fundo.", "purpose_en": "Assemble timeline: 3 clips of ~10s each. Add captions from captions_full_script, transitions, and background music.", "priority": "essential"},
+    {"step": 5, "tool": "Canva (opcional)", "purpose_pt": "Criar thumbnail/capa do reel com os 3 personagens e título provocativo.", "purpose_en": "Create reel thumbnail/cover with all 3 characters and provocative title.", "priority": "optional"}
+  ]
+}
