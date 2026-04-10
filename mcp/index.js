@@ -13,6 +13,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { analyzeVideo } from "./tools/analyze.js";
 import { generatePackage } from "./tools/generate.js";
+import { generateVideo } from "./tools/generate_video.js";
 import { exportArtifacts } from "./tools/export.js";
 import { listNiches } from "./tools/niches.js";
 
@@ -104,6 +105,47 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       },
     },
     {
+      name: "generate_video",
+      description:
+        "Generates the complete .mp4 video automatically via Fal.ai cloud APIs: character image (FLUX.2 Pro) → voice narration (MiniMax TTS, tone per character) → lip sync (VEED Fabric). No manual work required. Requires FAL_KEY. / Gera o vídeo .mp4 completo automaticamente via Fal.ai: imagem do personagem → voz com tonalidade por personagem → lip sync. Sem trabalho manual.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          package: {
+            type: "object",
+            description: "Production package from generate_package",
+          },
+          output_dir: {
+            type: "string",
+            description: "Output directory (default: ./outputs)",
+          },
+          quality: {
+            type: "string",
+            enum: ["draft", "standard", "premium"],
+            default: "standard",
+            description: "draft=$0.50/reel · standard=$2/reel · premium=$4/reel",
+          },
+          lang: {
+            type: "string",
+            enum: ["pt", "en"],
+            default: "pt",
+            description: "Language for voice narration",
+          },
+          caption_style: {
+            type: "string",
+            enum: ["bold_white", "minimal", "colorful"],
+            default: "bold_white",
+            description: "Caption visual style",
+          },
+          overrides: {
+            type: "object",
+            description: "Override voice tone per character. E.g.: { 'lixeira': 'furious', 'alface': 'resigned' }. Available tones: angry, furious, alarmed, resigned, sarcastic, educational, dramatic, funny",
+          },
+        },
+        required: ["package"],
+      },
+    },
+    {
       name: "export_artifacts",
       description:
         "Exports the production package as: (1) interactive HTML dashboard and (2) installable SKILL.md for Claude Code. Both files are saved to the output directory. / Exporta o pacote como HTML interativo e SKILL.md instalável no Claude Code.",
@@ -157,6 +199,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return await analyzeVideo(args);
       case "generate_package":
         return await generatePackage(args);
+      case "generate_video":
+        return await generateVideo(args);
       case "export_artifacts":
         return await exportArtifacts(args);
       case "list_niches":
