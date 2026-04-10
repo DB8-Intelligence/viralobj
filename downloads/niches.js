@@ -1,6 +1,6 @@
 /**
  * ViralObj — niches.js
- * 13-niche library with object lists, personalities, validated prompts
+ * 10-niche library with object lists, personalities, validated prompts
  */
 
 export const NICHES = {
@@ -22,6 +22,17 @@ export const NICHES = {
       { pt: "escova de dentes", en: "toothbrush", emoji: "🪥", personality: "abandonada, triste" },
       { pt: "mofo de parede", en: "wall mold", emoji: "🦠", personality: "arrogante, confiante, vilão cômico", format: "H", special: "grows FROM wall surface — embedded character, not standalone. Has mini-colony children around it." },
       { pt: "spray de limpeza", en: "cleaning spray bottle", emoji: "🧴", personality: "herói silencioso, furioso, determinado", format: "A", special: "hero counterpart to mofo — enters scene from right side" },
+      // —— Banheiro Duos (Tipo I) ————————————————————————————————————————————
+      { pt: "sabonete velho", en: "old bar soap", emoji: "🧼", personality: "furiosa, resentida, se sente substituída", format: "I", partner: "sabonete líquido", deterioration: "camadas de pele rosa/branca/amarela derretendo" },
+      { pt: "sabonete líquido", en: "liquid soap", emoji: "🧴", personality: "assustada, chora fácil, tímida, transparente", format: "I", partner: "sabonete velho", special: "confetti dots inside transparent body, huge anime tears" },
+      { pt: "escova velha descabelada", en: "old worn toothbrush", emoji: "🪥", personality: "raivosa, cabelos explodindo, se sente ultrapassada", format: "I", partner: "escova elétrica", special: "cabelos/cerdas para fora como monstro, corpo azul deteriorado com label ESCOVA DESCABELADA" },
+      { pt: "escova elétrica", en: "electric toothbrush", emoji: "⚡", personality: "assustada, elegante, high-tech", format: "I", partner: "escova velha", special: "aura de luz azul neon vibrando no topo, label ESCOVA ELÉTRICA PRISTINE" },
+      { pt: "creme dental clássico", en: "classic toothpaste", emoji: "🪥", personality: "raivosa, clássica, defensiva do flúor", format: "I", partner: "creme carvão", special: "tubo amassado vermelho DENTAGUARD, corpo encolhido mas furioso" },
+      { pt: "creme carvão ativado", en: "charcoal toothpaste", emoji: "⬛", personality: "assustada, chora lágrimas pretas", format: "I", partner: "creme dental clássico", special: "preto com lágrimas negras escorrendo, label ACTIVATED CHARCOAL" },
+      { pt: "shampoo de galão", en: "gallon shampoo", emoji: "🍶", personality: "raivosa, se sente ignorada apesar de durar anos", format: "I", partner: "shampoo a seco", special: "2L amarelo amassado, vapor de raiva pelas narinas, label SHAMPOO DE GALÃO NEUTRO" },
+      { pt: "shampoo a seco", en: "dry shampoo", emoji: "💸", personality: "assustada, premium, delicada, se sente frágil", format: "I", partner: "shampoo de galão", special: "lata aerosol rosa slim, pernas de metal finas, label SHAMPOO A SECO PREMIUM 200ml" },
+      { pt: "barbeador enferrujado", en: "old rusty razor", emoji: "🪒", personality: "resignada, triste, completamente deteriorada, não tem mais raiva", format: "I", partner: "depilador elétrico", deterioration: "plástico amarelo com ferrugem marrom, cerdas completamente destruídas" },
+      { pt: "depilador elétrico", en: "electric epilator", emoji: "🌸", personality: "também triste, solidária com o velho, não gosta de ver sofrimento", format: "I", partner: "barbeador enferrujado", special: "branco/rosê elegante, olhos grandes anime azuis cheios de lágrimas de compaixão" },
     ],
     prompts_base: "Brazilian home interior, Pixar 3D render, warm/cool lighting per room, human character in background making mistake",
   },
@@ -261,12 +272,22 @@ export const NICHES = {
 };
 
 // ─── ANALYSIS OUTPUT PROMPT TEMPLATE ────────────────────────────────────────
+// Used after every video analysis to generate ViralObj implementation prompt
 
 export function generateImplementationPrompt(analysis) {
   const {
-    video_file, account, niche_detected, niche_key, is_new_niche,
-    format_type, is_new_format, character, objects_to_add,
-    caption_style, hooks_detected, prompts_validated,
+    video_file,
+    account,
+    niche_detected,
+    niche_key,
+    is_new_niche,
+    format_type,
+    is_new_format,
+    character,
+    objects_to_add,
+    caption_style,
+    hooks_detected,
+    prompts_validated,
   } = analysis;
 
   return `
@@ -279,8 +300,8 @@ export function generateImplementationPrompt(analysis) {
 ## 1. NICHE ACTION
 
 ${is_new_niche
-  ? `### CREATE NEW NICHE: \`${niche_key}\`
-Add to \`~/viralobj/mcp/tools/niches.js\`:
+  ? `### ✅ CREATE NEW NICHE: \`${niche_key}\`
+Add to \`~/viralobj/mcp/tools/niches.js\` in the NICHES object:
 
 \`\`\`javascript
 "${niche_key}": {
@@ -289,25 +310,84 @@ Add to \`~/viralobj/mcp/tools/niches.js\`:
   emoji: "${niche_detected.emoji}",
   tone_default: "${niche_detected.tone_default}",
   format_default: "${format_type}",
-  source_reference: "${account} — ${new Date().toISOString().split("T")[0]}",
+  source_reference: "${account} — video analyzed ${new Date().toISOString().split("T")[0]}",
   objects: ${JSON.stringify(objects_to_add, null, 4)},
   prompts_base: "${niche_detected.prompts_base}",
 },
 \`\`\``
-  : `### ADD TO EXISTING NICHE: \`${niche_key}\`
+  : `### ✅ ADD TO EXISTING NICHE: \`${niche_key}\`
+Add these objects to \`NICHES["${niche_key}"].objects\` in \`niches.js\`:
+
 \`\`\`javascript
 ${objects_to_add.map(o => JSON.stringify(o)).join(",\n")}
 \`\`\``
 }
 
-## 2. FORMAT: ${format_type} ${is_new_format ? "(NEW)" : "(exists)"}
+---
 
-## 3. DATASET: +1 video, +${prompts_validated?.length || 0} prompts, add "${account}"
+## 2. FORMAT ACTION
 
-## 4. COMMIT
+${is_new_format
+  ? `### ✅ REGISTER NEW FORMAT TYPE: \`${format_type}\`
+Add to \`dataset.json\` → \`validated_patterns.format_types\`:
+
+\`\`\`json
+"${format_type}": {
+  "name": "${niche_detected.format_name}",
+  "body": "${niche_detected.format_body}",
+  "pipeline": "${niche_detected.pipeline}",
+  "example": "${account}",
+  "best_for": ${JSON.stringify(niche_detected.best_for)},
+  "new": true,
+  "caption_style": "${caption_style}",
+  "signature": "${niche_detected.format_signature}"
+}
+\`\`\``
+  : `### ✅ FORMAT \`${format_type}\` ALREADY EXISTS — no action needed`
+}
+
+---
+
+## 3. DATASET UPDATE
+
+Add to \`dataset.json\` → \`validated_prompts\`:
+
+\`\`\`json
+${JSON.stringify(prompts_validated, null, 2)}
 \`\`\`
-feat(niches): add ${is_new_niche ? niche_key : objects_to_add.length + " objects to " + niche_key}
-Source: ${account} | Format: ${format_type} | Caption: ${caption_style}
+
+Add hooks to \`post_formulas\`:
+\`\`\`json
+${JSON.stringify(hooks_detected, null, 2)}
+\`\`\`
+
+Increment \`videos_analyzed\` by 1.
+Add \`"${account}"\` to \`source_accounts\` if not present.
+
+---
+
+## 4. QUICK TEST
+
+After applying, test in Claude Code:
+\`\`\`
+Generate a talking object reel for ${niche_key}
+with ${objects_to_add[0]?.pt || character}
+about [TOPIC]
+format: ${format_type}
+duration: 30 seconds
+\`\`\`
+
+---
+
+## 5. COMMIT MESSAGE
+
+\`\`\`
+feat(niches): add ${is_new_niche ? niche_key + " niche" : objects_to_add.length + " objects to " + niche_key}
+
+- Source: ${account} (${new Date().toISOString().split("T")[0]})
+- Format: Type ${format_type}${is_new_format ? " (NEW)" : ""}
+- Objects: ${objects_to_add.map(o => o.pt).join(", ")}
+- Caption style: ${caption_style}
 \`\`\`
 `;
 }

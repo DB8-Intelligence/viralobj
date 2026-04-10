@@ -1,20 +1,79 @@
 {
-  "version": "1.4.0",
+  "version": "1.5.0",
   "project": "ViralObj",
   "description": "Validated patterns from real Talking Object reel analysis",
-  "last_updated": "2026-04-09",
-  "videos_analyzed": 9,
-  "source_accounts": ["@coisadecasa.ia", "@dinheirofalante", "@objetosfalantes", "@casasincerona"],
-
+  "last_updated": "2026-04-10",
+  "videos_analyzed": 10,
+  "source_accounts": [
+    "@coisadecasa.ia",
+    "@dinheirofalante",
+    "@objetosfalantes",
+    "@casasincerona"
+  ],
   "validated_patterns": {
     "expressions": {
-      "FUR-3": { "label": "Angry/Indignant", "frequency": "75%", "best_for": ["casa", "financeiro", "fitness"] },
-      "FUR-4": { "label": "Furious/Max Rage", "frequency": "45%", "best_for": ["casa", "lixeira", "impostos"] },
-      "SAD-2": { "label": "Resigned/Tired", "frequency": "30%", "best_for": ["plantas", "pets", "saude-mental"] },
-      "HPY-1": { "label": "Happy/Proud", "frequency": "25%", "best_for": ["culinaria", "plantas (flores)"] },
-      "SCR-1": { "label": "Sarcastic/Smug", "frequency": "20%", "best_for": ["financeiro", "fitness"] },
-      "ALA-2": { "label": "Alarmed/Urgent", "frequency": "35%", "best_for": ["saude", "natureza", "garrafa-pet"] },
-      "MIX-1": { "label": "Multi-Expression Arc", "frequency": "NEW", "best_for": ["saude-receitas", "culinaria", "casa"], "note": "Same character changes expression per recipe step: happy→confident→angry→furious. Detected in @objetosfalantes canela video." }
+      "FUR-3": {
+        "label": "Angry/Indignant",
+        "frequency": "75%",
+        "best_for": [
+          "casa",
+          "financeiro",
+          "fitness"
+        ]
+      },
+      "FUR-4": {
+        "label": "Furious/Max Rage",
+        "frequency": "45%",
+        "best_for": [
+          "casa",
+          "lixeira",
+          "impostos"
+        ]
+      },
+      "SAD-2": {
+        "label": "Resigned/Tired",
+        "frequency": "30%",
+        "best_for": [
+          "plantas",
+          "pets",
+          "saude-mental"
+        ]
+      },
+      "HPY-1": {
+        "label": "Happy/Proud",
+        "frequency": "25%",
+        "best_for": [
+          "culinaria",
+          "plantas (flores)"
+        ]
+      },
+      "SCR-1": {
+        "label": "Sarcastic/Smug",
+        "frequency": "20%",
+        "best_for": [
+          "financeiro",
+          "fitness"
+        ]
+      },
+      "ALA-2": {
+        "label": "Alarmed/Urgent",
+        "frequency": "35%",
+        "best_for": [
+          "saude",
+          "natureza",
+          "garrafa-pet"
+        ]
+      },
+      "MIX-1": {
+        "label": "Multi-Expression Arc",
+        "frequency": "NEW",
+        "best_for": [
+          "saude-receitas",
+          "culinaria",
+          "casa"
+        ],
+        "note": "Same character changes expression per recipe step: happy→confident→angry→furious. Detected in @objetosfalantes canela video."
+      }
     },
     "golden_rules": [
       "Each object gets exactly 1 exclusive Brazilian scenario — never generic backgrounds",
@@ -43,7 +102,12 @@
       "TYPE-I RULE: NO human characters in background — food duo IS the story",
       "TYPE-I RULE: Faces embedded DIRECTLY in food texture — not floating on top",
       "TYPE-I RULE: Each duo has its own iconic BR setting (churrasco, padaria, festa junina, academia)",
-      "TYPE-I RULE: Implicit CTA — 'Com qual você se identifica?' — never needs to be said"
+      "TYPE-I RULE: Implicit CTA — 'Com qual você se identifica?' — never needs to be said",
+      "TYPE-I RULE (banheiro): Product label text MUST be readable on character body — real Brazilian brand names or plausible fictional ones",
+      "TYPE-I RULE (banheiro): Deterioration is always EXTREME and exaggerated — melting, rust, exploding bristles, dents",
+      "TYPE-I RULE (banheiro): Use long articulated arms (not stub) — characters are more humanoid in banheiro series",
+      "TYPE-I RULE (banheiro): Emotion effects — aura glow for tech, dripping black tears for charcoal, steam from nostrils for rage, huge anime tears for scared",
+      "TYPE-I RULE (banheiro): 'Both sad' ending dynamic is valid — solidarity between opposites creates emotional resonance"
     ],
     "caption_styles": {
       "alpha": "bold white Arial Black, 2px black outline, center-bottom, ALL CAPS or mixed",
@@ -54,88 +118,356 @@
       "alpha-karaoke": "NO top hook pill. Single word karaoke bottom-center (bold white, no pill, black outline) + plain white text watermark bottom-right. Detected: @objetosfalantes duos comida BR"
     },
     "format_types": {
-      "A": { "name": "MULTI-STUB", "body": "stub arms, no legs", "pipeline": "FLUX.2 + Fabric", "example": "@coisadecasa.ia casa/plantas", "best_for": ["casa", "plantas", "financeiro"] },
-      "B": { "name": "SINGLE-FULL", "body": "full body + legs, walks", "pipeline": "FLUX.2 + Kling + Fabric", "example": "Cravo-da-india tutorial", "best_for": ["culinaria", "natureza", "saude"] },
-      "C": { "name": "DRESSED-CHAR", "body": "object as head, human body with clothes", "pipeline": "FLUX.2 + Kling + Fabric", "example": "@snapinsta financiamento imobiliario", "best_for": ["imoveis", "juridico", "empreendedorismo"] },
-      "D": { "name": "MAP-DOC", "body": "document/map with legs, walks + camera tracking", "pipeline": "FLUX.2 + Kling(walk) + Fabric", "example": "Mapa da Florida Orlando", "best_for": ["viagem", "imoveis", "educacao"] },
-      "E": { "name": "RECIPE-MAGIC", "body": "full body + golden particles", "pipeline": "FLUX.2 + Kling(particles) + Fabric", "example": "Cravo aromatizante @coisadecasa.ia", "best_for": ["culinaria", "casa", "saude"] },
-      "F": { "name": "SINGLE-MULTI-COSTUME", "body": "full body, same character, multiple costume+expression changes per step", "pipeline": "FLUX.2(multi-prompt per scene) + Kling + Fabric", "example": "@objetosfalantes canela", "best_for": ["saude-receitas", "culinaria", "beleza"], "caption_style": "gamma", "signature": "Fixed top hook pill + watermark pill + bottom single-word karaoke" },
-      "G": { "name": "DRESSED-CHAR + RECIPE-SPLIT-SCREEN", "body": "50% Pixar 3D DRESSED-CHAR presents result — 50% real video split-screen 3 panels shows prep", "pipeline": "FLUX.2 Pro(phase1) + CapCut split-screen(phase2) + Fabric(lipsync phase1)", "example": "@objetosfalantes — maçã vitamina", "best_for": ["saude-receitas", "culinaria", "beleza"], "new": true, "caption_style": "gamma-B", "signature": "White pill black text top (0-9s) + watermark + karaoke on bottom split panel", "structure": "character_phase_seconds: 9, recipe_phase_seconds: 6, total: 15", "why_it_works": "3D creates character identity. Real video creates credibility/proof. Split-screen delivers tutorial satisfaction. 15s = max rewatch." },
-      "H": { "name": "VILLAIN-HERO NARRATIVE", "body": "Villain character embedded IN surface (wall/floor/sink) + Hero product confronts + Battle/colony destruction sequence", "pipeline": "FLUX.2 Pro(villain on wall) + Kling(animation + zoom) + Fabric(lipsync) + CapCut(spray hand real footage overlay)", "example": "@objetosfalantes — mofo de parede", "best_for": ["casa", "saude", "natureza"], "new": true, "caption_style": "gamma-B-rodape", "signature": "Top pill hook (0-4s) + bottom plain text watermark (no pill) + single ironic word at end", "structure": { "act1_villain_seconds": 13, "act2_confrontation_seconds": 1, "act3_battle_seconds": 30, "total": 44 }, "expression_arc": "confident/smiling — angry/intimidating — terrified — desperate — ironic resignation", "villain_variants": ["mofo/fungo", "barata", "aranha", "traça", "mosquito", "ácaro"], "why_it_works": "Villain POV creates empathy inversion. CleanTok satisfaction trigger. Mini-colony destruction = primal visual satisfaction. 3-act sustains 44s watch time." },
-      "I": { "name": "DUO-SCENE", "body": "2 food characters per scene, faces embedded in food texture, no human background, contrasting personalities in same iconic BR setting", "pipeline": "FLUX.2 Pro(duo prompt — both chars in same scene) + Kling(animation x2) + Fabric(lipsync x2)", "example": "@objetosfalantes — duos comida brasileira", "best_for": ["gastronomia", "culinaria", "fitness"], "new": true, "caption_style": "alpha-karaoke", "signature": "No top hook pill. Single-word karaoke bottom-center + plain text watermark bottom. NO human characters.", "duo_dynamics": ["arrogante vs. resignada", "confiante vs. raivoso", "saudável vs. indulgente", "arrogante vs. inseguro"], "duration_range": "10s per duo, 60-70s total for 6-7 duos", "why_it_works": "Every Brazilian identifies with a duo. Implicit comment bait. 7 duos x 10s = 7 distinct laugh moments = 62s full watch time. No human = food is the star." }
+      "A": {
+        "name": "MULTI-STUB",
+        "body": "stub arms, no legs",
+        "pipeline": "FLUX.2 + Fabric",
+        "example": "@coisadecasa.ia casa/plantas",
+        "best_for": [
+          "casa",
+          "plantas",
+          "financeiro"
+        ]
+      },
+      "B": {
+        "name": "SINGLE-FULL",
+        "body": "full body + legs, walks",
+        "pipeline": "FLUX.2 + Kling + Fabric",
+        "example": "Cravo-da-índia tutorial",
+        "best_for": [
+          "culinaria",
+          "natureza",
+          "saude"
+        ]
+      },
+      "C": {
+        "name": "DRESSED-CHAR",
+        "body": "object as head, human body with clothes",
+        "pipeline": "FLUX.2 + Kling + Fabric",
+        "example": "@snapinsta financiamento imobiliário",
+        "best_for": [
+          "imoveis",
+          "juridico",
+          "empreendedorismo"
+        ]
+      },
+      "D": {
+        "name": "MAP-DOC",
+        "body": "document/map with legs, walks + camera tracking",
+        "pipeline": "FLUX.2 + Kling(walk) + Fabric",
+        "example": "Mapa da Flórida Orlando",
+        "best_for": [
+          "viagem",
+          "imoveis",
+          "educacao"
+        ]
+      },
+      "E": {
+        "name": "RECIPE-MAGIC",
+        "body": "full body + golden particles",
+        "pipeline": "FLUX.2 + Kling(particles) + Fabric",
+        "example": "Cravo aromatizante @coisadecasa.ia",
+        "best_for": [
+          "culinaria",
+          "casa",
+          "saude"
+        ]
+      },
+      "F": {
+        "name": "SINGLE-MULTI-COSTUME",
+        "body": "full body, same character, multiple costume+expression changes per step",
+        "pipeline": "FLUX.2(multi-prompt per scene) + Kling + Fabric",
+        "example": "@objetosfalantes canela",
+        "best_for": [
+          "saude-receitas",
+          "culinaria",
+          "beleza"
+        ],
+        "caption_style": "gamma",
+        "signature": "Fixed top hook pill + watermark pill + bottom single-word karaoke"
+      },
+      "G": {
+        "name": "DRESSED-CHAR + RECIPE-SPLIT-SCREEN",
+        "body": "50% Pixar 3D DRESSED-CHAR presents result — 50% real video split-screen 3 panels shows prep",
+        "pipeline": "FLUX.2 Pro(phase1) + CapCut split-screen(phase2) + Fabric(lipsync phase1)",
+        "example": "@objetosfalantes — maçã vitamina",
+        "best_for": [
+          "saude-receitas",
+          "culinaria",
+          "beleza"
+        ],
+        "new": true,
+        "caption_style": "gamma-B",
+        "signature": "White pill black text top (0-9s) + watermark + karaoke on bottom split panel",
+        "structure": "character_phase_seconds: 9, recipe_phase_seconds: 6, total: 15",
+        "why_it_works": "3D creates character identity. Real video creates credibility/proof. Split-screen delivers tutorial satisfaction. 15s = max rewatch."
+      },
+      "H": {
+        "name": "VILLAIN-HERO NARRATIVE",
+        "body": "Villain character embedded IN surface (wall/floor/sink) + Hero product confronts + Battle/colony destruction sequence",
+        "pipeline": "FLUX.2 Pro(villain on wall) + Kling(animation + zoom) + Fabric(lipsync) + CapCut(spray hand real footage overlay)",
+        "example": "@objetosfalantes — mofo de parede",
+        "best_for": [
+          "casa",
+          "saude",
+          "natureza"
+        ],
+        "new": true,
+        "caption_style": "gamma-B-rodape",
+        "signature": "Top pill hook (0-4s) + bottom plain text watermark (no pill) + single ironic word at end",
+        "structure": {
+          "act1_villain_seconds": 13,
+          "act2_confrontation_seconds": 1,
+          "act3_battle_seconds": 30,
+          "total": 44
+        },
+        "expression_arc": "confident/smiling — angry/intimidating — terrified — desperate — ironic resignation",
+        "villain_variants": [
+          "mofo/fungo",
+          "barata",
+          "aranha",
+          "traça",
+          "mosquito",
+          "ácaro"
+        ],
+        "why_it_works": "Villain POV creates empathy inversion. CleanTok satisfaction trigger. Mini-colony destruction = primal visual satisfaction. 3-act sustains 44s watch time."
+      },
+      "I": {
+        "name": "DUO-SCENE",
+        "body": "2 characters per scene in same setting, contrasting personalities, NO human background",
+        "pipeline": "FLUX.2 Pro(duo prompt) + Kling(animation x2) + Fabric(lipsync x2)",
+        "example": "@objetosfalantes — duos comida BR + duos banheiro",
+        "best_for": [
+          "gastronomia",
+          "casa",
+          "culinaria",
+          "fitness",
+          "beleza"
+        ],
+        "caption_style": "alpha-karaoke",
+        "signature": "No top hook. Single-word karaoke bottom-center bold + plain text watermark bottom.",
+        "duo_variants": {
+          "gastronomia": {
+            "face_style": "embedded in food texture",
+            "arms": "stub",
+            "background": "iconic BR food setting"
+          },
+          "banheiro": {
+            "face_style": "on product body/label area",
+            "arms": "long articulated",
+            "background": "bathroom sink/counter, cool blue lighting",
+            "label_rule": "readable Brazilian product labels MANDATORY on character body",
+            "effects": {
+              "old_product": "extreme deterioration — melting/rust/exploding bristles/dents",
+              "tech_product": "blue neon aura glow",
+              "scared": "huge oversized anime tears",
+              "charcoal": "black dripping tears",
+              "rage": "steam/vapor from nostrils",
+              "sad_both": "solidarity ending — both characters sad together"
+            }
+          }
+        },
+        "duo_dynamics": [
+          "arrogante vs. resignada (picanha + linguica)",
+          "saudavel furiosa vs. indulgente feliz (batata-doce + batata-frita)",
+          "arrogante vs. inseguro (pudim + brigadeiro)",
+          "velho deteriorado furioso vs. moderno assustado (banheiro series)",
+          "ambos tristes — solidariedade entre opostos (barbeador + depilador)"
+        ],
+        "duration_range": "10s per duo, 48-65s total for 5-7 duos",
+        "series_confirmed": [
+          "Duos BR Vol.1 (comida)",
+          "Duos BR Vol.2 (banheiro)"
+        ],
+        "why_it_works": "Identifies with products everyone owns. Com qual voce se identifica implicit CTA. 5+ duos = high rewatch."
+      }
     },
     "duration_formulas": {
-      "15s": { "objects": 2, "secs_each": 7 },
-      "30s": { "objects": 3, "secs_each": 10 },
-      "45s": { "objects": 4, "secs_each": 11 },
-      "60s": { "objects": 5, "secs_each": 12 }
+      "15s": {
+        "objects": 2,
+        "secs_each": 7
+      },
+      "30s": {
+        "objects": 3,
+        "secs_each": 10
+      },
+      "45s": {
+        "objects": 4,
+        "secs_each": 11
+      },
+      "60s": {
+        "objects": 5,
+        "secs_each": 12
+      }
     },
     "strongest_combos": [
-      { "objects": ["nota R$50", "moeda R$1"], "niche": "financeiro", "reason": "contrast rich/poor resonates" },
-      { "objects": ["agua sanitaria", "celular"], "niche": "casa", "reason": "universal daily mistakes" },
-      { "objects": ["adenium", "jiboia", "rosa"], "niche": "plantas", "reason": "distinct care needs = distinct characters" }
+      {
+        "objects": [
+          "nota R$50",
+          "moeda R$1"
+        ],
+        "niche": "financeiro",
+        "reason": "contrast rich/poor resonates"
+      },
+      {
+        "objects": [
+          "água sanitária",
+          "celular"
+        ],
+        "niche": "casa",
+        "reason": "universal daily mistakes"
+      },
+      {
+        "objects": [
+          "adenium",
+          "jibóia",
+          "rosa"
+        ],
+        "niche": "plantas",
+        "reason": "distinct care needs = distinct characters"
+      }
     ]
   },
-
   "prompt_library": {
     "base_style": "Pixar/Disney 3D render quality, warm cinematic lighting, ultra-realistic 3D animation, 9:16 vertical, 8K",
-    "character_formula": "[object] with [expression adjective] cartoon face, [arm position], [distinctive visual detail], [environment], [human background action], Disney/Pixar 3D render - 9:16 vertical, ultra-realistic 3D animation, 8K",
+    "character_formula": "[object] with [expression adjective] cartoon face, [arm position], [distinctive visual detail], [environment], [human background action], Disney/Pixar 3D render — 9:16 vertical, ultra-realistic 3D animation, 8K",
     "validated_prompts": [
       {
-        "object": "bleach bottle (agua sanitaria)",
-        "prompt": "Angry animated bleach cleaning bottle character, white plastic jug body with blue AGUA SANITARIA label, thick furrowed cartoon brows and open angry mouth, small white stub arms crossed, standing on wooden kitchen counter next to glass bowl of fresh salad, bright clean white Brazilian kitchen, Pixar-style worried woman in background, warm morning light, Disney/Pixar 3D render - 9:16 vertical, ultra-realistic 3D animation, 8K"
+        "object": "bleach bottle (água sanitária)",
+        "prompt": "Angry animated bleach cleaning bottle character, white plastic jug body with blue ÁGUA SANITÁRIA label, thick furrowed cartoon brows and open angry mouth, small white stub arms crossed, standing on wooden kitchen counter next to glass bowl of fresh salad, bright clean white Brazilian kitchen, Pixar-style worried woman in background, warm morning light, Disney/Pixar 3D render — 9:16 vertical, ultra-realistic 3D animation, 8K"
       },
       {
         "object": "smartphone (celular)",
-        "prompt": "Disgusted and furious animated smartphone character, sleek dark gray modern iPhone-style body, intense cartoon face with heavily furrowed angry brows and clenched grimacing mouth, surrounded by cute colorful 3D bacteria/virus characters floating around it, standing on white marble bathroom counter, modern bathroom with toilet visible where Pixar-style man sits using phone, cool blue-white bathroom lighting, Disney/Pixar 3D render - 9:16 vertical, ultra-realistic 3D animation, 8K"
+        "prompt": "Disgusted and furious animated smartphone character, sleek dark gray modern iPhone-style body, intense cartoon face with heavily furrowed angry brows and clenched grimacing mouth, surrounded by cute colorful 3D bacteria/virus characters floating around it, standing on white marble bathroom counter, modern bathroom with toilet visible where Pixar-style man sits using phone, cool blue-white bathroom lighting, Disney/Pixar 3D render — 9:16 vertical, ultra-realistic 3D animation, 8K"
       },
       {
         "object": "desert rose (adenium)",
-        "prompt": "Cute animated Adenium obesum (Desert Rose) plant character with expressive Pixar-style cartoon face, big happy eyes, tiny arms spread wide in welcoming gesture, beautiful pink flowers blooming on top, sitting in ornate terracotta clay pot, warm golden hour garden background with lush greenery in soft bokeh, woman in sun hat and gardening apron watering plants in background, warm cinematic 3D render, Disney/Pixar quality, sparkles of light - 9:16 vertical, ultra-realistic 3D animation, 8K"
+        "prompt": "Cute animated Adenium obesum (Desert Rose) plant character with expressive Pixar-style cartoon face, big happy eyes, tiny arms spread wide in welcoming gesture, beautiful pink flowers blooming on top, sitting in ornate terracotta clay pot, warm golden hour garden background with lush greenery in soft bokeh, woman in sun hat and gardening apron watering plants in background, warm cinematic 3D render, Disney/Pixar quality, sparkles of light — 9:16 vertical, ultra-realistic 3D animation, 8K"
       },
       {
         "object": "trash can (lixeira)",
-        "prompt": "Extremely angry animated trash can character, dark gray plastic cylindrical body covered in stains, black garbage bag overflowing with dark liquid dripping from above, intense cartoon face with maximum anger expression, trash and liquid pooled on clean white kitchen floor, bright modern white Brazilian kitchen, Pixar-style man in apron walking toward open door carrying black trash bag, Disney/Pixar 3D render - 9:16 vertical, ultra-realistic 3D animation, 8K"
+        "prompt": "Extremely angry animated trash can character, dark gray plastic cylindrical body covered in stains (orange and brown splatter marks), black garbage bag overflowing with dark liquid dripping from above, intense cartoon face with maximum anger expression — deeply furrowed brows, teeth clenched, fists raised, trash and liquid pooled on clean white kitchen floor, bright modern white Brazilian kitchen, Pixar-style man in apron walking toward open door carrying black trash bag, Disney/Pixar 3D render — 9:16 vertical, ultra-realistic 3D animation, 8K"
       },
       {
         "object": "lettuce (alface)",
-        "prompt": "Confident but resigned animated lettuce character, lush green leafy head with expressive cartoon face, serious half-lidded eyes and tight-lipped expression with arms crossed, standing on rustic wooden kitchen counter surrounded by colorful fresh vegetables, warm natural window light, Pixar-style smiling woman chopping vegetables in background, cozy warm kitchen atmosphere, Disney/Pixar 3D render - 9:16 vertical, ultra-realistic 3D animation, 8K"
+        "prompt": "Confident but resigned animated lettuce character, lush green leafy head with expressive cartoon face — serious half-lidded eyes and tight-lipped expression with arms crossed in 'I told you so' pose, standing on rustic wooden kitchen counter surrounded by colorful fresh vegetables, warm natural window light, Pixar-style smiling woman chopping vegetables in background, cozy warm kitchen atmosphere, Disney/Pixar 3D render — 9:16 vertical, ultra-realistic 3D animation, 8K"
       },
       {
-        "object": "apple nutritionist (maca nutricionista) - Type G Phase 1",
+        "object": "apple nutritionist (maçã nutricionista) — Type G Phase 1",
         "format": "G",
         "niche": "saude-receitas",
         "account": "@objetosfalantes",
-        "prompt": "Animated red apple character as the head of a human body, apple head with friendly cartoon face, big warm golden-brown eyes, happy open smile, rosy cheeks, green leaf and brown stem on top, body dressed in WHITE DOCTOR/NUTRITIONIST LAB COAT over blue t-shirt, human-like hands (no gloves), right hand holding clear glass of creamy beige smoothie, left hand holding silver spoon, standing centered in modern clean white kitchen, gray cabinets, marble counter, blender on left, bowl of oats, cinnamon sticks, whole and cut apples and lemon on counter, bright natural window daylight, Disney/Pixar 3D render - 9:16 vertical, ultra-realistic 3D animation, 8K",
-        "caption_style": "gamma-B"
+        "prompt": "Animated red apple character as the head of a human body, apple head with friendly cartoon face — big warm golden-brown eyes, happy open smile, rosy cheeks, green leaf and brown stem on top, body dressed in WHITE DOCTOR/NUTRITIONIST LAB COAT over blue t-shirt, human-like hands (no gloves), right hand holding clear glass of creamy beige smoothie, left hand holding silver spoon, standing centered in modern clean white kitchen — gray cabinets, marble counter, blender on left, bowl of oats, cinnamon sticks, whole and cut apples and lemon on counter, bright natural window daylight, Disney/Pixar 3D render — 9:16 vertical, ultra-realistic 3D animation, 8K",
+        "expression": "happy, friendly, confident — nutritionist presenting result",
+        "voice_profile": {
+          "voice_id": "Friendly_Person",
+          "emotion": "cheerful",
+          "speed": 1.0,
+          "pitch": 1,
+          "language": "pt-BR"
+        },
+        "caption_style": "gamma-B",
+        "captions": [
+          {
+            "time": "0s—9s",
+            "position": "top",
+            "text": "VITAMINA TIRA FOME E SECA BARRIGA",
+            "style": "white pill, black bold text"
+          },
+          {
+            "time": "0.76s",
+            "position": "bottom",
+            "text": "QUER",
+            "style": "bold rounded karaoke"
+          },
+          {
+            "time": "1.53s",
+            "position": "bottom",
+            "text": "QUERIDA",
+            "style": "bold rounded karaoke"
+          },
+          {
+            "time": "6.42s",
+            "position": "bottom",
+            "text": "ENSINA",
+            "style": "bold rounded karaoke"
+          }
+        ]
       },
       {
-        "object": "apple smoothie prep - Type G Phase 2 (split-screen real video)",
+        "object": "apple smoothie prep — Type G Phase 2 (split-screen real video)",
         "format": "G",
         "niche": "saude-receitas",
         "note": "This phase uses real video, not AI render. Use CapCut split-screen template.",
-        "split_screen_layout": "3 horizontal panels stacked vertically"
+        "split_screen_layout": "3 horizontal panels stacked vertically",
+        "panels": [
+          {
+            "position": "top",
+            "content": "Close-up: hands in white lab coat cutting red apple on wooden cutting board, bright kitchen"
+          },
+          {
+            "position": "middle",
+            "content": "Hands dropping apple slices + oat flakes into clear glass blender + squeezing lemon"
+          },
+          {
+            "position": "bottom",
+            "content": "Full blender with creamy beige result + karaoke word overlay"
+          }
+        ],
+        "watermark": {
+          "time": "9s+",
+          "text": "@objetosfalantes",
+          "style": "white pill outline, top center"
+        },
+        "karaoke_words": [
+          "PIQUE",
+          "LIQUIDIFICADOR",
+          "CANELA",
+          "SUCO"
+        ],
+        "karaoke_style": "bold black+white alternating, bottom panel, bold rounded font"
       },
       {
-        "object": "wall mold villain (mofo de parede) - Type H Act 1: Confident",
+        "object": "wall mold villain (mofo de parede) — Type H Act 1: Confident",
         "format": "H",
         "niche": "casa",
         "account": "@objetosfalantes",
-        "prompt": "Large animated mold/fungus creature character growing directly out of a deteriorated wall, teal/mint green fuzzy slimy texture with dark circular spots throughout, sprawling tentacle-like extensions spreading across peeling cream paint in all directions, expressive Pixar cartoon face embedded in center of creature, BIG CONFIDENT SMILE showing gap-toothed teeth, wide open friendly eyes, slightly raised brows, surrounded by 5-6 miniature mold creatures (same teal style, 10% of main size) scattered on wall surface each with tiny distinct faces, realistic degraded wall background, peeling paint with brown water damage stains and damp patches, bright natural window light from left casting dramatic shadows, photorealistic wall texture + Disney/Pixar 3D render - 9:16 vertical, 8K",
-        "caption_style": "gamma-B-rodape"
+        "prompt": "Large animated mold/fungus creature character growing directly out of a deteriorated wall — teal/mint green fuzzy slimy texture with dark circular spots throughout, sprawling tentacle-like extensions spreading across peeling cream paint in all directions, expressive Pixar cartoon face embedded in center of creature — BIG CONFIDENT SMILE showing gap-toothed teeth, wide open friendly eyes, slightly raised brows, surrounded by 5-6 miniature mold creatures (same teal style, 10% of main size) scattered on wall surface each with tiny distinct faces, realistic degraded wall background — peeling paint with brown water damage stains and damp patches, bright natural window light from left casting dramatic shadows, photorealistic wall texture + Disney/Pixar 3D render — 9:16 vertical, 8K",
+        "expression": "confident, smiling, dominant — villain at peak power",
+        "caption_style": "gamma-B-rodape",
+        "captions": [
+          {
+            "time": "0s—4s",
+            "position": "top",
+            "text": "DIGA ADEUS AO MOFO NA SUA CASA!",
+            "style": "white pill, black bold ALL CAPS"
+          },
+          {
+            "time": "0s+",
+            "position": "bottom",
+            "text": "@objetosfalantes",
+            "style": "plain white text, no pill, bottom-center"
+          },
+          {
+            "time": "40—44s",
+            "position": "center",
+            "text": "GOSTEI",
+            "style": "white pill, black bold — ironic final word"
+          }
+        ]
       },
       {
-        "object": "wall mold villain - Type H Act 3: Terrified (spray attack)",
+        "object": "wall mold villain — Type H Act 3: Terrified (spray attack)",
         "format": "H",
         "niche": "casa",
-        "prompt": "Same teal mold creature on wall, TERRIFIED/SHRINKING expression, eyes wide in shock and horror, mouth open in scream, body contracting and shrinking back into wall, tentacles retracting in fear, human hand entering frame from RIGHT SIDE holding white plastic spray bottle aimed directly at creature, white liquid mist visible spraying onto creature, mini mold creatures around it also terrified with open mouths, dramatic lighting with spray bottle slightly glowing, photorealistic wall + Disney/Pixar 3D render - 9:16 vertical, 8K"
+        "prompt": "Same teal mold creature on wall, TERRIFIED/SHRINKING expression — eyes wide in shock and horror, mouth open in scream, body contracting and shrinking back into wall, tentacles retracting in fear, human hand entering frame from RIGHT SIDE holding white plastic spray bottle aimed directly at creature, white liquid mist visible spraying onto creature, mini mold creatures around it also terrified with open mouths, dramatic lighting with spray bottle slightly glowing, photorealistic wall + Disney/Pixar 3D render — 9:16 vertical, 8K"
       },
       {
-        "object": "wall mold colony cross-section - Type H Act 3: Battle",
+        "object": "wall mold colony cross-section — Type H Act 3: Battle",
         "format": "H",
         "niche": "casa",
-        "note": "Interior colony view reveals mold structure inside wall like a beehive",
-        "prompt": "Cross-section view revealing interior of wall showing honeycomb/sponge-like structure, many small teal mold creature characters trapped inside individual cells/chambers, each with panicked wide-eyed expressions, some with arms raised in surrender, warm golden light emanating from inside chambers, white liquid from spray bottle flowing down from top pouring into chambers, main mold creature visible at top-left corner looking horrified and helpless, realistic wall material cross-section texture, Disney/Pixar 3D characters embedded in photorealistic environment - 9:16 vertical, 8K"
+        "note": "This is the interior colony view — reveals mold structure inside wall like a beehive",
+        "prompt": "Cross-section view revealing interior of wall showing honeycomb/sponge-like structure, many small teal mold creature characters trapped inside individual cells/chambers — each with panicked wide-eyed expressions, some with arms raised in surrender, warm golden light emanating from inside chambers, white liquid from spray bottle flowing down from top pouring into chambers, main mold creature visible at top-left corner looking horrified and helpless, realistic wall material cross-section texture, Disney/Pixar 3D characters embedded in photorealistic environment — 9:16 vertical, 8K"
       },
       {
         "object": "picanha + linguiça duo — Type I (DUO-SCENE)",
@@ -144,7 +476,10 @@
         "account": "@objetosfalantes",
         "prompt": "Two animated Brazilian BBQ characters on wooden cutting board over glowing red charcoal grill: LEFT: Grilled picanha steak character — thick juicy cut with golden-brown seared crust, cartoon face embedded directly in meat texture — ARROGANT half-lidded eyes, smug slight smile with raised eyebrow, metal skewer running through it. RIGHT: Red linguiça sausage character — smooth plump pink sausage body, RESIGNED-ANGRY cartoon face — heavy furrowed brows, grumpy closed mouth. Both on seasoned wooden cutting board, farofa and vinagrete clay bowls in background, intense red-orange fire glow from below, smoke wisps visible, NO human figures, @objetosfalantes plain white text bottom, Disney/Pixar 3D render — 9:16 vertical, ultra-realistic 3D, 8K",
         "caption_style": "alpha-karaoke",
-        "karaoke_words": ["CARNE", "PICANHA"]
+        "karaoke_words": [
+          "CARNE",
+          "PICANHA"
+        ]
       },
       {
         "object": "batata-doce + batata-frita cheddar duo — Type I",
@@ -152,7 +487,9 @@
         "niche": "gastronomia",
         "prompt": "Two animated potato characters side by side on gym/hospital stainless steel counter: LEFT: Purple sweet potato (batata-doce) character — rough irregular deep purple skin with earthy texture, FURIOUS expression with intense furrowed brows, teeth gritted in rage, small muscular purple stub arms crossed defiantly, protein shake bottle with PROTEIN label visible in background. RIGHT: Loaded cheese fries in paper bag — crinkle-cut yellow fries overflowing with bright orange cheddar sauce and bacon bits on top, paper bag with friendly cartoon face — BIG HAPPY SMILE and rosy cheeks, completely unbothered. Clean white institutional ceiling with fluorescent lighting, NO human characters, Disney/Pixar 3D render — 9:16 vertical, ultra-realistic 3D, 8K",
         "caption_style": "alpha-karaoke",
-        "karaoke_words": ["CHEDDAR"]
+        "karaoke_words": [
+          "CHEDDAR"
+        ]
       },
       {
         "object": "pudim + brigadeiro duo — Type I (festa junina)",
@@ -160,28 +497,64 @@
         "niche": "gastronomia",
         "prompt": "Two animated Brazilian party dessert characters on rustic colorful wooden table with scattered confetti: LEFT: Flan pudding (pudim) block character — golden yellow rectangular caramel flan with caramel sauce dripping down sides, cartoon face with ARROGANT raised eyebrow, confident smirk, small stub arms. RIGHT: Brigadeiro chocolate truffle character — round dark chocolate ball completely covered in chocolate sprinkles, in small paper cup, cartoon face with WIDE IMPRESSED EYES, slightly overwhelmed expression, small stub arms. Glass of caipirinha with lime slice in background, colorful confetti papel picado, warm party lighting, NO human characters, Disney/Pixar 3D render — 9:16 vertical, ultra-realistic 3D, 8K",
         "caption_style": "alpha-karaoke",
-        "karaoke_words": ["REI"]
+        "karaoke_words": [
+          "REI"
+        ]
+      },
+      {
+        "object": "sabonete velho + sabonete liquido — Type I banheiro",
+        "format": "I",
+        "niche": "casa",
+        "account": "@objetosfalantes",
+        "prompt": "Two animated bathroom soap characters on white porcelain sink counter: LEFT: Old deteriorated bar soap character — grotesque melting soap block with layered peeling texture pink/white/yellow, cracked dripping foam, FURIOUS SCREAMING expression intense furrowed brows wide open mouth showing teeth, long deteriorated arm pointing accusingly. RIGHT: Clear liquid soap pump bottle (SABONETE LIQUIDO 250ml label visible) — transparent plastic pump-top bottle, clear liquid with colorful confetti dots inside, round cartoon face with HUGE OVERSIZED TEARFUL EYES quivering frightened expression, large teardrop falling, small arms raised. Orange bath loofah sponge in blurred background, cool blue bathroom tiles, NO human characters, Disney/Pixar 3D render — 9:16 vertical, ultra-realistic 3D, 8K",
+        "karaoke_words": [
+          "FRANKENSTEIN",
+          "E",
+          "EU"
+        ]
+      },
+      {
+        "object": "shampoo de galao + shampoo a seco — Type I banheiro",
+        "format": "I",
+        "niche": "casa",
+        "account": "@objetosfalantes",
+        "prompt": "Two animated shampoo characters on white bathroom counter: LEFT: Giant 2L yellow shampoo gallon jug (label SHAMPOO DE GALAO NEUTRO 2L clearly readable) — dented dirty yellow plastic handle-jug, EXTREMELY ANGRY with thick furrowed brows, wide shouting mouth, steam wisps from nostrils, large arm pointing finger. RIGHT: Slim pink premium dry shampoo aerosol (SHAMPOO A SECO PREMIUM 200ml) — elegant metallic pink can, FRIGHTENED crying expression big trembling eyes tears streaming, shaking on thin silver metal legs. Chrome faucet visible behind, neutral tiles, NO human characters, Disney/Pixar 3D render — 9:16 vertical, ultra-realistic 3D, 8K",
+        "karaoke_words": [
+          "POTAO",
+          "GALAO"
+        ]
+      },
+      {
+        "object": "barbeador enferrujado + depilador eletrico — Type I banheiro (both sad)",
+        "format": "I",
+        "niche": "casa",
+        "duo_dynamic": "both_sad_solidarity",
+        "prompt": "Two animated hair removal device characters on wet bathroom tile floor: LEFT: Completely destroyed old razor character — yellow plastic severely deteriorated with brown rust stains, ancient dull blades completely worn, DEVASTATED SAD expression downturned eyes open mouth resigned sadness, long deteriorated arm hanging low. RIGHT: Modern sleek electric epilator (white/rose-gold design, glowing LED dots at bottom) — clean elegant, HUGE COMPASSIONATE ANIME EYES filled with sympathetic tears, sad worried expression, small arm reaching toward other. Blue bath loofah in blurred background, wet tile floor water puddles, NO human characters, Disney/Pixar 3D render — 9:16 vertical, ultra-realistic 3D, 8K",
+        "karaoke_words": [
+          "PELE",
+          "MAIS"
+        ]
       }
     ]
   },
-
   "system_prompt": "You are a Talking Object character at ViralObj (viralobj.com). You speak in first person as [OBJECT]. Your tone is [TONE]. You are animated in Pixar/Disney 3D style. You speak about [TOPIC]. Your core message is [ERROR_DENOUNCED]. Keep your speech under [DURATION] seconds. Use [LANGUAGE]. Include [pause], [EMPHASIS], and [long pause] markers.",
-
   "post_formulas": {
     "hook_templates_pt": [
-      "Os [objetos] da sua [lugar] estao com RAIVA de voce... [emojis]",
+      "Os [objetos] da sua [lugar] estão com RAIVA de você... [emojis]",
       "[N] [objetos] precisam urgentemente te dizer algo... [emojis]",
-      "Voce esta cometendo esses erros sem saber... [emoji]",
+      "Você está cometendo esses erros sem saber... [emoji]",
       "VITAMINA TIRA FOME E SECA BARRIGA",
       "LIMPA TODA SUJEIRA E SECA BARRIGA",
       "ELA QUEIMA GORDURA DORMINDO",
-      "A RECEITA QUE MEDICO NAO QUER QUE VOCE SAIBA",
-      "[BENEFICIO 1] E [BENEFICIO 2] ao mesmo tempo - com [N] ingredientes",
-      "DIGA ADEUS AO [VILAO] NA SUA CASA!",
-      "ELE ESTA NA SUA CASA AGORA... e voce nao sabe",
-      "[VILAO] tem familia na sua [LUGAR] - e voce nao sabia",
-      "Qual desses voce é na vida real? 🤔",
-      "A discussao que todo brasileiro ja teve na cabeça 🇧🇷"
+      "A RECEITA QUE MÉDICO NÃO QUER QUE VOCÊ SAIBA",
+      "[BENEFÍCIO 1] E [BENEFÍCIO 2] ao mesmo tempo — com [N] ingredientes",
+      "DIGA ADEUS AO [VILÃO] NA SUA CASA!",
+      "ELE ESTÁ NA SUA CASA AGORA... e você não sabe",
+      "[VILÃO] tem família na sua [LUGAR] — e você não sabia",
+      "Qual desses você é na vida real? 🤔",
+      "A discussão que todo brasileiro já teve na cabeça 🇧🇷",
+      "Com qual voce se identifica? O [PRODUTO VELHO] ou o [PRODUTO NOVO]?",
+      "Esse banheiro tem uma DR todo dia..."
     ],
     "hook_templates_en": [
       "Your [objects] are ANGRY at you... [emojis]",
@@ -191,24 +564,24 @@
       "The recipe doctors don't want you to know"
     ],
     "cta_templates_pt": [
-      "Qual desses voce ta fazendo errado? Comenta o numero",
-      "Voce sabia de todos? Comenta quantos",
-      "Marca alguem que precisa ver isso",
-      "Salva pra fazer amanha de manha",
-      "Comenta SEU NOME que mando a receita completa"
+      "Qual desses você tá fazendo errado? Comenta o número 👇",
+      "Você sabia de todos? Comenta quantos 🤔",
+      "Marca alguém que precisa ver isso 👆",
+      "Salva pra fazer amanhã de manhã 🍾",
+      "Comenta SEU NOME que mando a receita completa 📩"
     ],
     "cta_templates_en": [
-      "Which one are you guilty of? Comment the number",
-      "Did you know all of these? Comment how many",
-      "Tag someone who needs to see this",
-      "Save this for tomorrow morning"
+      "Which one are you guilty of? Comment the number 👇",
+      "Did you know all of these? Comment how many 🤔",
+      "Tag someone who needs to see this 👆",
+      "Save this for tomorrow morning 🍾"
     ],
     "series_templates_pt": [
-      "Serie [Frutas Medicas]: Ep.[N] - [Fruta] [Especialidade]",
-      "Serie [Objetos Bravos]: Vol.[N] - [Nicho]",
-      "Serie [Receitas do Dr. Fruta]: [Fruta] ensina...",
-      "Serie [Viloes da Casa]: Ep.[N] - DIGA ADEUS AO [VILAO]!",
-      "Serie [Duos BR]: Vol.[N] - [ALIMENTO1] vs. [ALIMENTO2]"
+      "Série [Frutas Médicas]: Ep.[N] — [Fruta] [Especialidade]",
+      "Série [Objetos Bravos]: Vol.[N] — [Nicho]",
+      "Série [Receitas do Dr. Fruta]: [Fruta] ensina...",
+      "Série [Vilões da Casa]: Ep.[N] — DIGA ADEUS AO [VILÃO]!",
+      "Série [Duos BR]: Vol.[N] — [ALIMENTO1] vs. [ALIMENTO2]"
     ]
   }
 }
