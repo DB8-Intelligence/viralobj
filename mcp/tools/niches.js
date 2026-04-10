@@ -1,6 +1,6 @@
 /**
  * ViralObj — niches.js
- * 10-niche library with object lists, personalities, validated prompts
+ * 12-niche library with object lists, personalities, validated prompts
  */
 
 export const NICHES = {
@@ -166,7 +166,96 @@ export const NICHES = {
     ],
     prompts_base: "Modern bedroom or office, Pixar 3D render, stressed person in background, mindfulness context",
   },
+
+  // ─── NEW NICHES — Added from video analysis ────────────────────────────
+
+  "saude-receitas": {
+    name_pt: "Saúde & Receitas Naturais",
+    name_en: "Health & Natural Recipes",
+    emoji: "🫚",
+    tone_default: "educational",
+    format_default: "F",
+    source_reference: "@objetosfalantes, @casasincerona — canela video 2026-04-09",
+    objects: [
+      { pt: "canela em pau", en: "cinnamon stick", emoji: "🪵", personality: "confiante, instrutora, multi-expressão", format: "F", costumes: ["sem roupa", "avental chef", "chapéu chef"] },
+      { pt: "gengibre", en: "ginger root", emoji: "🫚", personality: "picante, urgente, dramático", format: "F" },
+      { pt: "limão", en: "lemon", emoji: "🍋", personality: "ácido, direto, eficiente", format: "B" },
+      { pt: "alho", en: "garlic", emoji: "🧄", personality: "poderoso, mal compreendido, intenso", format: "B" },
+      { pt: "cúrcuma", en: "turmeric", emoji: "🟡", personality: "anti-inflamatória, orgulhosa, científica", format: "F" },
+      { pt: "chá verde", en: "green tea", emoji: "🍵", personality: "refinada, zen, poderosa", format: "B" },
+      { pt: "mel", en: "honey", emoji: "🍯", personality: "doce mas firme, protetora", format: "E" },
+      { pt: "vinagre de maçã", en: "apple cider vinegar", emoji: "🍏", personality: "azeda, incompreendida, eficaz", format: "A" },
+      { pt: "chia", en: "chia seeds", emoji: "⚫", personality: "pequena mas poderosa, surpresa", format: "A" },
+      { pt: "erva-cidreira", en: "lemon balm", emoji: "🌿", personality: "calmante, suave, acolhedora", format: "E" },
+    ],
+    prompts_base: "Brazilian kitchen, marble counter, glass pot boiling on gas stove, natural ingredients around, warm golden lighting, Pixar 3D render, no human in background (ingredient is the star)",
+    caption_style: "gamma",
+    caption_gamma: {
+      top_fixed: "Bold dark pill, white ALL CAPS text, benefit statement, persists 0-5s",
+      watermark: "White pill @account top-left, appears from mid-video",
+      bottom_karaoke: "Single word at a time, colorful/white, no pill, bold rounded font"
+    },
+    hooks: [
+      "LIMPA TODA SUJEIRA E SECA BARRIGA",
+      "ELA QUEIMA GORDURA DORMINDO",
+      "A RECEITA QUE MÉDICO NÃO QUER QUE VOCÊ SAIBA",
+      "ESSE CHÁ SIMPLES MUDOU MINHA VIDA",
+      "TOMA EM JEJUM E VÊ O QUE ACONTECE"
+    ],
+  },
+
+  "frutas-drama": {
+    name_pt: "Frutas & Drama",
+    name_en: "Fruit Drama",
+    emoji: "🍓",
+    tone_default: "dramatic",
+    format_default: "C",
+    source_reference: "Tendência viral BR abril/2026 — Abacatudo, Moranguete, Bananildo",
+    objects: [
+      { pt: "morango (Moranguete)", en: "strawberry", emoji: "🍓", personality: "dramática, passional, protagonista", format: "C" },
+      { pt: "abacate (Abacatudo)", en: "avocado", emoji: "🥑", personality: "confiante, charme, traidor", format: "C" },
+      { pt: "banana (Bananildo)", en: "banana", emoji: "🍌", personality: "ingênuo, engraçado, azarado", format: "C" },
+      { pt: "pera (Perita)", en: "pear", emoji: "🍐", personality: "delicada, sedutora, misteriosa", format: "C" },
+      { pt: "laranja (Laranjo)", en: "orange", emoji: "🍊", personality: "explosivo, esportista, direto", format: "C" },
+      { pt: "melancia (Melão)", en: "watermelon", emoji: "🍉", personality: "rico, superficial, arrogante", format: "C" },
+    ],
+    prompts_base: "Brazilian social scenario — BBQ, party, apartment, office, Pixar 3D render, DRESSED-CHAR style (fruit as head on human body), expressive faces, dramatic lighting",
+    content_warning: "Use only educational/positive storylines — avoid toxic relationship portrayal",
+  },
 };
+
+// ─── ANALYSIS OUTPUT PROMPT TEMPLATE ──────────────────────────────────────
+
+export function generateImplementationPrompt(analysis) {
+  const {
+    video_file, account, niche_detected, niche_key, is_new_niche,
+    format_type, is_new_format, character, objects_to_add,
+    caption_style, hooks_detected, prompts_validated,
+  } = analysis;
+
+  return `# ViralObj Implementation Prompt
+## Video: ${video_file} | Account: ${account}
+## Generated: ${new Date().toISOString()}
+
+## 1. NICHE ACTION
+${is_new_niche
+  ? `### CREATE NEW NICHE: \`${niche_key}\`\nAdd to niches.js with ${objects_to_add.length} objects.`
+  : `### ADD TO EXISTING NICHE: \`${niche_key}\`\n${objects_to_add.length} new objects.`}
+
+## 2. FORMAT: ${format_type} ${is_new_format ? "(NEW)" : "(exists)"}
+
+## 3. DATASET UPDATE
+- Increment videos_analyzed
+- Add "${account}" to source_accounts
+- Add ${prompts_validated?.length || 0} validated prompts
+
+## 4. COMMIT
+\`\`\`
+feat(niches): add ${is_new_niche ? niche_key : objects_to_add.length + " objects to " + niche_key}
+Source: ${account} | Format: ${format_type} | Caption: ${caption_style}
+\`\`\`
+`;
+}
 
 export async function loadNicheData(niche) {
   const data = NICHES[niche];
@@ -190,11 +279,11 @@ export async function listNiches({ lang = "pt" } = {}) {
   const text = lang === "en"
     ? `🎭 ViralObj — Available Niches (${list.length} total)\n\n` +
       list.map(n =>
-        `${n.emoji} ${n.key.padEnd(14)} | ${n.name.padEnd(25)} | ${n.objects_count} objects | tone: ${n.tone_default}\n   Objects: ${n.sample_objects.join(", ")}...`
+        `${n.emoji} ${n.key.padEnd(16)} | ${n.name.padEnd(27)} | ${n.objects_count} objects | tone: ${n.tone_default}\n   Objects: ${n.sample_objects.join(", ")}...`
       ).join("\n\n")
     : `🎭 ViralObj — Nichos Disponíveis (${list.length} total)\n\n` +
       list.map(n =>
-        `${n.emoji} ${n.key.padEnd(14)} | ${n.name.padEnd(25)} | ${n.objects_count} objetos | tom: ${n.tone_default}\n   Objetos: ${n.sample_objects.join(", ")}...`
+        `${n.emoji} ${n.key.padEnd(16)} | ${n.name.padEnd(27)} | ${n.objects_count} objetos | tom: ${n.tone_default}\n   Objetos: ${n.sample_objects.join(", ")}...`
       ).join("\n\n");
 
   return {

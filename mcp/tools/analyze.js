@@ -9,17 +9,17 @@ import { existsSync, mkdirSync, readdirSync } from "fs";
 import { join, basename, dirname } from "path";
 import Anthropic from "@anthropic-ai/sdk";
 import { readFileSync } from "fs";
-import { framesDir as makeFramesDir } from "../paths.js";
+import { getFramesPath, ensureDirectories } from "../paths.js";
 
 const client = new Anthropic();
 
 export async function analyzeVideo({ video_path, lang = "pt" }) {
-  // ── 1. Validate file ────────────────────────────────────────────────────
+  // —— 1. Validate file ————————————————————————————————————————————————————
   if (!existsSync(video_path)) {
     throw new Error(`Video file not found: ${video_path}`);
   }
 
-  // ── 2. Get video metadata ───────────────────────────────────────────────
+  // —— 2. Get video metadata ———————————————————————————————————————————————
   let duration = 30;
   try {
     const meta = execSync(
@@ -31,8 +31,11 @@ export async function analyzeVideo({ video_path, lang = "pt" }) {
     console.error("ffprobe failed, using default duration 30s");
   }
 
-  // ── 3. Extract frames ───────────────────────────────────────────────────
-  const framesDir = makeFramesDir(video_path);
+  // —— 3. Extract frames ———————————————————————————————————————————————————
+  ensureDirectories();
+  const videoSlug = `${basename(video_path, ".mp4")}_${Date.now()}`;
+  const framesDir = getFramesPath(videoSlug);
+  mkdirSync(framesDir, { recursive: true });
 
   const numFrames = Math.min(14, Math.max(8, Math.floor(duration / 2)));
   const timestamps = Array.from({ length: numFrames }, (_, i) =>
@@ -60,7 +63,7 @@ export async function analyzeVideo({ video_path, lang = "pt" }) {
     throw new Error("No frames could be extracted. Is ffmpeg installed?");
   }
 
-  // ── 4. Analyze frames with Claude Vision ───────────────────────────────
+  // —— 4. Analyze frames with Claude Vision ———————————————————————————————
   const imageContents = extractedFrames.map((f) => {
     const imageData = readFileSync(f.path).toString("base64");
     return {
@@ -70,7 +73,7 @@ export async function analyzeVideo({ video_path, lang = "pt" }) {
   });
 
   const systemPrompt = lang === "en"
-    ? `You are a Talking Objects content analyst for ViralObj (viralobj.com). 
+    ? `You are a Talking Objects content analyst for ViralObj (viralobj.com).
        Analyze video frames and identify animated 3D characters (objects with faces).
        Return ONLY valid JSON, no markdown, no extra text.`
     : `Você é analista de conteúdo Talking Objects para o ViralObj (viralobj.com).
@@ -162,7 +165,7 @@ Retorne exatamente esta estrutura JSON:
     ],
   });
 
-  // ── 5. Parse response ───────────────────────────────────────────────────
+  // —— 5. Parse response ———————————————————————————————————————————————————
   let analysis;
   try {
     const raw = response.content[0].text.trim();
@@ -172,7 +175,7 @@ Retorne exatamente esta estrutura JSON:
     throw new Error(`Failed to parse Claude analysis: ${e.message}`);
   }
 
-  // ── 6. Add metadata ─────────────────────────────────────────────────────
+  // —— 6. Add metadata ————————————————————————————————————————————————————
   analysis.meta = {
     video_path,
     frames_extracted: extractedFrames.length,

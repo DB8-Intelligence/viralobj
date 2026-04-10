@@ -1,66 +1,119 @@
 /**
  * ViralObj — paths.js
- * Centralized path configuration for all MCP tools.
- * Every tool imports paths from here — never hardcode directories.
+ * Central configuration for all project paths.
+ * Single source of truth — change here, applies everywhere.
+ *
+ * Directory structure:
+ *
+ * ~/viralobj/
+ * ├── downloads/          — all downloaded videos (input)
+ * │   ├── instagram/
+ * │   ├── tiktok/
+ * │   ├── youtube/
+ * │   └── uploaded/       — manually uploaded by user
+ * ├── frames/             — extracted frames from videos
+ * │   └── [video-slug]/
+ * │       ├── f01.jpg
+ * │       └── ...
+ * ├── outputs/            — generated packages, HTML, skills
+ * │   ├── [slug].html
+ * │   ├── [slug]-skill/
+ * │   └── [slug]/         — video clips from Fal.ai
+ * ├── implementations/    — implementation prompts from analysis
+ * │   └── [slug]-impl.md
+ * ├── training-data/      — dataset + reference videos
+ * │   ├── dataset.json
+ * │   └── reel-references/
+ * ├── mcp/
+ * └── skills/
  */
 
 import { join, resolve } from "path";
-import { mkdirSync } from "fs";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
+import { mkdirSync, existsSync } from "fs";
+import { homedir } from "os";
 
-// —— Project root (parent of mcp/) ——————————————————————————————————————
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-export const PROJECT_ROOT = resolve(__dirname, "..");
+// —— Base project root ————————————————————————————————————————————————————
+// Resolves to ~/viralobj regardless of where the process starts
+export const PROJECT_ROOT = process.env.VIRALOBJ_ROOT
+  || resolve(join(homedir(), "viralobj"));
 
-// —— Core directories ———————————————————————————————————————————————————
-export const OUTPUTS_DIR = join(PROJECT_ROOT, "outputs");
-export const DOWNLOADS_DIR = join(OUTPUTS_DIR, "downloads");
-export const SKILLS_DIR = join(PROJECT_ROOT, "skills");
-export const TRAINING_DIR = join(PROJECT_ROOT, "training-data");
-export const MCP_DIR = join(PROJECT_ROOT, "mcp");
-export const TOOLS_DIR = join(MCP_DIR, "tools");
+// —— All directories ——————————————————————————————————————————————————————
+export const PATHS = {
+  root:            PROJECT_ROOT,
 
-// —— Training data paths ————————————————————————————————————————————————
-export const DATASET_PATH = join(TRAINING_DIR, "dataset.json");
-export const REEL_REFERENCES_DIR = join(TRAINING_DIR, "reel-references");
-export const REFERENCES_DIR = join(TRAINING_DIR, "references");
+  // INPUT — where videos arrive
+  downloads:       join(PROJECT_ROOT, "downloads"),
+  downloads_instagram: join(PROJECT_ROOT, "downloads", "instagram"),
+  downloads_tiktok:    join(PROJECT_ROOT, "downloads", "tiktok"),
+  downloads_youtube:   join(PROJECT_ROOT, "downloads", "youtube"),
+  downloads_facebook:  join(PROJECT_ROOT, "downloads", "facebook"),
+  downloads_twitter:   join(PROJECT_ROOT, "downloads", "twitter"),
+  downloads_uploaded:  join(PROJECT_ROOT, "downloads", "uploaded"),
 
-// —— Skill paths ————————————————————————————————————————————————————————
-export const REVERSE_ENGINEER_DIR = join(SKILLS_DIR, "viralobj-reverse-engineer");
+  // PROCESSING — frames extracted from videos
+  frames:          join(PROJECT_ROOT, "frames"),
 
-// —— Env file ————————————————————————————————————————————————————————————
-export const ENV_PATH = join(PROJECT_ROOT, ".env");
+  // OUTPUT — generated content
+  outputs:         join(PROJECT_ROOT, "outputs"),
 
-// —— Ensure directories exist ————————————————————————————————————————————
-export function ensureDir(dir) {
-  mkdirSync(dir, { recursive: true });
-  return dir;
+  // IMPLEMENTATIONS — analysis output prompts
+  implementations: join(PROJECT_ROOT, "implementations"),
+
+  // TRAINING — dataset and references
+  training:        join(PROJECT_ROOT, "training-data"),
+  references:      join(PROJECT_ROOT, "training-data", "reel-references"),
+
+  // SKILLS
+  skills:          join(PROJECT_ROOT, "skills"),
+};
+
+// —— Helper: resolve download path by platform ————————————————————————————
+export function getDownloadPath(platform, filename) {
+  const platformDir = {
+    instagram: PATHS.downloads_instagram,
+    tiktok:    PATHS.downloads_tiktok,
+    youtube:   PATHS.downloads_youtube,
+    facebook:  PATHS.downloads_facebook,
+    twitter:   PATHS.downloads_twitter,
+    uploaded:  PATHS.downloads_uploaded,
+    unknown:   PATHS.downloads,
+  }[platform] || PATHS.downloads;
+
+  return join(platformDir, filename);
 }
 
-export function ensureOutputDirs() {
-  ensureDir(OUTPUTS_DIR);
-  ensureDir(DOWNLOADS_DIR);
+// —— Helper: resolve frames path for a video —————————————————————————————
+export function getFramesPath(videoSlug) {
+  return join(PATHS.frames, videoSlug);
 }
 
-// —— Helper: generate timestamped output dir ————————————————————————————
-export function makeOutputDir(prefix) {
-  const slug = `${prefix}-${Date.now()}`;
-  const dir = join(OUTPUTS_DIR, slug);
-  ensureDir(dir);
-  return dir;
+// —— Helper: resolve output path ——————————————————————————————————————————
+export function getOutputPath(...parts) {
+  return join(PATHS.outputs, ...parts);
 }
 
-// —— Helper: download destination path ——————————————————————————————————
-export function downloadPath(platform) {
-  ensureDir(DOWNLOADS_DIR);
-  return join(DOWNLOADS_DIR, `${platform}_${Date.now()}.mp4`);
+// —— Helper: resolve implementation path ——————————————————————————————————
+export function getImplPath(slug) {
+  return join(PATHS.implementations, `${slug}-impl.md`);
 }
 
-// —— Helper: frames temp dir ————————————————————————————————————————————
-export function framesDir(videoPath) {
-  const dir = join(dirname(videoPath), `.viralobj_frames_${Date.now()}`);
-  ensureDir(dir);
-  return dir;
+// —— Bootstrap: create all directories if they don't exist ————————————————
+export function ensureDirectories() {
+  const dirs = Object.values(PATHS);
+  for (const dir of dirs) {
+    if (!existsSync(dir)) {
+      mkdirSync(dir, { recursive: true });
+    }
+  }
+  return PATHS;
+}
+
+// —— Print all paths (for debugging) —————————————————————————————————————
+export function printPaths() {
+  console.error("\n📁 ViralObj Paths:");
+  for (const [key, val] of Object.entries(PATHS)) {
+    const exists = existsSync(val) ? "✅" : "❌";
+    console.error(`  ${exists} ${key.padEnd(22)} ${val}`);
+  }
+  console.error("");
 }

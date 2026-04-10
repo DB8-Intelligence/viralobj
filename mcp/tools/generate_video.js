@@ -18,7 +18,7 @@
 import { createFalClient } from "@fal-ai/client";
 import { writeFileSync, mkdirSync, existsSync } from "fs";
 import { join } from "path";
-import { OUTPUTS_DIR, makeOutputDir } from "../paths.js";
+import { getOutputPath, ensureDirectories, PATHS } from "../paths.js";
 
 // —— Voice profiles mapped to personality ——————————————————————————————————
 // MiniMax TTS voice_ids with emotion/speed tuned per character personality
@@ -123,7 +123,7 @@ const PERSONALITY_TO_VOICE = {
 
 export async function generateVideo({
   package: pkg,
-  output_dir = OUTPUTS_DIR,
+  output_dir = null,
   quality = "standard",  // "draft" | "standard" | "premium"
   lang = "pt",           // "pt" | "en"
   caption_style = "bold_white", // "bold_white" | "minimal" | "colorful"
@@ -134,9 +134,11 @@ export async function generateVideo({
     throw new Error("Invalid package: missing characters");
   }
 
-  const videoDir = output_dir === OUTPUTS_DIR
-    ? makeOutputDir(pkg.meta?.niche || "reel")
-    : (() => { mkdirSync(output_dir, { recursive: true }); return output_dir; })();
+  ensureDirectories();
+  const slug = `${pkg.meta?.niche || "reel"}-${Date.now()}`;
+  const videoDir = output_dir
+    ? (() => { mkdirSync(output_dir, { recursive: true }); return output_dir; })()
+    : (() => { const d = getOutputPath(slug); mkdirSync(d, { recursive: true }); return d; })();
 
   const totalSteps = pkg.characters.length * 3 + 2; // img + tts + lipsync per char + concat + captions
   let currentStep = 0;

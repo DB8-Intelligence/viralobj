@@ -12,12 +12,12 @@
  */
 
 import { execSync } from "child_process";
-import { existsSync, mkdirSync, writeFileSync, unlinkSync, statSync } from "fs";
-import { join } from "path";
+import { existsSync, mkdirSync, unlinkSync, statSync } from "fs";
+import { join, dirname } from "path";
 import { createWriteStream } from "fs";
 import https from "https";
 import http from "http";
-import { OUTPUTS_DIR, downloadPath, ensureDir } from "../paths.js";
+import { getDownloadPath, ensureDirectories, PATHS } from "../paths.js";
 
 // —— Platform detection ——————————————————————————————————————————————————
 
@@ -58,7 +58,6 @@ function downloadFile(url, destPath) {
       },
       timeout: 60000,
     }, (res) => {
-      // Follow redirects
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         file.close();
         try { unlinkSync(destPath); } catch {}
@@ -94,7 +93,6 @@ async function trySnapInsta(url, destPath) {
   if (res.status !== 200) throw new Error(`SnapInsta HTTP ${res.status}`);
 
   const html = res.body;
-
   const cdnPatterns = [
     /href="(https:\/\/[^"]*\.cdninstagram\.com[^"]*\.mp4[^"]*)"/gi,
     /href="(https:\/\/scontent[^"]*\.mp4[^"]*)"/gi,
@@ -112,7 +110,6 @@ async function trySnapInsta(url, destPath) {
   }
 
   if (!videoUrl) throw new Error("SnapInsta: no video URL found in response");
-
   console.error(`   SnapInsta CDN URL found: ${videoUrl.slice(0, 80)}...`);
   await downloadFile(videoUrl, destPath);
   return destPath;
@@ -149,7 +146,6 @@ async function trySSSTik(url, destPath) {
 
   const dlMatch = step2.body.match(/href="(https:\/\/[^"]*\.mp4[^"]*)"/i)
     || step2.body.match(/download\s+href="([^"]+)"/i);
-
   if (!dlMatch) throw new Error("SSSTik: no download URL found");
   await downloadFile(dlMatch[1], destPath);
   return destPath;
@@ -201,7 +197,6 @@ async function tryCobalt(url, destPath) {
 
   const data = JSON.parse(res.body);
   if (!data.url) throw new Error(`Cobalt: ${data.error || "no URL returned"}`);
-
   await downloadFile(data.url, destPath);
   return destPath;
 }
@@ -210,18 +205,23 @@ async function tryCobalt(url, destPath) {
 
 export async function downloadReel({
   url,
-  output_dir = OUTPUTS_DIR,
+  output_dir = null,
   auto_analyze = true,
   lang = "pt",
 }) {
   if (!url) throw new Error("URL is required");
 
-  const platform = detectPlatform(url);
+  ensureDirectories();
 
-  ensureDir(output_dir);
-  const destPath = output_dir === OUTPUTS_DIR
-    ? downloadPath(platform)
-    : join(output_dir, `${platform}_${Date.now()}.mp4`);
+  const platform = detectPlatform(url);
+  const timestamp = Date.now();
+  const slug = `${platform}_${timestamp}`;
+
+  const destPath = output_dir
+    ? join(output_dir, `${slug}.mp4`)
+    : getDownloadPath(platform, `${slug}.mp4`);
+
+  mkdirSync(dirname(destPath), { recursive: true });
 
   console.error(`\n🎬 ViralObj Download — ${platform.toUpperCase()}`);
   console.error(`   URL: ${url}`);
@@ -341,17 +341,17 @@ function getManualInstructions(platform, url) {
       `1. Acesse: https://snapinsta.app\n` +
       `2. Cole: ${url}\n` +
       `3. Clique Download → HD\n` +
-      `4. Salve o .mp4 em ~/viralobj/outputs/`,
+      `4. Salve o .mp4 em ~/viralobj/downloads/instagram/`,
     tiktok: `📥 Download manual — TikTok\n\n` +
       `1. Acesse: https://ssstik.io\n` +
       `2. Cole: ${url}\n` +
       `3. Download without watermark\n` +
-      `4. Salve o .mp4 em ~/viralobj/outputs/`,
+      `4. Salve o .mp4 em ~/viralobj/downloads/tiktok/`,
     youtube: `📥 Download manual — YouTube\n\n` +
       `1. Acesse: https://y2mate.com\n` +
       `2. Cole: ${url}\n` +
       `3. MP4 720p\n` +
-      `4. Salve o .mp4 em ~/viralobj/outputs/`,
+      `4. Salve o .mp4 em ~/viralobj/downloads/youtube/`,
   };
-  return tools[platform] || `📥 Baixe o vídeo manualmente e salve em ~/viralobj/outputs/`;
+  return tools[platform] || `📥 Baixe o vídeo manualmente e salve em ~/viralobj/downloads/uploaded/`;
 }

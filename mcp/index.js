@@ -16,7 +16,6 @@ import { generatePackage } from "./tools/generate.js";
 import { generateVideo } from "./tools/generate_video.js";
 import { downloadReel } from "./tools/download_reel.js";
 import { exportArtifacts } from "./tools/export.js";
-import { postToInstagram } from "./tools/post_instagram.js";
 import { listNiches } from "./tools/niches.js";
 
 const server = new Server(
@@ -59,7 +58,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           niche: {
             type: "string",
             description:
-              "Content niche (e.g. casa, plantas, financeiro, pets, fitness, saude, culinaria, natureza, maternidade, saude-mental)",
+              "Content niche (e.g. casa, plantas, financeiro, pets, fitness, saude, culinaria, natureza, maternidade, saude-mental, saude-receitas, frutas-drama)",
           },
           objects: {
             type: "array",
@@ -119,7 +118,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           },
           output_dir: {
             type: "string",
-            description: "Output directory for the downloaded video (default: ./outputs)",
+            description: "Output directory for the downloaded video (default: downloads/[platform]/)",
           },
           auto_analyze: {
             type: "boolean",
@@ -203,54 +202,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       },
     },
     {
-      name: "post_to_instagram",
-      description:
-        "Publishes a reel video to Instagram via Graph API. Supports immediate posting and scheduling. Optionally shares to Stories. Requires INSTAGRAM_ACCESS_TOKEN and INSTAGRAM_ACCOUNT_ID env vars. / Publica reel no Instagram via Graph API. Suporta publicação imediata e agendamento.",
-      inputSchema: {
-        type: "object",
-        properties: {
-          video_url: {
-            type: "string",
-            description: "Public URL of the video to post (from generate_video clip_url)",
-          },
-          caption_pt: {
-            type: "string",
-            description: "Post caption in Portuguese",
-          },
-          caption_en: {
-            type: "string",
-            description: "Post caption in English (optional, appended after separator)",
-          },
-          hashtags_pt: {
-            type: "array",
-            items: { type: "string" },
-            description: "Portuguese hashtags (25 recommended)",
-          },
-          hashtags_en: {
-            type: "array",
-            items: { type: "string" },
-            description: "English hashtags (20 recommended)",
-          },
-          schedule_time: {
-            type: "string",
-            description: "ISO datetime for scheduled posting (null = immediate). E.g. '2026-04-10T18:00:00-03:00'",
-          },
-          share_to_stories: {
-            type: "boolean",
-            default: false,
-            description: "Also share the reel to Instagram Stories",
-          },
-          lang: {
-            type: "string",
-            enum: ["pt", "en", "both"],
-            default: "pt",
-            description: "Caption language mode",
-          },
-        },
-        required: ["video_url", "caption_pt"],
-      },
-    },
-    {
       name: "list_niches",
       description:
         "Lists all available niches with their pre-loaded object libraries and validated AI prompts. / Lista todos os nichos disponíveis com bibliotecas de objetos e prompts AI validados.",
@@ -277,16 +228,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     switch (name) {
       case "analyze_video":
         return await analyzeVideo(args);
-      case "generate_package":
-        return await generatePackage(args);
       case "download_reel":
         return await downloadReel(args);
+      case "generate_package":
+        return await generatePackage(args);
       case "generate_video":
         return await generateVideo(args);
       case "export_artifacts":
         return await exportArtifacts(args);
-      case "post_to_instagram":
-        return await postToInstagram(args);
       case "list_niches":
         return await listNiches(args);
       default:
