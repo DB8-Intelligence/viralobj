@@ -20,6 +20,8 @@ export const NICHES = {
       { pt: "travesseiro", en: "pillow", emoji: "🛏️", personality: "exausto, sofrendo" },
       { pt: "toalha de banho", en: "bath towel", emoji: "🏳️", personality: "resignada, cansada" },
       { pt: "escova de dentes", en: "toothbrush", emoji: "🪥", personality: "abandonada, triste" },
+      { pt: "mofo de parede", en: "wall mold", emoji: "🦠", personality: "confiante, vilão, territorial", format: "H", role: "villain", expression_arc: ["confiante", "raivoso", "aterrorizado", "irônico"] },
+      { pt: "spray de limpeza", en: "cleaning spray", emoji: "🧹", personality: "heroico, determinado, protetor", format: "H", role: "hero" },
     ],
     prompts_base: "Brazilian home interior, Pixar 3D render, warm/cool lighting per room, human character in background making mistake",
   },
