@@ -7,8 +7,9 @@
 
 import { writeFileSync, mkdirSync, existsSync } from "fs";
 import { join } from "path";
+import { OUTPUTS_DIR, ensureDir } from "../paths.js";
 
-export async function exportArtifacts({ package: pkg, output_dir = "./outputs", slug }) {
+export async function exportArtifacts({ package: pkg, output_dir = OUTPUTS_DIR, slug }) {
   if (!pkg || !pkg.meta) throw new Error("Invalid package: missing meta");
 
   // ── Generate slug ──────────────────────────────────────────────────────

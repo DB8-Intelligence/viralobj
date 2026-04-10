@@ -17,6 +17,7 @@ import { join } from "path";
 import { createWriteStream } from "fs";
 import https from "https";
 import http from "http";
+import { OUTPUTS_DIR, downloadPath, ensureDir } from "../paths.js";
 
 // —— Platform detection ——————————————————————————————————————————————————
 
@@ -209,18 +210,18 @@ async function tryCobalt(url, destPath) {
 
 export async function downloadReel({
   url,
-  output_dir = "./outputs",
+  output_dir = OUTPUTS_DIR,
   auto_analyze = true,
   lang = "pt",
 }) {
   if (!url) throw new Error("URL is required");
 
   const platform = detectPlatform(url);
-  const timestamp = Date.now();
-  const slug = platform + "_" + timestamp;
 
-  mkdirSync(output_dir, { recursive: true });
-  const destPath = join(output_dir, `${slug}.mp4`);
+  ensureDir(output_dir);
+  const destPath = output_dir === OUTPUTS_DIR
+    ? downloadPath(platform)
+    : join(output_dir, `${platform}_${Date.now()}.mp4`);
 
   console.error(`\n🎬 ViralObj Download — ${platform.toUpperCase()}`);
   console.error(`   URL: ${url}`);

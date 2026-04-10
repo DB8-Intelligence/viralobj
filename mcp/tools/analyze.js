@@ -9,6 +9,7 @@ import { existsSync, mkdirSync, readdirSync } from "fs";
 import { join, basename, dirname } from "path";
 import Anthropic from "@anthropic-ai/sdk";
 import { readFileSync } from "fs";
+import { framesDir as makeFramesDir } from "../paths.js";
 
 const client = new Anthropic();
 
@@ -31,8 +32,7 @@ export async function analyzeVideo({ video_path, lang = "pt" }) {
   }
 
   // ── 3. Extract frames ───────────────────────────────────────────────────
-  const framesDir = join(dirname(video_path), `.viralobj_frames_${Date.now()}`);
-  mkdirSync(framesDir, { recursive: true });
+  const framesDir = makeFramesDir(video_path);
 
   const numFrames = Math.min(14, Math.max(8, Math.floor(duration / 2)));
   const timestamps = Array.from({ length: numFrames }, (_, i) =>
