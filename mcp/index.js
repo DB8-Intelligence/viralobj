@@ -14,6 +14,7 @@ import {
 import { analyzeVideo } from "./tools/analyze.js";
 import { generatePackage } from "./tools/generate.js";
 import { generateVideo } from "./tools/generate_video.js";
+import { downloadReel } from "./tools/download_reel.js";
 import { exportArtifacts } from "./tools/export.js";
 import { postToInstagram } from "./tools/post_instagram.js";
 import { listNiches } from "./tools/niches.js";
@@ -103,6 +104,36 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           },
         },
         required: ["niche", "objects", "topic"],
+      },
+    },
+    {
+      name: "download_reel",
+      description:
+        "Downloads videos automatically from Instagram, TikTok, YouTube Shorts, Facebook and Twitter/X. Uses SnapInsta (Instagram), SSSTik (TikTok), yt-dlp and Cobalt as fallbacks. After download, triggers analyze_video automatically. / Baixa vídeos automaticamente do Instagram, TikTok, YouTube Shorts. Após download, aciona analyze_video automaticamente.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          url: {
+            type: "string",
+            description: "Full URL of the video (instagram.com/reel/, tiktok.com, youtube.com/shorts/, etc.)",
+          },
+          output_dir: {
+            type: "string",
+            description: "Output directory for the downloaded video (default: ./outputs)",
+          },
+          auto_analyze: {
+            type: "boolean",
+            default: true,
+            description: "Automatically call analyze_video after download (default: true)",
+          },
+          lang: {
+            type: "string",
+            enum: ["pt", "en"],
+            default: "pt",
+            description: "Language for analysis output",
+          },
+        },
+        required: ["url"],
       },
     },
     {
@@ -248,6 +279,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return await analyzeVideo(args);
       case "generate_package":
         return await generatePackage(args);
+      case "download_reel":
+        return await downloadReel(args);
       case "generate_video":
         return await generateVideo(args);
       case "export_artifacts":
