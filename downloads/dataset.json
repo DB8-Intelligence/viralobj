@@ -1,14 +1,16 @@
 {
-  "version": "1.8.0",
+  "version": "1.9.0",
   "project": "ViralObj",
   "description": "Validated patterns from real Talking Object reel analysis",
   "last_updated": "2026-04-10",
-  "videos_analyzed": 16,
+  "videos_analyzed": 36,
   "source_accounts": [
     "@coisadecasa.ia",
     "@dinheirofalante",
     "@objetosfalantes",
-    "@casasincerona"
+    "@casasincerona",
+    "@ajuda.ai.hacks",
+    "@oficinassuculentas"
   ],
   "validated_patterns": {
     "expressions": {
@@ -126,7 +128,19 @@
       "TYPE-M RULE: Character body IS the food texture — not a costume, the actual texture of the food as 3D body",
       "TYPE-M RULE: Arms are MUSCULAR with food texture — food fighters are aggressive, not cute",
       "TYPE-M RULE: gamma-emoji-pill hook FIXED at top for ENTIRE video — never disappears. Acts as permanent debate headline.",
-      "TYPE-M RULE: Each fighter gets their own camera tracking shot in their own cenário BR before confrontation"
+      "TYPE-M RULE: Each fighter gets their own camera tracking shot in their own cenário BR before confrontation",
+      "TYPE-N RULE: Host appliance STAYS on screen entire video — guests appear inside/beside it. Host = anchor retention.",
+      "TYPE-N RULE: Transparent body showing liquid/content inside = visual curiosity hook",
+      "TYPE-O RULE: Scene IS interior of human organ — bioluminescent cave aesthetic with moist organic textures",
+      "TYPE-O RULE: Heroes are food/medicine navigating through organ tunnel — villains are toxins/residues",
+      "TYPE-P RULE: 3 villain insects introduced TOGETHER as crime boss trio — then defeated individually by home remedies",
+      "TYPE-P RULE: Each villain has distinct personality/accessory (chef apron, glasses, muscular) — not generic insects",
+      "TYPE-Q RULE: 4-8 characters in single elaborate themed scene (apothecary, garden, temple) — establishing wide shot then zoom each",
+      "TYPE-Q RULE: Scene template defines the mood — apotecário vintage = warm candlelight, jardim = golden hour, templo = dramatic shadows",
+      "TYPE-R RULE: Face embedded INSIDE liquid in transparent glass — face emerges from/is molded by liquid texture. Mystical setting.",
+      "TYPE-R RULE: Amber glowing eyes in liquid = signature visual. Oil lamp lighting mandatory.",
+      "TYPE-S RULE: Plant body is ROOT/BARK humanoid — flowers as crown/hair, leaves as clothing. Realistic feminine face, NOT simplified cartoon.",
+      "TYPE-S RULE: African/indigenous ancestral setting with warriors, fire, jungle background. Cinematic portrait framing."
     ],
     "caption_styles": {
       "alpha": "bold white Arial Black, 2px black outline, center-bottom, ALL CAPS or mixed",
@@ -136,7 +150,8 @@
       "gamma-B-rodape": "WHITE pill top BLACK text (hook 0-4s) + plain WHITE TEXT watermark bottom-center (NO pill) + single ironic word pill at very end. Detected: @objetosfalantes mofo video",
       "alpha-karaoke": "NO top hook pill. Single word karaoke bottom-center (bold white, no pill, black outline) + plain white text watermark bottom-right. Detected: @objetosfalantes duos comida BR",
       "beta-word-karaoke": "1 palavra isolada por beat de voz. Bold arredondada, branco 100% opaco, outline preto ~3px, centro-baixo. Watermark @conta plain text bottom-center. Detected: @objetosfalantes leite condensado receita",
-      "gamma-emoji-pill": "Pill branco TOPO com emoji + texto maiúsculo bold preto. FIXO durante todo o vídeo como headline permanente. Diferente do gamma clássico. Detected: @objetosfalantes tapioca vs pastel"
+      "gamma-emoji-pill": "Pill branco TOPO com emoji + texto maiúsculo bold preto. FIXO durante todo o vídeo como headline permanente. Diferente do gamma clássico. Detected: @objetosfalantes tapioca vs pastel",
+      "highlight-keyword-color": "Texto karaokê bottom com palavra-chave em COR diferente (verde neon #00FF88, ciano #00E5FF, amarelo #FFE000). Headline top em fundo semi-transparente. Detected: @ajuda.ai.hacks múltiplos vídeos"
     },
     "format_types": {
       "A": {
@@ -359,6 +374,66 @@
         "expression_arc": "desafiador → furioso → dominante",
         "characters_per_video": "2-3",
         "why_it_works": "Polarizing debate = comment flood. Iconic BR foods = instant identification. Muscular food bodies = scroll-stopping visual."
+      },
+      "N": {
+        "name": "APPLIANCE-HOST",
+        "body": "appliance full body with transparent glass showing content inside. Host permanent + guest characters appear.",
+        "pipeline": "FLUX.2 Pro + MiniMax TTS + VEED Fabric",
+        "example": "@ajuda.ai.hacks — liquidificador 7 sucos",
+        "best_for": ["saude-receitas", "culinaria", "saude", "fitness-nutricao"],
+        "new": true,
+        "caption_style": "highlight-keyword-color",
+        "why_it_works": "Host appliance anchors attention. Guests appearing inside = visual novelty per item. List format = high rewatch."
+      },
+      "O": {
+        "name": "INTERNAL-BODY-SCENE",
+        "body": "characters inside human organ — bioluminescent organic cave aesthetic. Heroes=food, Villains=toxins.",
+        "pipeline": "FLUX.2 Pro + MiniMax TTS + VEED Fabric (Veo recommended)",
+        "example": "@ajuda.ai.hacks — intestino + café + caju",
+        "best_for": ["saude", "fitness-nutricao", "saude-mental"],
+        "new": true,
+        "caption_style": "alpha-bold-highlight",
+        "why_it_works": "Internal body macro = visceral fascination. Bioluminescence = premium visual. Hero/villain inside organ = educational drama."
+      },
+      "P": {
+        "name": "TRIO-VILLAIN",
+        "body": "3 villain insects as crime boss trio — each with personality/accessory, defeated individually by home remedies.",
+        "pipeline": "FLUX.2 Pro + MiniMax TTS + VEED Fabric",
+        "example": "@ajuda.ai.hacks — barata + mosquito + formiga",
+        "best_for": ["casa", "casa-pragas", "saude"],
+        "new": true,
+        "caption_style": "alpha-bold-white",
+        "why_it_works": "Villain trio = 3x engagement. Individual defeats = satisfaction loop. Terror-cômico = shares."
+      },
+      "Q": {
+        "name": "MULTI-GROUP-SCENE",
+        "body": "4-8 characters in elaborate themed scene (apothecary, garden, temple). Wide establishing then zoom each.",
+        "pipeline": "FLUX.2 Pro + MiniMax TTS + VEED Fabric (Veo for long duration)",
+        "example": "@ajuda.ai.hacks — 6 plantas medicinais apotecário",
+        "best_for": ["plantas", "espiritualidade", "saude", "saude-receitas"],
+        "new": true,
+        "caption_style": "highlight-keyword-color",
+        "why_it_works": "Group scene = visual richness. Themed environment = immersion. Individual spotlights = full watch time."
+      },
+      "R": {
+        "name": "LIQUID-FACE-EMBEDDED",
+        "body": "face embedded INSIDE liquid in transparent glass — emerges from/molded by liquid texture. Mystical setting.",
+        "pipeline": "FLUX.2 Pro + MiniMax TTS + VEED Fabric",
+        "example": "@ajuda.ai.hacks — água com sal ritual",
+        "best_for": ["espiritualidade", "saude", "casa"],
+        "new": true,
+        "caption_style": "alpha-bold-white",
+        "why_it_works": "Face-in-liquid = uncanny valley fascination. Amber glowing eyes = scroll stop. Ritual context = saves."
+      },
+      "S": {
+        "name": "PLANT-HUMANOID",
+        "body": "root/bark humanoid body, flowers as crown/hair, realistic feminine face. African/indigenous ancestral setting.",
+        "pipeline": "FLUX.2 Pro ou Veo + MiniMax TTS + VEED Fabric",
+        "example": "@oficinassuculentas — adenium africana",
+        "best_for": ["plantas", "espiritualidade", "saude-natural"],
+        "new": true,
+        "caption_style": "alpha-word-simple",
+        "why_it_works": "Hybrid nature+human = unique visual identity. Ancestral setting = emotional depth. Botanical illustration meets Pixar."
       }
     },
     "duration_formulas": {
@@ -906,7 +981,26 @@
       },
       "viral_score": 4,
       "viral_factor": "Identificação imediata (todo mundo tem objeto velho em casa) + tom de coitado = comentários garantidos"
-    }
+    },
+    { "video_id":17, "slug":"liquidificador-7-sucos-saude",      "account":"@ajuda.ai.hacks", "format":"N", "niche":"saude-receitas",   "duration_seconds":62.1,  "characters":["liquidificador-host","suco-verde","suco-vermelho","suco-laranja"], "pipeline":"FLUX.2+Fabric", "viral_score":5, "analyzed_date":"2026-04-10" },
+    { "video_id":18, "slug":"intestino-cafe-caju-truques",        "account":"@ajuda.ai.hacks", "format":"O", "niche":"saude",           "duration_seconds":64.1,  "characters":["intestino-preso-villain","cafe-hero","caju-hero"], "pipeline":"FLUX.2+Fabric", "viral_score":5, "technical_note":"Cenário interno do intestino humano com bioluminescência verde", "analyzed_date":"2026-04-10" },
+    { "video_id":19, "slug":"absorvente-ciclo-menstrual-cores",   "account":"@ajuda.ai.hacks", "format":"B", "niche":"saude-feminino",  "duration_seconds":63.0,  "characters":["absorvente-ciclo"], "pipeline":"FLUX.2+Fabric", "viral_score":4, "niche_is_new":true, "analyzed_date":"2026-04-10" },
+    { "video_id":20, "slug":"trio-vilao-barata-mosquito-formiga", "account":"@ajuda.ai.hacks", "format":"P", "niche":"casa-pragas",     "duration_seconds":64.1,  "characters":["barata-chefe","mosquito-elegante","formiga-muscular"], "pipeline":"FLUX.2+Fabric", "viral_score":5, "analyzed_date":"2026-04-10" },
+    { "video_id":21, "slug":"hamburguer-villao-banana-heroi",     "account":"@ajuda.ai.hacks", "format":"I", "niche":"fitness-nutricao","duration_seconds":63.0,  "characters":["hamburguer-villain","banana-hero"], "pipeline":"FLUX.2+Fabric", "viral_score":4, "analyzed_date":"2026-04-10" },
+    { "video_id":22, "slug":"sabonete-morango-serum-caro-skincare","account":"@ajuda.ai.hacks","format":"I", "niche":"skincare-natural", "duration_seconds":64.1,  "characters":["sabonete-morango","serum-caro-villain"], "pipeline":"FLUX.2+Fabric", "viral_score":4, "analyzed_date":"2026-04-10" },
+    { "video_id":23, "slug":"queijo-processado-vs-real-ovo",      "account":"@ajuda.ai.hacks", "format":"A", "niche":"saude",           "duration_seconds":63.0,  "characters":["queijo-processado-villain","queijo-real","ovo","tomate"], "pipeline":"FLUX.2+Fabric", "viral_score":4, "analyzed_date":"2026-04-10" },
+    { "video_id":24, "slug":"lavanda-espada-sao-jorge-dormir",    "account":"@ajuda.ai.hacks", "format":"A", "niche":"plantas",         "duration_seconds":60.1,  "characters":["lavanda-pijama","espada-sao-jorge"], "human_background":true, "pipeline":"FLUX.2+Fabric", "viral_score":4, "technical_note":"Plantas em vaso com pijama — dormitório", "analyzed_date":"2026-04-10" },
+    { "video_id":25, "slug":"6-plantas-medicinais-apotecario",    "account":"@ajuda.ai.hacks", "format":"Q", "niche":"plantas",         "duration_seconds":63.8,  "characters":["espada-sao-jorge","jiboia","aloe-vera","bambu-da-sorte","arruda","basilico"], "pipeline":"FLUX.2+Fabric", "viral_score":5, "scene":"apotecario-vintage", "analyzed_date":"2026-04-10" },
+    { "video_id":26, "slug":"agua-sal-cebola-alho-rituais",       "account":"@ajuda.ai.hacks", "format":"R", "niche":"espiritualidade", "duration_seconds":29.4,  "characters":["agua-com-sal","cebola","alho"], "pipeline":"FLUX.2+Fabric", "viral_score":5, "niche_is_new":true, "analyzed_date":"2026-04-10" },
+    { "video_id":27, "slug":"chef-frango-molho-cogumelos",        "account":"@ajuda.ai.hacks", "format":"C", "niche":"culinaria",       "duration_seconds":42.2,  "characters":["chef-frango"], "pipeline":"FLUX.2+Fabric", "viral_score":4, "analyzed_date":"2026-04-10" },
+    { "video_id":28, "slug":"chef-carne-steak-master-marinadas",  "account":"@ajuda.ai.hacks", "format":"C", "niche":"culinaria",       "duration_seconds":42.2,  "characters":["chef-carne"], "pipeline":"FLUX.2+Fabric", "viral_score":4, "analyzed_date":"2026-04-10" },
+    { "video_id":29, "slug":"oleo-vaso-sanitario-limpeza-hotel",  "account":"@ajuda.ai.hacks", "format":"K", "niche":"casa",            "duration_seconds":29.0,  "characters":["oleo-cozinha-bottle"], "pipeline":"Veo", "pipeline_is_new":true, "viral_score":5, "technical_note":"Watermark Veo visível — gerado com Google Veo", "analyzed_date":"2026-04-10" },
+    { "video_id":30, "slug":"mascara-clara-ovo-amido-milho",      "account":"@ajuda.ai.hacks", "format":"J", "niche":"skincare-natural", "duration_seconds":31.6, "characters":["clara-de-ovo-soldado"], "pipeline":"Veo", "viral_score":4, "technical_note":"Clara de ovo com boina militar, macro pele", "analyzed_date":"2026-04-10" },
+    { "video_id":31, "slug":"tabua-corte-bacterias-cozinha",      "account":"@ajuda.ai.hacks", "format":"A", "niche":"casa",            "duration_seconds":32.1,  "characters":["tabua-de-corte","pote-graos"], "pipeline":"FLUX.2+Fabric", "viral_score":4, "analyzed_date":"2026-04-10" },
+    { "video_id":32, "slug":"plantas-guardias-jardim-pragas",     "account":"@ajuda.ai.hacks", "format":"Q", "niche":"plantas",         "duration_seconds":63.9,  "characters":["calendula","losna","lavanda"], "pipeline":"FLUX.2+Fabric", "viral_score":4, "scene":"jardim-encantado", "analyzed_date":"2026-04-10" },
+    { "video_id":33, "slug":"7-ervas-abrir-caminhos-prosperar",   "account":"@ajuda.ai.hacks", "format":"Q", "niche":"espiritualidade", "duration_seconds":143.7, "characters":["arruda","manjericao","alecrim","losna","guiné","espada-sao-jorge","pimenta"], "pipeline":"Veo", "viral_score":5, "technical_note":"143s — formato longa duração, Veo watermark", "analyzed_date":"2026-04-10" },
+    { "video_id":34, "slug":"planta-africana-indigena-adenium",   "account":"@oficinassuculentas","format":"S","niche":"plantas",        "duration_seconds":31.6,  "characters":["adenium-africana-humanoid"], "pipeline":"FLUX.2 Pro (suspected)", "viral_score":5, "technical_note":"Humanoide planta feminina estilo africano ancestral — @oficinassuculentas", "analyzed_date":"2026-04-10" },
+    { "video_id":35, "slug":"suplementos-juntos-b12-omega3-ashwagandha","account":"canal-saude","format":"A","niche":"saude",           "duration_seconds":65.7,  "characters":["capsula-b12","capsula-omega3","capsula-ashwagandha","capsula-branca"], "pipeline":"FLUX.2+Fabric", "viral_score":4, "analyzed_date":"2026-04-10" }
   ],
   "system_prompt": "You are a Talking Object character at ViralObj (viralobj.com). You speak in first person as [OBJECT]. Your tone is [TONE]. You are animated in Pixar/Disney 3D style. You speak about [TOPIC]. Your core message is [ERROR_DENOUNCED]. Keep your speech under [DURATION] seconds. Use [LANGUAGE]. Include [pause], [EMPHASIS], and [long pause] markers.",
   "post_formulas": {
@@ -931,7 +1025,12 @@
       "[N] ingredientes e a receita se faz SOZINHA 🍰",
       "🔥 [ALIMENTO A] OU [ALIMENTO B]? O RECADINHO É DIRETO! 🔥",
       "MISTURA [PRODUTO A] + [PRODUTO B] e veja a MÁGICA acontecer 🧹",
-      "Esse [PARASITA] TÁ NA SUA CASA... e tem FAMÍLIA no pelo do seu pet 🐕"
+      "Esse [PARASITA] TÁ NA SUA CASA... e tem FAMÍLIA no pelo do seu pet 🐕",
+      "SEU [ÓRGÃO] TÁ PEDINDO SOCORRO... e você não sabe 🆘",
+      "[N] [ERVAS/PLANTAS] que todo brasileiro deveria ter em casa 🌿",
+      "Coloca [INGREDIENTE] no copo e veja O QUE ACONTECE... 🔮",
+      "⚠️ A COR do seu ciclo FALA sobre sua saúde... 🩸",
+      "Esses 3 VILÕES estão na sua cozinha AGORA... 🪳🦟🐜"
     ],
     "hook_templates_en": [
       "Your [objects] are ANGRY at you... [emojis]",
@@ -964,7 +1063,11 @@
       "Série [Receitas DIY de Limpeza]: Ep.[N] — [PRODUTO] [RECEITA]",
       "Série [Batalha dos Alimentos BR]: Vol.[N] — 🔥 [ALIMENTO1] vs. [ALIMENTO2]",
       "Série [Vilões do Pelo]: Ep.[N] — [PARASITA] vs. ANTI [PARASITA]!",
-      "Série [Objetos que Precisam Ser Trocados]: Vol.[N] — [OBJETO1] + [OBJETO2]"
+      "Série [Objetos que Precisam Ser Trocados]: Vol.[N] — [OBJETO1] + [OBJETO2]",
+      "Série [Ervas com Poder]: Ep.[N] — [TEMA ESPIRITUAL]",
+      "Série [Seu Ciclo Te Fala]: Ep.[N] — [TEMA SAÚDE FEMININA]",
+      "Série [Vilões da Cozinha]: Ep.[N] — [INSETO1] + [INSETO2] + [INSETO3]",
+      "Série [Seu Corpo Por Dentro]: Ep.[N] — [ÓRGÃO] + [HERÓI] vs [VILÃO]"
     ]
   }
 }

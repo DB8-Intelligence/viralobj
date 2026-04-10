@@ -1,7 +1,7 @@
 /**
  * ViralObj — niches.js
- * 16-niche library with object lists, personalities, validated prompts
- * Formats A–M | 100+ objects | 16 niches
+ * 18-niche library with object lists, personalities, validated prompts
+ * Formats A–S | 120+ objects | 18 niches | Pipelines: FLUX.2+Fabric, Veo
  */
 
 // ─── FORMAT DEFINITIONS (J+K v1.7.0, L+M v1.8.0) ──────────────────────────
@@ -130,10 +130,109 @@ export const FORMATS = {
       { tema: "café da manhã", personagens: ["pão-francês", "tapioca", "fruta"] },
       { tema: "lanche", personagens: ["coxinha", "esfiha", "pastel"] }
     ]
+  },
+  // ─── Formats N–S (v1.9.0) ────────────────────────────────────────────────
+  N: {
+    id: "N", name: "APPLIANCE-HOST",
+    description: "Eletrodoméstico é o personagem anfitrião que apresenta uma lista de itens. Cada item aparece como guest character dentro/ao lado do host. Host permanece durante todo o vídeo.",
+    body: "appliance-full-body", host_permanent: true, guest_characters: true,
+    pipeline: ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+    camera: "static-medium-with-inserts", tone: "educational",
+    best_for: ["saude-receitas", "culinaria", "saude", "fitness-nutricao"],
+    caption_style: "highlight-keyword-color",
+    flux_template: {
+      host: "[ELETRODOMÉSTICO] animated character, [FORMA] body, transparent glass body showing [CONTEÚDO] inside, face embedded on [PARTE], full body with arms and legs, cheerful educational expression, [CENÁRIO COZINHA], Disney/Pixar 3D render, 8K",
+      guest: "[ITEM DA LISTA] animated character appearing [DENTRO/AO LADO] of [HOST], friendly confident expression, 9:16 vertical, Disney/Pixar 3D render, 8K"
+    },
+    reference_account: "@ajuda.ai.hacks",
+    objects: ["liquidificador", "panela-pressao", "airfryer", "forno-micro-ondas", "chaleira"]
+  },
+  O: {
+    id: "O", name: "INTERNAL-BODY-SCENE",
+    description: "Cenário é o interior do corpo humano (intestino, estômago, veias, pulmão). Personagens Pixar 3D habitam e interagem dentro do órgão. Estética: caverna orgânica úmida com bioluminescência verde/azul.",
+    body: "full-body-inside-organ", internal_scene: true, organic_environment: true, bioluminescence: true,
+    pipeline: ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+    camera: "tracking-inside-tunnel", tone: "dramatic",
+    best_for: ["saude", "fitness-nutricao", "saude-mental"],
+    caption_style: "alpha-bold-highlight",
+    flux_template: {
+      scene: "Interior of human [ÓRGÃO] as Pixar 3D environment, [TEXTURA ORGÂNICA] walls with bioluminescent [COR] glow, moist cave-like tunnel, [PERSONAGEM] character navigating through, visceral organic textures, Disney/Pixar 3D render ultra-realistic, 8K",
+      character: "[ALIMENTO/REMÉDIO] animated character as hero [OU] [TOXINA/RESÍDUO] as villain, inside the [ÓRGÃO] environment, [EXPRESSÃO], Disney/Pixar 3D render, 8K"
+    },
+    reference_account: "@ajuda.ai.hacks",
+    organ_scenes: ["intestino-grosso", "intestino-delgado", "estomago", "veias-sangue", "pulmao", "cerebro"]
+  },
+  P: {
+    id: "P", name: "TRIO-VILLAIN",
+    description: "3 insetos/pragas vilões apresentados juntos em cena de 'troupe' — depois cada um é derrotado por seu truque caseiro específico. Tom: terror-cômico.",
+    body: "insect-full-body-villain", villain_count: "3", group_intro: true, individual_defeat: true,
+    pipeline: ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+    camera: "wide-group-then-close-each", tone: "funny", sub_tone: "terror-comico",
+    best_for: ["casa", "casa-pragas", "saude"],
+    caption_style: "alpha-bold-white",
+    flux_template: {
+      group: "Three villain insect characters — [BARATA] wearing dirty apron, [MOSQUITO] elegant with glasses, [FORMIGA] muscular arms crossed — standing together on kitchen counter like a crime boss trio, dramatic lighting, Disney/Pixar 3D render villain style, 8K",
+      defeat: "[INSETO] character [REAÇÃO DE DERROTA] hit by [TRUQUE CASEIRO], [EFEITO VISUAL], Disney/Pixar 3D render, 8K"
+    },
+    reference_account: "@ajuda.ai.hacks",
+    villain_roster: [
+      { id: "barata-chefe", label: "Barata Chefe de Cozinha", accessory: "dirty-apron", expression: "arrogant" },
+      { id: "mosquito-elegante", label: "Mosquito Elegante", accessory: "glasses-wings", expression: "sophisticated-villain" },
+      { id: "formiga-muscular", label: "Formiga Capitã", accessory: "none", expression: "arms-crossed-confident" }
+    ]
+  },
+  Q: {
+    id: "Q", name: "MULTI-GROUP-SCENE",
+    description: "Grupo de 4-8 personagens do mesmo tipo apresentados juntos em cenário temático elaborado (apotecário vintage, jardim encantado, templo). Cada personagem fala individualmente.",
+    body: "various-same-category", group_size: "4-8", shared_scene: true, individual_spotlight: true,
+    pipeline: ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+    camera: "establishing-wide-then-zoom-each", tone: "educational",
+    best_for: ["plantas", "espiritualidade", "saude", "saude-receitas"],
+    caption_style: "highlight-keyword-color",
+    flux_template: {
+      group_scene: "Group of [N] animated [CATEGORIA] characters — [LISTA] — gathered in [CENÁRIO TEMÁTICO: apothecary vintage shop / enchanted garden / ancient temple], each with distinct personality and expression, warm [ILUMINAÇÃO], Disney/Pixar 3D render, 8K",
+      individual: "Close-up of [PERSONAGEM] animated [OBJETO/PLANTA] character explaining [BENEFÍCIO], [EXPRESSÃO], same [CENÁRIO] background, Disney/Pixar 3D render, 8K"
+    },
+    reference_account: "@ajuda.ai.hacks",
+    scene_templates: {
+      "apotecario-vintage": "Victorian apothecary shop with wooden shelves, amber bottles, botanical illustrations, stained glass window, warm candlelight",
+      "jardim-encantado":   "Sunlit cottage garden with white picket fence, tomatoes and vegetables, warm golden hour light, dirt soil foreground",
+      "templo-pedra":       "Ancient stone wall temple exterior, earthen ground, warm dramatic lighting, mystical atmosphere"
+    }
+  },
+  R: {
+    id: "R", name: "LIQUID-FACE-EMBEDDED",
+    description: "Face do personagem está DENTRO do líquido de um recipiente transparente. O rosto emerge da superfície ou está submerso, integrado à textura do líquido. Cenário místico/ritualístico.",
+    body: "face-in-liquid-no-full-body", liquid_embedded: true, container: "transparent-glass", mystical_setting: true,
+    pipeline: ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+    camera: "close-to-medium-mystical", tone: "dramatic", sub_tone: "mistico-autoritario",
+    best_for: ["espiritualidade", "saude", "casa"],
+    caption_style: "alpha-bold-white",
+    flux_template: {
+      character: "[LÍQUIDO] [EXPRESSÃO] face embedded and emerging from inside a clear glass containing [LÍQUIDO] with [CRISTAIS/SAL/ERVAS], face molded from the liquid texture with amber glowing eyes, [EXPRESSÃO FURIOSA/DRAMÁTICA], antique mystic [CENÁRIO: apothecary/altar/dark kitchen], oil lamp lighting, Disney/Pixar 3D render, 8K"
+    },
+    reference_account: "@ajuda.ai.hacks",
+    liquid_types: ["agua-com-sal", "agua-com-cebola", "cha-de-ervas", "agua-florida", "mel-puro"]
+  },
+  S: {
+    id: "S", name: "PLANT-HUMANOID",
+    description: "Planta COM corpo humanoide completo — raiz = tronco/corpo, flores = cabelo/coroa, folhas = pele/roupa. Face humana feminina detalhada. Estética híbrida natureza+humano. Cenário africano/indígena ancestral.",
+    body: "root-humanoid-organic", face_style: "realistic-human-feminine", hair: "flower-crown", skin: "root-bark-texture",
+    pipeline: ["FLUX.2 Pro ou Veo", "MiniMax TTS", "VEED Fabric"],
+    camera: "medium-portrait-cinematic", tone: "educational", sub_tone: "ancestral-mistico",
+    best_for: ["plantas", "espiritualidade", "saude-natural"],
+    caption_style: "alpha-word-simple",
+    flux_template: {
+      character: "[PLANTA] female humanoid character, body made of thick textured [ROOT/BARK] with wrinkles and organic patterns, [FLORES] crown as hair, feminine realistic face with [EXPRESSÃO], [FOLHAS/PÉTALAS] as clothing details, sitting or standing in [CENÁRIO AFRICANO/ANCESTRAL] environment with [WARRIORS/FIRE/JUNGLE] background, cinematic dramatic lighting, ultra-detailed organic textures, Disney/Pixar meets botanical illustration style, 8K"
+    },
+    reference_account: "@oficinassuculentas",
+    plant_characters: [
+      { id: "adenium-africana", label: "Adenium Africana", flowers: "pink-plumeria", bark: "thick-succulent-root" }
+    ]
   }
 };
 
-// ─── FORMAT REGISTRY (all 13 formats A–M) ───────────────────────────────────
+// ─── FORMAT REGISTRY (all 19 formats A–S) ───────────────────────────────────
 
 export const FORMAT_REGISTRY = [
   { id: "A", name: "MULTI-STUB",                    niches: ["casa", "plantas", "financeiro"],                              tone: "angry" },
@@ -149,6 +248,12 @@ export const FORMAT_REGISTRY = [
   { id: "K", name: "SINGLE-RECIPE-JOURNEY",         niches: ["culinaria-receitas", "gastronomia", "casa"],                  tone: "funny" },
   { id: "L", name: "SINGLE-MULTI-SCENE-JOURNEY",  niches: ["casa", "limpeza", "pets"],                                    tone: "funny" },
   { id: "M", name: "FOOD-FIGHTER",                 niches: ["gastronomia", "fitness-nutricao", "culinaria"],                tone: "angry" },
+  { id: "N", name: "APPLIANCE-HOST",              niches: ["saude-receitas", "culinaria", "saude"],                        tone: "educational" },
+  { id: "O", name: "INTERNAL-BODY-SCENE",         niches: ["saude", "fitness-nutricao"],                                   tone: "dramatic" },
+  { id: "P", name: "TRIO-VILLAIN",                niches: ["casa", "casa-pragas"],                                         tone: "funny" },
+  { id: "Q", name: "MULTI-GROUP-SCENE",           niches: ["plantas", "espiritualidade", "saude"],                          tone: "educational" },
+  { id: "R", name: "LIQUID-FACE-EMBEDDED",        niches: ["espiritualidade", "saude", "casa"],                             tone: "dramatic" },
+  { id: "S", name: "PLANT-HUMANOID",              niches: ["plantas", "espiritualidade", "saude-natural"],                  tone: "educational" },
 ];
 
 // ─── CAPTION STYLES ─────────────────────────────────────────────────────────
@@ -225,6 +330,92 @@ export const CAPTION_STYLES = {
     uppercase: true,
     examples: ["🔥 TAPIOCA OU PASTEL? O RECADINHO É DIRETO! 🔥‍", "🧽 ESPONJA VELHA FALANDO A VERDADE! 🤣"]
   },
+  "highlight-keyword-color": {
+    id: "highlight-keyword-color",
+    description: "Texto karaokê bottom com palavra-chave destacada em COR diferente (verde neon, ciano, amarelo). Resto do texto em branco bold. Headline top em fundo semi-transparente.",
+    font: "bold rounded",
+    color_default: "#FFFFFF",
+    color_highlight: "dynamic — verde #00FF88 / ciano #00E5FF / amarelo #FFE000",
+    position: "center-bottom",
+    outline: "2px black",
+    headline_top: "bold black text on white semi-transparent background — full phrase visible throughout",
+    examples: ["INCHADO", "ESPINAFRE", "INTESTINO", "PREGUIÇOSOS", "SANGUE"]
+  },
+};
+
+// ─── PIPELINES ──────────────────────────────────────────────────────────────
+
+export const PIPELINES = {
+  "flux-fabric": {
+    id: "flux-fabric",
+    name: "FLUX.2 Pro + MiniMax TTS + VEED Fabric",
+    description: "Pipeline padrão ViralObj. FLUX.2 Pro gera imagem, MiniMax TTS gera voz, VEED Fabric sincroniza lábios.",
+    steps: ["FLUX.2 Pro → imagem 9:16", "MiniMax TTS → áudio PT-BR", "VEED Fabric → lip sync vídeo"],
+    cost_range: "$2-4/reel",
+    best_for: "all formats",
+    default: true
+  },
+  "veo": {
+    id: "veo",
+    name: "Google Veo",
+    description: "Pipeline alternativo ao FLUX.2+Fabric. Gera vídeo diretamente sem etapa separada de lip sync. Watermark 'Veo' visível no canto inferior direito (remover em pós se necessário). Qualidade de movimento superior ao Fabric para personagens orgânicos (plantas, líquidos, humanoides).",
+    watermark: "Veo — bottom-right corner",
+    strengths: ["organic-movement", "plant-characters", "liquid-effects", "long-duration"],
+    pipeline_steps: ["Veo prompt → vídeo direto"],
+    best_for_formats: ["Q", "R", "S", "O"],
+    detected_in_videos: [29, 30, 33]
+  }
+};
+
+// ─── SOURCE ACCOUNTS ────────────────────────────────────────────────────────
+
+export const SOURCE_ACCOUNTS = {
+  "@objetosfalantes": {
+    handle: "@objetosfalantes",
+    style: "talking-objects-viral-BR",
+    formats_used: ["A","B","C","F","G","H","I","J","K","L","M"],
+    niches: ["casa","saude-receitas","gastronomia","skincare-natural","culinaria-receitas","pets"],
+    first_analyzed: "2026-04-09",
+  },
+  "@coisadecasa.ia": {
+    handle: "@coisadecasa.ia",
+    style: "casa-plantas-stub",
+    formats_used: ["A"],
+    niches: ["casa","plantas"],
+    first_analyzed: "2026-04-09",
+  },
+  "@casasincerona": {
+    handle: "@casasincerona",
+    style: "humor-objetos-velhos",
+    formats_used: ["A"],
+    niches: ["casa"],
+    first_analyzed: "2026-04-10",
+    note: "Mesma estética de @coisadecasa.ia — provavelmente mesma equipe",
+  },
+  "@ajuda.ai.hacks": {
+    handle: "@ajuda.ai.hacks",
+    style: "saude-educativo-viral",
+    formats_used: ["N","O","P","Q","R","A","B","C","I","J"],
+    niches: ["saude","saude-receitas","fitness-nutricao","skincare-natural","casa","plantas","espiritualidade","saude-feminino","culinaria"],
+    caption_pattern: "headline-topo + highlight-keyword-bottom + CTA 'Comenta: [PALAVRA]'",
+    cta_comment_bait: true,
+    pipeline_mix: ["FLUX.2 Pro + Fabric", "Veo"],
+    watermark: "@ajuda.ai.hacks — center-middle plain text",
+    logo: "pill vermelho/coral canto superior direito",
+    first_analyzed: "2026-04-10",
+    videos_analyzed: 19
+  },
+  "@oficinassuculentas": {
+    handle: "@oficinassuculentas",
+    style: "plantas-ancestrais-premium",
+    formats_used: ["S"],
+    niches: ["plantas","espiritualidade"],
+    caption_pattern: "word-karaoke simple + watermark bottom-center",
+    pipeline_mix: ["FLUX.2 Pro (suspected)"],
+    watermark: "@OFICINADASSUCULENTAS — bottom-center uppercase",
+    first_analyzed: "2026-04-10",
+    videos_analyzed: 1
+  },
 };
 
 // ─── NICHES ─────────────────────────────────────────────────────────────────
@@ -262,6 +453,9 @@ export const NICHES = {
       // —— Limpeza DIY (Tipo L) ——————————————————————————————————————————————
       { id: "amaciante", pt: "amaciante", en: "fabric softener", emoji: "💜", personality: "sarcástica, orgulhosa, sabe que é versátil", format: "L", shape: "plastic-bottle-2L-handle", color: "#B39DDB", cap_color: "#1565C0", body_type: "full-body-homogeneous", flux_base: "Cute animated fabric softener bottle character, large 2L plastic bottle body with handle, lilac/lavender purple homogeneous color all over body and limbs, face embedded on bottle front with expressive brown-amber cartoon eyes, long lilac arms with hands, short lilac legs and oval feet, blue plastic cap as hat, Disney/Pixar 3D render, ultra-realistic 3D animation, 8K", voice: { voice_id: "Wise_Woman", emotion: "cheerful", speed: 1.05, pitch: 1 }, diy_props: ["garrafa-spray-vidro", "vinagre", "agua"] },
       // —— Objetos Velhos (Tipo A - @casasincerona) ——————————————————————————
+      // —— Novos objetos casa v1.9.0 ————————————————————————————————————————
+      { id: "oleo-cozinha-bottle", pt: "garrafa de óleo de cozinha", en: "cooking oil bottle", emoji: "🫗", personality: "apavorada, caindo, derramando", format: "K", pipeline_note: "Veo gerado", flux_base: "Terrified animated cooking oil bottle character, transparent golden-yellow plastic bottle body, liquid gold oil visible inside, scared wide-eyed expression, arms spread in panic falling position, pouring into white toilet bowl, clean marble bathroom background, Disney/Pixar 3D render, 8K" },
+      { id: "tabua-de-corte-obj", pt: "tábua de corte (personagem)", en: "cutting board character", emoji: "🪵", personality: "furiosa, enojada, bacteria-hater", format: "A", flux_base: "Extremely angry animated wooden cutting board character, large rectangular wood cutting board body with grain texture, furious disgusted face embedded in wood, brown grain eyebrows furrowed, lemon half and salt visible on surface, arms gripping edges, Disney/Pixar 3D render, 8K", voice: { voice_id: "Wise_Woman", emotion: "angry", speed: 1.15, pitch: -1 } },
       { id: "cueca-velha", pt: "cueca velha", en: "old underwear", emoji: "🩲", personality: "resignada, confusa, perdida", format: "A", shape: "underwear-flat-with-face", color: "#F8BBD9", flux_base: "Cute animated old pink underwear character, flat fabric body shape, face embedded in fabric with worried confused expression and big round eyes, small fabric arms spread open in confusion, short fabric legs, inside open wooden drawer with folded clothes, Disney/Pixar 3D render, ultra-realistic 3D animation, 8K", voice: { voice_id: "Calm_Woman", emotion: "sad", speed: 0.90, pitch: -1 } },
     ],
     prompts_base: "Brazilian home interior, Pixar 3D render, warm/cool lighting per room, human character in background making mistake",
@@ -334,6 +528,9 @@ export const NICHES = {
       { pt: "açúcar", en: "sugar", emoji: "🍬", personality: "doce, sedutora" },
       { pt: "fermento", en: "yeast/baking powder", emoji: "🌡️", personality: "ansioso, expansivo" },
       { pt: "forno", en: "oven", emoji: "♨️", personality: "autoritário, preciso" },
+      // —— Chefs animais/alimentos (Tipo C-variant) v1.9.0 ——————————————————
+      { id: "chef-frango", pt: "chef frango", en: "chef chicken", emoji: "🐔", personality: "orgulhoso, animado, cozinheiro", format: "C", body_type: "C-variant-animal", accessory: "white-chef-hat + gray-apron", flux_base: "Cheerful animated rooster/chicken character dressed as professional chef, full bird body with wings as arms, white chef hat, gray chef apron with wheat emblem, excited cooking expression, rustic warm restaurant kitchen background with hanging pots and pans, Disney/Pixar 3D render, 8K", voice: { voice_id: "Friendly_Person", emotion: "cheerful", speed: 1.10, pitch: 2 } },
+      { id: "chef-carne", pt: "chef carne (Steak Master)", en: "chef steak", emoji: "🥩", personality: "confiante, apresentador, master", format: "C", body_type: "C-variant-food-chef", accessory: "chef-hat-labeled-STEAK-MASTER + white-gloves + white-apron", flux_base: "Confident animated beef steak character as chef, round marbled red meat body with visible fat marbling texture, face on meat surface with expressive brown eyes, white chef hat reading STEAK MASTER, white gloves, white apron, cheerful waving gesture, bright modern kitchen with green cabinets background, Disney/Pixar 3D render, 8K", voice: { voice_id: "Friendly_Person", emotion: "cheerful", speed: 1.05, pitch: 1 } },
     ],
     prompts_base: "Modern Brazilian kitchen, warm cooking atmosphere, Pixar 3D render, cook/chef character, ingredients on counter",
   },
@@ -365,6 +562,9 @@ export const NICHES = {
       { pt: "vitamina", en: "vitamin supplement", emoji: "🔶", personality: "esquecida, esperançosa" },
       { pt: "açúcar refinado", en: "refined sugar", emoji: "🍬", personality: "culpado, sedutor" },
       { pt: "cigarro", en: "cigarette", emoji: "🚬", personality: "arrependido, honesto" },
+      // —— Suplementos (Tipo A-MULTI grupo) v1.9.0 ——————————————————————————
+      { id: "capsula-b12", pt: "cápsula B12", en: "B12 supplement", emoji: "💊", personality: "furiosa, alerta, urgente", format: "A", group_format: true, flux_base: "Extremely angry animated vitamin B12 supplement tablet character, white rectangular tablet body, face on tablet front with intense furious expression, small arms and legs, standing on wooden table beside B12 label, Disney/Pixar 3D render, 8K" },
+      { id: "capsula-omega3", pt: "cápsula Omega-3", en: "Omega-3 capsule", emoji: "🟡", personality: "furiosa, professora, acusadora", format: "A", group_format: true, flux_base: "Extremely angry animated Omega-3 fish oil capsule character, golden oval capsule body with Omega-3 label, intense furious expression, small muscular arms pointing accusingly, Disney/Pixar 3D render, 8K" },
     ],
     prompts_base: "Health/home context, Pixar 3D render, person ignoring health advice in background",
   },
@@ -714,6 +914,68 @@ export const NICHES = {
     correlated_niches: ["gastronomia","casa","maternidade","fitness-nutricao"],
     prompts_base: "Realistic Brazilian kitchen scene with photorealistic props, Pixar 3D character interacting with real kitchen items, warm kitchen lighting, 9:16 vertical, 8K",
   },
+
+  // ─── espiritualidade — Formats Q, R, S (v1.9.0) ──────────────────────────
+  "espiritualidade": {
+    name_pt: "Espiritualidade & Rituais",
+    name_en: "Spirituality & Rituals",
+    emoji: "🔮",
+    tone_default: "dramatic",
+    format_default: "Q",
+    alt_formats: ["R", "S", "B"],
+    sub_tone: "ancestral-mistico",
+    bpm_range: [70, 90],
+    music_style: "mystical ambient ethnic",
+    caption_style: "alpha-bold-white",
+    cta_pattern: "Comenta [PALAVRA] para receber mais",
+    source_reference: "@ajuda.ai.hacks — rituais + ervas 2026-04-10",
+    series: {
+      name: "Ervas com Poder",
+      format: "Q",
+      episodes: [
+        { ep: 1, tema: "7 ervas para abrir caminhos",  status: "catalogado",     objects: ["arruda","manjericao","alecrim","losna","guiné","espada-sao-jorge","sal-grosso"] },
+        { ep: 2, tema: "rituais com água e sal",        status: "catalogado",     objects: ["agua-com-sal","cebola","alho"] },
+        { ep: 3, tema: "plantas de proteção do lar",   status: "pronto-produzir", objects: ["espada-sao-jorge","arruda","comigo-ninguem-pode","pata-de-vaca"] },
+        { ep: 4, tema: "ervas para prosperidade",      status: "planejado",       objects: ["manjericao","canela","cravo","louro","hortelã"] }
+      ]
+    },
+    objects: [
+      { id: "agua-com-sal", pt: "água com sal", en: "salt water", emoji: "🧂", personality: "furiosa, autoritária, mística", format: "R", face_style: "embedded-in-liquid", eye_color: "amber-glowing", cenario: "apotecario-mistico-vintage", flux_base: "Extremely powerful animated water character, face embedded INSIDE a clear tall glass filled with water and salt crystals, angry authoritative expression molded from the water texture, amber glowing eyes, face emerging from liquid surface, antique mystical apothecary background with oil lamp and old books, Disney/Pixar 3D render, 8K", voice: { voice_id: "Wise_Woman", emotion: "angry", speed: 1.00, pitch: -2 } },
+      { id: "arruda", pt: "arruda", en: "rue herb", emoji: "🌿", personality: "confiante, poderosa, protetora", format: "Q", cenario: "jardim-encantado", flux_base: "Cute powerful animated arruda herb character, small green plant body with face embedded in leaves, confident protective expression, green glowing aura, cottage garden background, Disney/Pixar 3D render, 8K", voice: { voice_id: "Wise_Woman", emotion: "cheerful", speed: 1.00, pitch: 0 } },
+    ],
+    correlated_niches: ["plantas", "saude", "casa", "maternidade"],
+    prompts_base: "Mystical/ritual setting — apothecary vintage, enchanted garden, stone temple. Warm candlelight or dramatic lightning. Disney/Pixar 3D render, 8K",
+  },
+
+  // ─── saude-feminino — Format B (v1.9.0) ───────────────────────────────────
+  "saude-feminino": {
+    name_pt: "Saúde Feminina",
+    name_en: "Women's Health",
+    emoji: "🩸",
+    tone_default: "educational",
+    format_default: "B",
+    alt_formats: ["A", "J"],
+    sub_tone: "empatico-urgente",
+    bpm_range: [80, 100],
+    music_style: "gentle piano with soft urgency",
+    caption_style: "highlight-keyword-color",
+    hook_style: "alerta-visual",
+    source_reference: "@ajuda.ai.hacks — absorvente ciclo menstrual 2026-04-10",
+    objects: [
+      { id: "absorvente-ciclo", pt: "absorvente (ciclo menstrual)", en: "sanitary pad", emoji: "🩹", personality: "preocupado, empático, educativo", format: "B", expression_arc: "preocupado → explicando → empático", flux_base: "Cute animated sanitary pad character, white quilted rectangular body with face, worried concerned expression, holding color indicator showing menstrual blood color, full body with small arms and legs with blue shoes, realistic kitchen granite counter background, Disney/Pixar 3D render, 8K", voice: { voice_id: "Gentle_Woman", emotion: "fearful", speed: 0.95, pitch: 1 } },
+    ],
+    series: {
+      name: "Seu Ciclo Te Fala",
+      format: "B",
+      episodes: [
+        { ep: 1, tema: "cores do ciclo menstrual",    status: "catalogado" },
+        { ep: 2, tema: "cólica: o que o corpo diz",   status: "pronto-produzir" },
+        { ep: 3, tema: "TPM — sinais e soluções",     status: "planejado" }
+      ]
+    },
+    correlated_niches: ["saude", "maternidade"],
+    prompts_base: "Empathetic health context, soft warm lighting, Pixar 3D render, educational gentle tone, 8K",
+  },
 };
 
 // ─── ANALYSIS OUTPUT PROMPT TEMPLATE ────────────────────────────────────────
@@ -835,6 +1097,64 @@ Voz vilão: Wise_Woman | angry | 1.30x
 Palavra irônica final: "ANTI [PARASITA]!"
 
 ### Characters: ${objects_to_add.map(o => o.pt || o.id).join(", ")}
+${JSON.stringify(prompts_validated, null, 2)}
+`;
+  }
+
+  // ─── Special case: espiritualidade (Formats Q, R, S) ──────────────────────
+  if (niche_key === "espiritualidade") {
+    return `
+# ViralObj Implementation — Espiritualidade (Formats Q/R/S)
+## Video: ${video_file} | Account: ${account}
+## Generated: ${new Date().toISOString()}
+
+### Format: Q (grupo) ou R (líquido) ou S (humanoide planta)
+### Cenários: templo-pedra, apotecário-místico, jardim-encantado
+### Séries: "Ervas com Poder", "Rituais com Água"
+
+Voz: Wise_Woman | angry | 1.00x | -2 pitch
+CTA: "Comenta [PALAVRA PODEROSA] aqui embaixo"
+Pipeline: FLUX.2 Pro OU Veo (Veo recomendado para movimento orgânico)
+
+### Objects: ${objects_to_add.map(o => o.pt || o.id).join(", ")}
+${JSON.stringify(prompts_validated, null, 2)}
+`;
+  }
+
+  // ─── Special case: saude-feminino (Format B) ──────────────────────────────
+  if (niche_key === "saude-feminino") {
+    return `
+# ViralObj Implementation — Saúde Feminina (Format B)
+## Video: ${video_file} | Account: ${account}
+## Generated: ${new Date().toISOString()}
+
+### Format: B ou A
+### Tom: empático-urgente
+### Série: "Seu Ciclo Te Fala"
+
+Voz: Gentle_Woman | fearful→educational | 0.95x
+Hook obrigatório: alerta visual (⚠️ ou 🩸 + texto bold)
+
+### Objects: ${objects_to_add.map(o => o.pt || o.id).join(", ")}
+${JSON.stringify(prompts_validated, null, 2)}
+`;
+  }
+
+  // ─── Special case: saude-interna (Format O) ───────────────────────────────
+  if (niche_key === "saude" && format_type === "O") {
+    return `
+# ViralObj Implementation — Saúde Interna (Format O)
+## Video: ${video_file} | Account: ${account}
+## Generated: ${new Date().toISOString()}
+
+### Format: O (INTERNAL-BODY-SCENE)
+### Cenário: interior orgânico com bioluminescência
+
+Heróis: alimentos/remédios naturais dentro do órgão
+Vilões: toxinas/resíduos/bactérias
+Pipeline: Veo recomendado para movimento fluido dentro do órgão
+
+### Objects: ${objects_to_add.map(o => o.pt || o.id).join(", ")}
 ${JSON.stringify(prompts_validated, null, 2)}
 `;
   }
