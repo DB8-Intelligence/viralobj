@@ -1,0 +1,367 @@
+{
+  "meta": {
+    "niche": "plantas",
+    "topic_pt": "Cuidados incorretos com plantas",
+    "topic_en": "Incorrect plant care mistakes",
+    "tone": "educational",
+    "duration": 17,
+    "objects_count": 3,
+    "generated_at": "2026-04-09T22:58:21.478Z"
+  },
+  "characters": [
+    {
+      "id": 1,
+      "name_pt": "Adenium (Rosa do Deserto)",
+      "name_en": "Desert Rose",
+      "emoji": "🌸",
+      "timestamp_start": "0s",
+      "timestamp_end": "5s",
+      "environment_pt": "Parapeito de janela ensolarado com areia clara e pedras decorativas ao redor, luz dourada de fim de tarde",
+      "environment_en": "Sunny windowsill with light sand and decorative stones around, warm golden afternoon light",
+      "expression_arc": [
+        "orgulhosa",
+        "indignada",
+        "decepcionada"
+      ],
+      "error_denounced_pt": "Regar em excesso — o adenium acumula água na raiz e apodrece quando regado com frequência como plantas tropicais",
+      "error_denounced_en": "Overwatering — the desert rose stores water in its roots and rots when watered as frequently as tropical plants",
+      "human_background_pt": "Jardineiro ao fundo despejando um regador cheio sobre o vaso, expressão animada mas equivocada",
+      "human_background_en": "Gardener in the background pouring a full watering can over the pot, animated but misguided expression",
+      "captions": [
+        {
+          "time": "0s",
+          "text_pt": "EU VIVO NO DESERTO.",
+          "text_en": "I LIVE IN THE DESERT.",
+          "style": "bold"
+        },
+        {
+          "time": "2s",
+          "text_pt": "Pare de me afogar!",
+          "text_en": "Stop drowning me!",
+          "style": "bold"
+        },
+        {
+          "time": "4s",
+          "text_pt": "Água demais = raiz podre. 🌸",
+          "text_en": "Too much water = root rot. 🌸",
+          "style": "regular"
+        }
+      ],
+      "voice_script_pt": "Eu sou da família do deserto. [pausa] Sobrevivo com POUCA água. [ÊNFASE] Mas todo mundo chega com o regador cheio achando que tá me ajudando… [pausa longa] Para. Você tá me matando.",
+      "voice_script_en": "I come from the desert family. [pause] I survive on LITTLE water. [EMPHASIS] But everyone shows up with a full watering can thinking they're helping me… [long pause] Stop. You're killing me.",
+      "ai_prompt_midjourney": "Cute Pixar 3D animated desert rose plant with big expressive eyes, chubby swollen trunk, pink blooming flowers on top, sitting on a sunny sandy windowsill with small decorative stones, warm golden hour light, looking proud then horrified as a watering can pours water nearby, indoor garden setting, 9:16 vertical format, soft rim lighting, hyperdetailed Pixar Disney render style, pastel warm tones --ar 9:16 --v 6",
+      "ai_prompt_kling": "Pixar 3D desert rose plant character sitting upright on windowsill, starts pose proud and tall, then eyes go wide with horror as water splashes near its base, body shakes and recoils dramatically, arms (leaves) waving in protest, head tilts down in disappointment at the end, smooth expressive facial animation, loopable 5-second clip, warm golden light"
+    },
+    {
+      "id": 2,
+      "name_pt": "Jibóia",
+      "name_en": "Pothos",
+      "emoji": "🪴",
+      "timestamp_start": "5s",
+      "timestamp_end": "11s",
+      "environment_pt": "Prateleira de madeira em ambiente interno com luz baixa e indireta, folhas longas pendentes ao redor, tons verdes escuros",
+      "environment_en": "Wooden indoor shelf with low indirect light, long drooping leaves around, deep green tones",
+      "expression_arc": [
+        "dramática",
+        "sofrida",
+        "aliviada"
+      ],
+      "error_denounced_pt": "Colocar a jibóia no sol direto — suas folhas ficam amarelas e queimadas pois ela é uma planta de sombra",
+      "error_denounced_en": "Placing pothos in direct sunlight — its leaves turn yellow and scorched because it is a shade plant",
+      "human_background_pt": "Pessoa ao fundo movendo o vaso para perto de uma janela com sol forte, sorrindo sem saber o dano que causa",
+      "human_background_en": "Person in background moving the pot close to a bright sunny window, smiling unaware of the damage being caused",
+      "captions": [
+        {
+          "time": "5s",
+          "text_pt": "SOL DIRETO?! NÃO, OBRIGADA.",
+          "text_en": "DIRECT SUN?! NO THANK YOU.",
+          "style": "bold"
+        },
+        {
+          "time": "7s",
+          "text_pt": "Minhas folhas ficam amarelas assim!",
+          "text_en": "My leaves turn yellow just like that!",
+          "style": "regular"
+        },
+        {
+          "time": "10s",
+          "text_pt": "Sombra = felicidade 🪴",
+          "text_en": "Shade = happiness 🪴",
+          "style": "bold"
+        }
+      ],
+      "voice_script_pt": "Gente, eu AMO viver em cantinhos com pouca luz. [pausa] Aí vem alguém e me bota na janela com sol pleno… [ÊNFASE] MINHAS FOLHAS FICAM AMARELAS! [pausa] Eu não sou uma planta de praia, tá? Me deixa na sombra que eu prospero.",
+      "voice_script_en": "Guys, I LOVE living in low-light corners. [pause] Then someone comes and puts me on the windowsill with full sun… [EMPHASIS] MY LEAVES TURN YELLOW! [pause] I'm not a beach plant, okay? Leave me in the shade and I'll thrive.",
+      "ai_prompt_midjourney": "Cute Pixar 3D animated pothos plant with big expressive teary eyes, lush long trailing green-yellow leaves, sitting dramatically on a wooden indoor shelf, dim cozy indoor light, one leaf pressed dramatically to forehead like a theater actress in distress, bright sunbeam visible in background causing discomfort, 9:16 vertical format, Pixar Disney hyperrealistic render, warm amber room tones with deep greens --ar 9:16 --v 6",
+      "ai_prompt_kling": "Pixar 3D pothos plant character on wooden shelf, starts with dramatic faint pose with one leaf on forehead, eyes wide and teary, body wilting slightly as a sunbeam crosses the scene, then perks up when light fades and shade returns, big smile and satisfied shimmy at end, expressive 5-second smooth animation loop, cozy indoor warm lighting"
+    },
+    {
+      "id": 3,
+      "name_pt": "Rosa",
+      "name_en": "Rose",
+      "emoji": "🌹",
+      "timestamp_start": "11s",
+      "timestamp_end": "17s",
+      "environment_pt": "Jardim externo com solo escuro e rico, grade de madeira ao fundo, luz suave da manhã com orvalho nas pétalas",
+      "environment_en": "Outdoor garden with dark rich soil, wooden trellis in background, soft morning light with dew on petals",
+      "expression_arc": [
+        "séria",
+        "firme",
+        "carinhosa"
+      ],
+      "error_denounced_pt": "Molhar as folhas e pétalas ao invés do solo — a umidade nas folhas favorece fungos como o oídio e a ferrugem",
+      "error_denounced_en": "Watering the leaves and petals instead of the soil — moisture on leaves promotes fungal diseases like powdery mildew and rust",
+      "human_background_pt": "Pessoa ao fundo regando de cima para baixo com chuveiro, molhando pétalas e folhas em vez da base da planta",
+      "human_background_en": "Person in background watering from above with a shower nozzle, wetting petals and leaves instead of the plant base",
+      "captions": [
+        {
+          "time": "11s",
+          "text_pt": "ÁGUA NAS FOLHAS = FUNGO.",
+          "text_en": "WATER ON LEAVES = FUNGUS.",
+          "style": "bold"
+        },
+        {
+          "time": "13s",
+          "text_pt": "Regue sempre na base, não em mim.",
+          "text_en": "Always water at the base, not on me.",
+          "style": "regular"
+        },
+        {
+          "time": "16s",
+          "text_pt": "Com amor, sua rosa. 🌹",
+          "text_en": "With love, your rose. 🌹",
+          "style": "regular"
+        }
+      ],
+      "voice_script_pt": "Olha, eu sei que você me ama. [pausa] Mas quando você molha minhas folhas e pétalas em vez do solo… [ÊNFASE] FUNGO. [pausa longa] Sempre regue na base. É simples, é eficaz, e me mantém linda por mais tempo.",
+      "voice_script_en": "Look, I know you love me. [pause] But when you water my leaves and petals instead of the soil… [EMPHASIS] FUNGUS. [long pause] Always water at the base. It's simple, it works, and keeps me beautiful much longer.",
+      "ai_prompt_midjourney": "Cute Pixar 3D animated rose plant with big warm expressive eyes, deep red velvety petals, green thorned stem, sitting in dark rich outdoor garden soil with wooden trellis behind, soft morning golden light, dew drops on petals, character looking serious and wise while pointing down at the soil with a leaf, watering can visible in background spraying incorrectly, 9:16 vertical format, Pixar Disney hyperrealistic 3D render, lush garden tones --ar 9:16 --v 6",
+      "ai_prompt_kling": "Pixar 3D rose plant character standing tall in garden soil, starts with serious and composed expression, tenses up and shudders when water droplets fall on petals from above, eyes narrow in stern warning, then relaxes into warm gentle smile while pointing down to the soil with a leaf gesture, smooth 5-second expressive animation, soft morning garden lighting"
+    }
+  ],
+  "post_copy": {
+    "hook_pt": "Suas plantas estão tentando te contar algo… e você não está ouvindo 🌿",
+    "hook_en": "Your plants are trying to tell you something… and you're not listening 🌿",
+    "body_pt": "3 plantas, 3 erros que VOCÊ provavelmente comete todo dia:\n\n🌸 Rosa do Deserto — Menos água, não mais. Ela guarda água na raiz. Regar demais = apodrecer por dentro.\n\n🪴 Jibóia — Ela AMA sombra. Sol direto deixa as folhas amarelas e queimadas. Muda de lugar JÁ.\n\n🌹 Rosa — Água nas folhas chama fungo. Sempre, SEMPRE regue na base.\n\nCuide com inteligência, não só com amor. 💚",
+    "body_en": "3 plants, 3 mistakes you probably make every single day:\n\n🌸 Desert Rose — Less water, not more. It stores water in its roots. Overwatering = rotting from the inside.\n\n🪴 Pothos — It LOVES shade. Direct sun yellows and scorches the leaves. Move it NOW.\n\n🌹 Rose — Water on leaves invites fungus. Always, ALWAYS water at the base.\n\nCare with intelligence, not just with love. 💚",
+    "cta_pt": "Salva esse vídeo antes de regar sua próxima planta 💾 | Qual erro você já cometeu? Comenta aqui 👇",
+    "cta_en": "Save this video before watering your next plant 💾 | Which mistake have you made? Comment below 👇",
+    "hashtags_pt": [
+      "#plantas",
+      "#jardinagem",
+      "#cuidadoscomplantas",
+      "#rosadodeserto",
+      "#adenium",
+      "#jiboía",
+      "#rosa",
+      "#plantasdeinterior",
+      "#plantasornamentais",
+      "#dicasdejardim",
+      "#jardinagemurbana",
+      "#plantasbr",
+      "#amoplantasss",
+      "#vidaverde",
+      "#jardinagemdicas",
+      "#plantascarnivoras",
+      "#suculentas",
+      "#plantasemcasa",
+      "#dicasdeplantas",
+      "#errosdejardim",
+      "#regimedeplantass",
+      "#plantasvirais",
+      "#greenlife",
+      "#homedecorplantas",
+      "#jardinagembrasil"
+    ],
+    "hashtags_en": [
+      "#plants",
+      "#plantcare",
+      "#gardeningtips",
+      "#desertrose",
+      "#adenium",
+      "#pothos",
+      "#rosegarden",
+      "#indoorplants",
+      "#plantmistakes",
+      "#urbangardening",
+      "#planttok",
+      "#plantlover",
+      "#gardenlife",
+      "#plantparent",
+      "#houseplanttips",
+      "#plantadvice",
+      "#greenthumb",
+      "#plantvibes",
+      "#plantsofinstagram",
+      "#gardeningforbeginners"
+    ]
+  },
+  "captions_full_script": [
+    {
+      "time": "0s",
+      "text_pt": "EU VIVO NO DESERTO.",
+      "text_en": "I LIVE IN THE DESERT.",
+      "character": "Adenium",
+      "style": "bold",
+      "color": "white"
+    },
+    {
+      "time": "2s",
+      "text_pt": "Pare de me afogar!",
+      "text_en": "Stop drowning me!",
+      "character": "Adenium",
+      "style": "bold",
+      "color": "red"
+    },
+    {
+      "time": "4s",
+      "text_pt": "Água demais = raiz podre. 🌸",
+      "text_en": "Too much water = root rot. 🌸",
+      "character": "Adenium",
+      "style": "regular",
+      "color": "white"
+    },
+    {
+      "time": "5s",
+      "text_pt": "SOL DIRETO?! NÃO, OBRIGADA.",
+      "text_en": "DIRECT SUN?! NO THANK YOU.",
+      "character": "Jibóia",
+      "style": "bold",
+      "color": "white"
+    },
+    {
+      "time": "7s",
+      "text_pt": "Minhas folhas ficam amarelas assim!",
+      "text_en": "My leaves turn yellow just like that!",
+      "character": "Jibóia",
+      "style": "regular",
+      "color": "green"
+    },
+    {
+      "time": "10s",
+      "text_pt": "Sombra = felicidade 🪴",
+      "text_en": "Shade = happiness 🪴",
+      "character": "Jibóia",
+      "style": "bold",
+      "color": "white"
+    },
+    {
+      "time": "11s",
+      "text_pt": "ÁGUA NAS FOLHAS = FUNGO.",
+      "text_en": "WATER ON LEAVES = FUNGUS.",
+      "character": "Rosa",
+      "style": "bold",
+      "color": "red"
+    },
+    {
+      "time": "13s",
+      "text_pt": "Regue sempre na base, não em mim.",
+      "text_en": "Always water at the base, not on me.",
+      "character": "Rosa",
+      "style": "regular",
+      "color": "white"
+    },
+    {
+      "time": "16s",
+      "text_pt": "Com amor, sua rosa. 🌹",
+      "text_en": "With love, your rose. 🌹",
+      "character": "Rosa",
+      "style": "regular",
+      "color": "white"
+    }
+  ],
+  "variations": [
+    {
+      "id": 1,
+      "angle_pt": "Plantas reagindo a dicas populares ERRADAS do TikTok e YouTube",
+      "angle_en": "Plants reacting to popular WRONG tips from TikTok and YouTube",
+      "title_pt": "\"Esse conselho da internet quase me matou\" — diz a planta",
+      "title_en": "\"This internet tip almost killed me\" — says the plant",
+      "hook_pt": "Você seguiu um tutorial de jardinagem e sua planta começou a murchar? Ela vai te explicar o porquê 🌿",
+      "hook_en": "You followed a gardening tutorial and your plant started wilting? It's going to explain why 🌿",
+      "objects": [
+        "adenium",
+        "orquídea"
+      ],
+      "format_note_pt": "Formato reação: inserir thumbnail fake de vídeo viral ao lado da planta falando. Aumenta retenção por reconhecimento visual.",
+      "format_note_en": "Reaction format: insert fake viral video thumbnail next to the talking plant. Increases retention through visual recognition.",
+      "tags": [
+        "high-retention",
+        "viral",
+        "educational"
+      ]
+    },
+    {
+      "id": 2,
+      "angle_pt": "Plantas julgando o ambiente da sua casa antes de você comprá-las",
+      "angle_en": "Plants judging your home environment before you buy them",
+      "title_pt": "\"Antes de me comprar, responde essas perguntas\" — A planta",
+      "title_en": "\"Before you buy me, answer these questions\" — The plant",
+      "hook_pt": "Se as plantas pudessem escolher quem as leva pra casa, elas iriam te entrevistar primeiro 😅🌱",
+      "hook_en": "If plants could choose who takes them home, they'd interview you first 😅🌱",
+      "objects": [
+        "rosa do deserto",
+        "jibóia",
+        "rosa"
+      ],
+      "format_note_pt": "Formato entrevista: planta faz 2 perguntas rápidas ao dono antes de 'aceitar' ir embora. Alta interatividade e compartilhamento.",
+      "format_note_en": "Interview format: plant asks 2 quick questions to the owner before 'agreeing' to leave. High interactivity and shareability.",
+      "tags": [
+        "high-retention",
+        "viral",
+        "relatable"
+      ]
+    },
+    {
+      "id": 3,
+      "angle_pt": "Ranking das plantas mais difíceis de matar — contado por elas mesmas",
+      "angle_en": "Ranking of the hardest plants to kill — told by the plants themselves",
+      "title_pt": "\"Pode confiar em mim\" vs \"Sou para quem é dedicado\" — Tier list de sobrevivência",
+      "title_en": "\"You can trust me\" vs \"I'm for dedicated owners\" — Survival tier list",
+      "hook_pt": "Qual planta aguenta um dono esquecido? Elas mesmas vão te dizer 🏆🌵",
+      "hook_en": "Which plant survives a forgetful owner? They'll tell you themselves 🏆🌵",
+      "objects": [
+        "cacto",
+        "jibóia",
+        "orquídea"
+      ],
+      "format_note_pt": "Formato tier list animado: cada planta aparece em uma célula do ranking (S-A-B-C). Altamente compartilhável e salvável.",
+      "format_note_en": "Animated tier list format: each plant appears in a ranking cell (S-A-B-C). Highly shareable and save-worthy.",
+      "tags": [
+        "educational",
+        "viral",
+        "save-worthy"
+      ]
+    }
+  ],
+  "production_stack": [
+    {
+      "step": 1,
+      "tool": "Midjourney v6",
+      "purpose_pt": "Gerar os personagens 3D das plantas em estilo Pixar com os prompts detalhados fornecidos, no formato vertical 9:16",
+      "purpose_en": "Generate Pixar-style 3D plant characters using the detailed prompts provided, in 9:16 vertical format",
+      "priority": "essential"
+    },
+    {
+      "step": 2,
+      "tool": "ElevenLabs",
+      "purpose_pt": "Criar as vozes dos personagens com entonação natural e emocional em Português BR e Inglês, aplicando as marcações de pausa e ênfase dos scripts",
+      "purpose_en": "Create character voices with natural emotional intonation in Brazilian Portuguese and English, applying pause and emphasis markers from the scripts",
+      "priority": "essential"
+    },
+    {
+      "step": 3,
+      "tool": "Kling AI / HeyGen",
+      "purpose_pt": "Animar os personagens das plantas com os movimentos e expressões faciais descritos nos prompts de animação, sincronizando com o áudio gerado",
+      "purpose_en": "Animate plant characters with movements and facial expressions described in the animation prompts, syncing with generated audio",
+      "priority": "essential"
+    },
+    {
+      "step": 4,
+      "tool": "CapCut",
+      "purpose_pt": "Montar o reel final: juntar os 3 clipes, adicionar legendas bilíngues com os estilos e cores definidos, inserir transições e trilha sonora de fundo suave",
+      "purpose_en": "Assemble the final reel: merge the 3 clips, add bilingual captions with defined styles and colors, insert transitions and soft background music track",
+      "priority": "essential"
+    }
+  ]
+}

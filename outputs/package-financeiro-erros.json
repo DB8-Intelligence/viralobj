@@ -1,0 +1,443 @@
+{
+  "meta": {
+    "niche": "financeiro",
+    "topic_pt": "Erros financeiros do dia a dia",
+    "topic_en": "Everyday financial mistakes",
+    "tone": "dramatic",
+    "duration": 30,
+    "objects_count": 3,
+    "generated_at": "2026-04-09T22:59:53.869Z"
+  },
+  "characters": [
+    {
+      "id": 1,
+      "name_pt": "Nota de R$50",
+      "name_en": "R$50 Bill",
+      "emoji": "💵",
+      "timestamp_start": "0s",
+      "timestamp_end": "10s",
+      "environment_pt": "Caixa registradora de supermercado, luz fria de néon, prateleiras lotadas ao fundo",
+      "environment_en": "Supermarket cash register, cold neon light, crowded shelves in background",
+      "expression_arc": [
+        "angustiada",
+        "indignada",
+        "desesperada"
+      ],
+      "error_denounced_pt": "Gastar o dinheiro do mês inteiro em compras por impulso no supermercado",
+      "error_denounced_en": "Spending the entire monthly budget on impulse purchases at the supermarket",
+      "human_background_pt": "Uma pessoa jogando produtos aleatórios no carrinho sem olhar os preços, sorrindo ingenuamente",
+      "human_background_en": "A person tossing random items into the cart without checking prices, smiling naively",
+      "captions": [
+        {
+          "time": "0s",
+          "text_pt": "Eu era feliz...",
+          "text_en": "I was happy once...",
+          "style": "bold"
+        },
+        {
+          "time": "2s",
+          "text_pt": "...até você entrar no mercado.",
+          "text_en": "...until you walked into that store.",
+          "style": "regular"
+        },
+        {
+          "time": "5s",
+          "text_pt": "IMPULSO NÃO É NECESSIDADE!",
+          "text_en": "IMPULSE IS NOT A NEED!",
+          "style": "bold"
+        },
+        {
+          "time": "8s",
+          "text_pt": "Eu merecia um futuro melhor.",
+          "text_en": "I deserved a better future.",
+          "style": "regular"
+        }
+      ],
+      "voice_script_pt": "Eu estava ali, guardadinha na sua carteira... [pausa] com tanto potencial! [pausa] Poderia ter virado investimento, reserva de emergência, [ÊNFASE] qualquer coisa útil! [pausa] Mas não... você me viu no mercado e pensou: 'ah, esse chocolate não está na lista, mas MERECE.' [pausa longa] Merece?! [ÊNFASE] EU que merecia respeito!",
+      "voice_script_en": "I was right there, tucked safely in your wallet... [pause] with so much potential! [pause] I could have become an investment, an emergency fund, [EMPHASIS] anything useful! [pause] But no... you saw me at the store and thought: 'oh, that chocolate isn't on the list, but I DESERVE it.' [long pause] Deserve?! [EMPHASIS] I'M the one who deserved respect!",
+      "ai_prompt_midjourney": "Anthropomorphic R$50 Brazilian banknote character, Pixar 3D render style, big expressive teary eyes, small trembling hands, dramatic lighting with cold neon supermarket glow, 9:16 vertical format, shallow depth of field, blurred background showing a Brazilian person loading a shopping cart with random items, emotional facial expression shifting from hopeful to devastated, ultra-detailed paper texture, green and purple color tones of real R$50 bill, cinematic composition, Disney-Pixar quality rendering --ar 9:16 --v 6",
+      "ai_prompt_kling": "Animate a 3D Pixar-style R$50 Brazilian banknote character standing at a supermarket checkout. Begin with arms crossed and a proud posture, then slowly slump as a shopping cart full of random items passes by. Eyes widen in horror, hands reach out dramatically as if trying to stop the transaction. Body shakes with exaggerated sorrow. Camera slowly zooms into the character's face for a close-up of tearful despair. Smooth, expressive Disney-quality animation, 10 seconds total."
+    },
+    {
+      "id": 2,
+      "name_pt": "Cartão de Crédito",
+      "name_en": "Credit Card",
+      "emoji": "💳",
+      "timestamp_start": "10s",
+      "timestamp_end": "20s",
+      "environment_pt": "Mesa de escritório doméstico à noite, luz de tela de computador azulada, contas espalhadas ao redor",
+      "environment_en": "Home office desk at night, blue computer screen glow, bills scattered around",
+      "expression_arc": [
+        "exausta",
+        "sobrecarregada",
+        "à beira do colapso"
+      ],
+      "error_denounced_pt": "Parcelar compras desnecessárias e pagar apenas o mínimo da fatura todo mês",
+      "error_denounced_en": "Installment buying unnecessary items and only paying the minimum balance every month",
+      "human_background_pt": "Pessoa olhando para a fatura no computador com os olhos arregalados, suando frio, segurando a cabeça com as mãos",
+      "human_background_en": "Person staring at the bill on the computer screen with wide eyes, sweating, holding their head in their hands",
+      "captions": [
+        {
+          "time": "10s",
+          "text_pt": "Eu carrego o peso dos seus caprichos.",
+          "text_en": "I carry the weight of your whims.",
+          "style": "bold"
+        },
+        {
+          "time": "12s",
+          "text_pt": "12x de 'só R$29,90'...",
+          "text_en": "12 installments of 'just R$29.90'...",
+          "style": "regular"
+        },
+        {
+          "time": "15s",
+          "text_pt": "JUROS DE 400% AO ANO!",
+          "text_en": "400% ANNUAL INTEREST!",
+          "style": "bold"
+        },
+        {
+          "time": "18s",
+          "text_pt": "Você chamou isso de 'necessidade'.",
+          "text_en": "You called this a 'necessity'.",
+          "style": "regular"
+        }
+      ],
+      "voice_script_pt": "Você sabe quantas vezes me passou essa semana? [pausa] SETE. [ÊNFASE] Sete vezes! [pausa] 'Ah, são só 12 parcelas...' [pausa] 'Ah, pago o mínimo esse mês...' [ÊNFASE] O MÍNIMO! [pausa] Sabe o que é o mínimo? É a porta de entrada do inferno financeiro! [pausa longa] Eu não aguento mais. Minhas bordas estão desgastadas de tanto trabalho... e você ainda quer me passar no débito?",
+      "voice_script_en": "Do you know how many times you swiped me this week? [pause] SEVEN. [EMPHASIS] Seven times! [pause] 'Oh, it's only 12 installments...' [pause] 'Oh, I'll just pay the minimum this month...' [EMPHASIS] THE MINIMUM! [pause] Do you know what the minimum payment is? It's the entrance gate to financial hell! [long pause] I can't take it anymore. My edges are worn out from overwork... and you still want to tap me for contactless?",
+      "ai_prompt_midjourney": "Anthropomorphic credit card character, Pixar 3D render style, exhausted dark circles under expressive eyes, hunched posture, cracked and worn edges, dramatic blue computer screen backlight glow in a messy home office at night, 9:16 vertical format, bills and papers scattered on desk, blurred background showing a stressed Brazilian person at computer, ultra-detailed plastic card texture with generic bank logo, emotional expression of total exhaustion and overwhelm, cinematic dramatic lighting, Disney-Pixar quality rendering --ar 9:16 --v 6",
+      "ai_prompt_kling": "Animate a 3D Pixar-style credit card character sitting slumped on a desk surrounded by scattered bills. Character breathes heavily with bags under their eyes. As the camera slowly pushes in, the character dramatically raises both arms to the sky in despair, then collapses forward onto the desk. Subtle trembling throughout body. Background: soft blue glow of a computer screen. Exaggerated emotional Disney-quality animation, 10 seconds total."
+    },
+    {
+      "id": 3,
+      "name_pt": "Boleto",
+      "name_en": "Bill/Invoice",
+      "emoji": "📄",
+      "timestamp_start": "20s",
+      "timestamp_end": "30s",
+      "environment_pt": "Aplicativo de banco no celular, fundo escuro e dramático, código de barras pulsando como um coração ameaçador",
+      "environment_en": "Bank app on phone screen, dark dramatic background, barcode pulsing like a threatening heartbeat",
+      "expression_arc": [
+        "ameaçador",
+        "implacável",
+        "triunfante"
+      ],
+      "error_denounced_pt": "Deixar boletos vencerem por esquecimento e pagar multa e juros desnecessários",
+      "error_denounced_en": "Letting bills expire from forgetfulness and paying unnecessary fines and interest",
+      "human_background_pt": "Pessoa olhando para o celular em pânico ao perceber que o boleto venceu há três dias",
+      "human_background_en": "Person staring at their phone in panic realizing the bill expired three days ago",
+      "captions": [
+        {
+          "time": "20s",
+          "text_pt": "Eu avisei. Você ignorou.",
+          "text_en": "I warned you. You ignored me.",
+          "style": "bold"
+        },
+        {
+          "time": "22s",
+          "text_pt": "Vencimento: ontem.",
+          "text_en": "Due date: yesterday.",
+          "style": "regular"
+        },
+        {
+          "time": "25s",
+          "text_pt": "MULTA + JUROS = SEU CASTIGO.",
+          "text_en": "FINE + INTEREST = YOUR PUNISHMENT.",
+          "style": "bold"
+        },
+        {
+          "time": "28s",
+          "text_pt": "Eu sempre volto. Atualizado.",
+          "text_en": "I always come back. Updated.",
+          "style": "bold"
+        }
+      ],
+      "voice_script_pt": "Eu cheguei na semana passada. [pausa] Estava lá. Na sua caixa de entrada. No aplicativo. [pausa] Você viu. [ÊNFASE] E escolheu ignorar. [pausa longa] Então agora... [ÊNFASE] me pague. Com multa. Com juros. Com arrependimento. [pausa] Porque eu, diferente dos seus sonhos, [ÊNFASE] nunca desapareço. Eu vivo. Eu cresço. Eu volto. [pausa] Sempre atualizado.",
+      "voice_script_en": "I arrived last week. [pause] I was right there. In your inbox. In the app. [pause] You saw me. [EMPHASIS] And chose to ignore me. [long pause] So now... [EMPHASIS] pay me. With the fine. With the interest. With the regret. [pause] Because I, unlike your dreams, [EMPHASIS] never disappear. I live. I grow. I come back. [pause] Always updated.",
+      "ai_prompt_midjourney": "Anthropomorphic paper bill/boleto character, Pixar 3D render style, menacing sharp eyes, stern authoritative expression, glowing red barcode like a warning signal, dark dramatic cinematic background with red and black tones, 9:16 vertical format, small arms crossed in a powerful stance, crinkled paper texture with visible Brazilian bill formatting, blurred background showing a panicked Brazilian person holding a phone, dramatic underlighting creating villain-like shadows, Disney-Pixar quality rendering --ar 9:16 --v 6",
+      "ai_prompt_kling": "Animate a 3D Pixar-style Brazilian boleto/bill character standing tall and intimidating in a dark environment. Character begins with arms crossed and a slow, deliberate head turn toward camera. Barcode on body pulses red rhythmically. Character slowly raises one finger and wags it in a 'tsk tsk' motion. Then spreads arms wide in a triumphant villain pose as red light radiates outward. Camera slowly zooms out to reveal the dramatic scale of the character. Menacing, villain-quality Disney animation, 10 seconds total."
+    }
+  ],
+  "post_copy": {
+    "hook_pt": "🚨 Seus objetos financeiros têm algo a te dizer... e você NÃO vai gostar.",
+    "hook_en": "🚨 Your financial objects have something to tell you... and you WON'T like it.",
+    "body_pt": "Todo dia você comete erros financeiros que custam caro — e seus próprios objetos estão fartos de te ver sofrendo!\n\n💵 A Nota de R$50 chora toda vez que você compra por impulso no mercado\n💳 O Cartão de Crédito está exausto de carregar parcelas de coisas que você nem usa mais\n📄 O Boleto? Ele nunca perdoa. Venceu? Multa. Sempre.\n\nReconheceu algum desses erros? Você não está sozinho — mas precisa parar AGORA.\n\n👇 Salva esse vídeo e manda pra aquele amigo que vive no limite do cartão.",
+    "body_en": "Every day you make financial mistakes that cost you dearly — and your own financial objects are tired of watching you suffer!\n\n💵 The R$50 Bill cries every time you make an impulse buy at the supermarket\n💳 The Credit Card is exhausted from carrying installments on things you don't even use anymore\n📄 The Bill/Invoice? It never forgives. Expired? Fine. Always.\n\nRecognize any of these mistakes? You're not alone — but you need to stop NOW.\n\n👇 Save this video and send it to that friend who's always maxed out.",
+    "cta_pt": "💾 Salva esse vídeo antes que seu boleto vença! Comenta aqui qual erro você comete mais 👇",
+    "cta_en": "💾 Save this video before your next bill is due! Comment which mistake you make the most 👇",
+    "hashtags_pt": [
+      "#educacaofinanceira",
+      "#financaspessoais",
+      "#dinheiro",
+      "#errosfinanceiros",
+      "#cartraodecredito",
+      "#boleto",
+      "#independenciafinanceira",
+      "#viralfinancas",
+      "#dicasfinanceiras",
+      "#gastosimpulso",
+      "#controlefinanceiro",
+      "#vidafinanceira",
+      "#reservadeemergencia",
+      "#juros",
+      "#dividas",
+      "#economizar",
+      "#planejamentofinanceiro",
+      "#liberdadefinanceira",
+      "#brasilfinancas",
+      "#mesada",
+      "#investimentos",
+      "#orcamentodomestico",
+      "#pobrezafinanceira",
+      "#conscienciafinanceira",
+      "#talkingobject"
+    ],
+    "hashtags_en": [
+      "#financialmistakes",
+      "#personalfinance",
+      "#moneytips",
+      "#creditcarddebt",
+      "#budgeting",
+      "#financialeducation",
+      "#moneymanagement",
+      "#debtfree",
+      "#savemoney",
+      "#financialfreedom",
+      "#talkingobjects",
+      "#viralfinance",
+      "#moneyadvice",
+      "#brazilianfinance",
+      "#impulsespending",
+      "#financialgoals",
+      "#pixarstyle",
+      "#aianimation",
+      "#moneyreels",
+      "#financetips"
+    ]
+  },
+  "captions_full_script": [
+    {
+      "time": "0s",
+      "text_pt": "Eu era feliz...",
+      "text_en": "I was happy once...",
+      "character": "Nota de R$50",
+      "style": "bold",
+      "color": "white"
+    },
+    {
+      "time": "2s",
+      "text_pt": "...até você entrar no mercado.",
+      "text_en": "...until you walked into that store.",
+      "character": "Nota de R$50",
+      "style": "regular",
+      "color": "white"
+    },
+    {
+      "time": "5s",
+      "text_pt": "IMPULSO NÃO É NECESSIDADE!",
+      "text_en": "IMPULSE IS NOT A NEED!",
+      "character": "Nota de R$50",
+      "style": "bold",
+      "color": "red"
+    },
+    {
+      "time": "8s",
+      "text_pt": "Eu merecia um futuro melhor.",
+      "text_en": "I deserved a better future.",
+      "character": "Nota de R$50",
+      "style": "regular",
+      "color": "white"
+    },
+    {
+      "time": "10s",
+      "text_pt": "Eu carrego o peso dos seus caprichos.",
+      "text_en": "I carry the weight of your whims.",
+      "character": "Cartão de Crédito",
+      "style": "bold",
+      "color": "white"
+    },
+    {
+      "time": "12s",
+      "text_pt": "12x de 'só R$29,90'...",
+      "text_en": "12 installments of 'just R$29.90'...",
+      "character": "Cartão de Crédito",
+      "style": "regular",
+      "color": "white"
+    },
+    {
+      "time": "15s",
+      "text_pt": "JUROS DE 400% AO ANO!",
+      "text_en": "400% ANNUAL INTEREST!",
+      "character": "Cartão de Crédito",
+      "style": "bold",
+      "color": "red"
+    },
+    {
+      "time": "18s",
+      "text_pt": "Você chamou isso de 'necessidade'.",
+      "text_en": "You called this a 'necessity'.",
+      "character": "Cartão de Crédito",
+      "style": "regular",
+      "color": "white"
+    },
+    {
+      "time": "20s",
+      "text_pt": "Eu avisei. Você ignorou.",
+      "text_en": "I warned you. You ignored me.",
+      "character": "Boleto",
+      "style": "bold",
+      "color": "red"
+    },
+    {
+      "time": "22s",
+      "text_pt": "Vencimento: ontem.",
+      "text_en": "Due date: yesterday.",
+      "character": "Boleto",
+      "style": "regular",
+      "color": "white"
+    },
+    {
+      "time": "25s",
+      "text_pt": "MULTA + JUROS = SEU CASTIGO.",
+      "text_en": "FINE + INTEREST = YOUR PUNISHMENT.",
+      "character": "Boleto",
+      "style": "bold",
+      "color": "red"
+    },
+    {
+      "time": "28s",
+      "text_pt": "Eu sempre volto. Atualizado.",
+      "text_en": "I always come back. Updated.",
+      "character": "Boleto",
+      "style": "bold",
+      "color": "white"
+    }
+  ],
+  "variations": [
+    {
+      "id": 1,
+      "angle_pt": "Versão cômica — os objetos discutem entre si sobre quem sofre mais com os erros do dono",
+      "angle_en": "Comedy version — the objects argue among themselves about who suffers the most from their owner's mistakes",
+      "title_pt": "A Briga dos Objetos Financeiros",
+      "title_en": "The Financial Objects Fight Back",
+      "hook_pt": "😂 Meu cartão e meu boleto entraram em briga por minha causa... e eu mereço.",
+      "hook_en": "😂 My credit card and my bill got into a fight because of me... and I deserve it.",
+      "objects": [
+        "Cartão de Crédito",
+        "Boleto"
+      ],
+      "format_note_pt": "Cena dividida ao meio: cartão e boleto um de cada lado discutindo com gestos exagerados. Ideal para Reels de 15s com corte rápido.",
+      "format_note_en": "Split-screen scene: card on one side, bill on the other arguing with exaggerated gestures. Ideal for 15s Reels with fast cuts.",
+      "tags": [
+        "high-retention",
+        "viral",
+        "comedy"
+      ]
+    },
+    {
+      "id": 2,
+      "angle_pt": "Versão educacional — cada objeto ensina uma dica prática para evitar o erro que ele denuncia",
+      "angle_en": "Educational version — each object teaches a practical tip to avoid the mistake it exposes",
+      "title_pt": "O Que Seus Objetos Queriam Que Você Soubesse",
+      "title_en": "What Your Financial Objects Wished You Knew",
+      "hook_pt": "📚 E se seus objetos financeiros pudessem te ensinar a não sofrer mais?",
+      "hook_en": "📚 What if your financial objects could teach you how to stop suffering?",
+      "objects": [
+        "Nota de R$50",
+        "Cartão de Crédito",
+        "Boleto"
+      ],
+      "format_note_pt": "Após o discurso dramático de cada objeto, inserir card educacional de 2s com a dica. Ideal para salvar e compartilhar.",
+      "format_note_en": "After each object's dramatic speech, insert a 2s educational card with the tip. Ideal for saves and shares.",
+      "tags": [
+        "educational",
+        "high-retention",
+        "saveable"
+      ]
+    },
+    {
+      "id": 3,
+      "angle_pt": "Versão 'Fim do Mês' — objetos reagem ao extrato bancário zerado no dia 30",
+      "angle_en": "End of Month version — objects react to a zeroed bank statement on the 30th",
+      "title_pt": "Dia 30: A Tragédia Financeira",
+      "title_en": "Day 30: The Financial Tragedy",
+      "hook_pt": "😱 Dia 30 na conta bancária — uma história de terror real.",
+      "hook_en": "😱 Day 30 in the bank account — a real horror story.",
+      "objects": [
+        "Nota de R$50",
+        "Poupança",
+        "PIX"
+      ],
+      "format_note_pt": "Ambiência noturna dramática, efeitos de som de suspense, close no saldo zerado. Formato ideal 30-45s para maior engajamento.",
+      "format_note_en": "Dramatic night ambiance, suspense sound effects, close-up on zero balance. Ideal 30-45s format for higher engagement.",
+      "tags": [
+        "viral",
+        "relatable",
+        "high-retention"
+      ]
+    },
+    {
+      "id": 4,
+      "angle_pt": "Versão 'Herói' — os objetos ensinam o que fazer CERTO e celebram quando o usuário acerta",
+      "angle_en": "Hero version — the objects teach what to do RIGHT and celebrate when the user gets it right",
+      "title_pt": "Quando Você Finalmente Acerta nas Finanças",
+      "title_en": "When You Finally Get Your Finances Right",
+      "hook_pt": "🎉 E se seus objetos financeiros ficassem ORGULHOSOS de você?",
+      "hook_en": "🎉 What if your financial objects were actually PROUD of you?",
+      "objects": [
+        "Cartão de Crédito",
+        "Nota de R$50"
+      ],
+      "format_note_pt": "Tom inspiracional em vez de dramático. Transição de cena triste para alegre. Ideal para início de mês ou virada de ano.",
+      "format_note_en": "Inspirational tone instead of dramatic. Transition from sad to happy scene. Ideal for start of month or New Year.",
+      "tags": [
+        "inspirational",
+        "positive",
+        "shareable"
+      ]
+    }
+  ],
+  "production_stack": [
+    {
+      "step": 1,
+      "tool": "Midjourney v6",
+      "purpose_pt": "Gerar os personagens 3D estilo Pixar de cada objeto financeiro com os prompts fornecidos, no formato 9:16 vertical",
+      "purpose_en": "Generate Pixar-style 3D character images for each financial object using the provided prompts, in 9:16 vertical format",
+      "priority": "essential"
+    },
+    {
+      "step": 2,
+      "tool": "ElevenLabs",
+      "purpose_pt": "Sintetizar as vozes dramáticas de cada personagem em português e inglês, usando os voice scripts com marcações de pausa e ênfase",
+      "purpose_en": "Synthesize the dramatic voice for each character in Portuguese and English, using the voice scripts with pause and emphasis markers",
+      "priority": "essential"
+    },
+    {
+      "step": 3,
+      "tool": "Kling AI / Runway Gen-3",
+      "purpose_pt": "Animar os personagens estáticos gerados no Midjourney com os movimentos corporais descritos nos prompts de animação",
+      "purpose_en": "Animate the static characters generated in Midjourney using the body movement descriptions in the animation prompts",
+      "priority": "essential"
+    },
+    {
+      "step": 4,
+      "tool": "CapCut",
+      "purpose_pt": "Montar o reel final: sincronizar áudio, adicionar legendas com estilos e cores definidos, inserir efeitos sonoros dramáticos e transições entre os personagens",
+      "purpose_en": "Assemble the final reel: sync audio, add captions with defined styles and colors, insert dramatic sound effects and transitions between characters",
+      "priority": "essential"
+    },
+    {
+      "step": 5,
+      "tool": "Adobe Premiere Pro / DaVinci Resolve",
+      "purpose_pt": "Edição avançada opcional: color grading dramático, correção de sincronização labial e ajustes finos de timing para máximo engajamento",
+      "purpose_en": "Optional advanced editing: dramatic color grading, lip sync correction and fine timing adjustments for maximum engagement",
+      "priority": "optional"
+    },
+    {
+      "step": 6,
+      "tool": "HeyGen",
+      "purpose_pt": "Alternativa ao Kling para sincronização labial dos personagens animados com o áudio gerado no ElevenLabs",
+      "purpose_en": "Alternative to Kling for lip-syncing animated characters with the audio generated in ElevenLabs",
+      "priority": "essential"
+    }
+  ]
+}

@@ -1,0 +1,603 @@
+{
+  "meta": {
+    "niche": "casa",
+    "topic_pt": "Erros de higiene doméstica",
+    "topic_en": "Domestic hygiene mistakes",
+    "tone": "angry",
+    "duration": 30,
+    "objects_count": 3,
+    "generated_at": "2026-04-09T23:38:06.012Z",
+    "lang": "pt",
+    "quality": "standard",
+    "caption_style": "bold_white",
+    "total_clips": 3,
+    "pipeline": "FLUX.2 Pro → MiniMax TTS → VEED Fabric"
+  },
+  "clips": [
+    {
+      "character_pt": "Água Sanitária",
+      "character_en": "Bleach",
+      "emoji": "🧴",
+      "timestamp_start": "0s",
+      "timestamp_end": "10s",
+      "image_url": "https://v3b.fal.media/files/b/0a959f27/XCuWYTSApG2wAf7qLJ669_5b328c8f9e2c4d4aa2ed790f62c96a56.jpg",
+      "audio_url": "https://v3b.fal.media/files/b/0a959f28/alEuLJ3uUXQuFm-oGSx4F_speech.mp3",
+      "clip_url": "https://v3b.fal.media/files/b/0a959f2e/b7dSLPzxG0PZqFDpxGD_1_tmpdl6k4agy.mp4",
+      "voice_profile": {
+        "voice_id": "Friendly_Person",
+        "emotion": "angry",
+        "speed": 1.1,
+        "pitch": 0,
+        "description": "Angry, indignant, resentful"
+      },
+      "captions": [
+        {
+          "time": "0s",
+          "text": "EU SOU A ÁGUA SANITÁRIA...",
+          "style": "bold",
+          "css": {
+            "fontFamily": "Arial Black, sans-serif",
+            "textAlign": "center",
+            "position": "absolute",
+            "bottom": "15%",
+            "width": "90%",
+            "left": "5%",
+            "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            "color": "#FFFFFF",
+            "fontSize": "48px",
+            "fontWeight": "900"
+          }
+        },
+        {
+          "time": "2s",
+          "text": "e você me trata como suco!",
+          "style": "regular",
+          "css": {
+            "fontFamily": "Arial Black, sans-serif",
+            "textAlign": "center",
+            "position": "absolute",
+            "bottom": "15%",
+            "width": "90%",
+            "left": "5%",
+            "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            "color": "#FFFFFF",
+            "fontSize": "38px",
+            "fontWeight": "900"
+          }
+        },
+        {
+          "time": "5s",
+          "text": "MISTURA COM VINAGRE?!",
+          "style": "bold",
+          "css": {
+            "fontFamily": "Arial Black, sans-serif",
+            "textAlign": "center",
+            "position": "absolute",
+            "bottom": "15%",
+            "width": "90%",
+            "left": "5%",
+            "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            "color": "#FFFFFF",
+            "fontSize": "48px",
+            "fontWeight": "900"
+          }
+        },
+        {
+          "time": "8s",
+          "text": "Você acabou com meu poder desinfetante!",
+          "style": "regular",
+          "css": {
+            "fontFamily": "Arial Black, sans-serif",
+            "textAlign": "center",
+            "position": "absolute",
+            "bottom": "15%",
+            "width": "90%",
+            "left": "5%",
+            "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            "color": "#FFFFFF",
+            "fontSize": "38px",
+            "fontWeight": "900"
+          }
+        }
+      ]
+    },
+    {
+      "character_pt": "Celular",
+      "character_en": "Smartphone",
+      "emoji": "📱",
+      "timestamp_start": "10s",
+      "timestamp_end": "20s",
+      "image_url": "https://v3b.fal.media/files/b/0a959f2e/aAwSGFZaTy4rzqvnoFU0i_83de15b1f66f48d8b3515f0fb2c7ad4a.jpg",
+      "audio_url": "https://v3b.fal.media/files/b/0a959f2f/mjW-c6nVHtjZ9AhghLb4l_speech.mp3",
+      "clip_url": "https://v3b.fal.media/files/b/0a959f35/ZN6MZJEwyRokDhaaLRWPy_tmp9dif1f8t.mp4",
+      "voice_profile": {
+        "voice_id": "Friendly_Person",
+        "emotion": "angry",
+        "speed": 1.1,
+        "pitch": 0,
+        "description": "Angry, indignant, resentful"
+      },
+      "captions": [
+        {
+          "time": "10s",
+          "text": "EU TENHO MAIS BACTÉRIA...",
+          "style": "bold",
+          "css": {
+            "fontFamily": "Arial Black, sans-serif",
+            "textAlign": "center",
+            "position": "absolute",
+            "bottom": "15%",
+            "width": "90%",
+            "left": "5%",
+            "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            "color": "#FFFFFF",
+            "fontSize": "48px",
+            "fontWeight": "900"
+          }
+        },
+        {
+          "time": "12s",
+          "text": "que o seu vaso sanitário!",
+          "style": "bold",
+          "css": {
+            "fontFamily": "Arial Black, sans-serif",
+            "textAlign": "center",
+            "position": "absolute",
+            "bottom": "15%",
+            "width": "90%",
+            "left": "5%",
+            "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            "color": "#FFFFFF",
+            "fontSize": "48px",
+            "fontWeight": "900"
+          }
+        },
+        {
+          "time": "15s",
+          "text": "E você me bota no rosto??",
+          "style": "regular",
+          "css": {
+            "fontFamily": "Arial Black, sans-serif",
+            "textAlign": "center",
+            "position": "absolute",
+            "bottom": "15%",
+            "width": "90%",
+            "left": "5%",
+            "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            "color": "#FFFFFF",
+            "fontSize": "38px",
+            "fontWeight": "900"
+          }
+        },
+        {
+          "time": "18s",
+          "text": "Que NOJO de você...",
+          "style": "bold",
+          "css": {
+            "fontFamily": "Arial Black, sans-serif",
+            "textAlign": "center",
+            "position": "absolute",
+            "bottom": "15%",
+            "width": "90%",
+            "left": "5%",
+            "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            "color": "#FFFFFF",
+            "fontSize": "48px",
+            "fontWeight": "900"
+          }
+        }
+      ]
+    },
+    {
+      "character_pt": "Lixeira",
+      "character_en": "Trash Can",
+      "emoji": "🗑️",
+      "timestamp_start": "20s",
+      "timestamp_end": "30s",
+      "image_url": "https://v3b.fal.media/files/b/0a959f35/fz4n1rQbEz8koT9MdvrUi_120a79b63e164d56801924cadaf0117b.jpg",
+      "audio_url": "https://v3b.fal.media/files/b/0a959f36/uU1KE17zRfyztajgi4K8p_speech.mp3",
+      "clip_url": "https://v3b.fal.media/files/b/0a959f3c/goOHBnrODHZ6y1cCxf_-S_tmp88psmnxl.mp4",
+      "voice_profile": {
+        "voice_id": "Wise_Woman",
+        "emotion": "angry",
+        "speed": 1.25,
+        "pitch": -2,
+        "description": "Furious, explosive, at the limit"
+      },
+      "captions": [
+        {
+          "time": "20s",
+          "text": "HÁ QUANTOS DIAS...",
+          "style": "bold",
+          "css": {
+            "fontFamily": "Arial Black, sans-serif",
+            "textAlign": "center",
+            "position": "absolute",
+            "bottom": "15%",
+            "width": "90%",
+            "left": "5%",
+            "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            "color": "#FFFFFF",
+            "fontSize": "48px",
+            "fontWeight": "900"
+          }
+        },
+        {
+          "time": "22s",
+          "text": "você não me esvazia?!",
+          "style": "regular",
+          "css": {
+            "fontFamily": "Arial Black, sans-serif",
+            "textAlign": "center",
+            "position": "absolute",
+            "bottom": "15%",
+            "width": "90%",
+            "left": "5%",
+            "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            "color": "#FFFFFF",
+            "fontSize": "38px",
+            "fontWeight": "900"
+          }
+        },
+        {
+          "time": "25s",
+          "text": "SEM SACO PLÁSTICO?!",
+          "style": "bold",
+          "css": {
+            "fontFamily": "Arial Black, sans-serif",
+            "textAlign": "center",
+            "position": "absolute",
+            "bottom": "15%",
+            "width": "90%",
+            "left": "5%",
+            "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            "color": "#FFFFFF",
+            "fontSize": "48px",
+            "fontWeight": "900"
+          }
+        },
+        {
+          "time": "27s",
+          "text": "Você criou uma fábrica de moscas na sua cozinha!",
+          "style": "regular",
+          "css": {
+            "fontFamily": "Arial Black, sans-serif",
+            "textAlign": "center",
+            "position": "absolute",
+            "bottom": "15%",
+            "width": "90%",
+            "left": "5%",
+            "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            "color": "#FFFFFF",
+            "fontSize": "38px",
+            "fontWeight": "900"
+          }
+        }
+      ]
+    }
+  ],
+  "final_video_url": null,
+  "caption_script": [
+    {
+      "time_seconds": 0,
+      "time_formatted": "00:00.00",
+      "text": "EU SOU A ÁGUA SANITÁRIA...",
+      "style": "bold",
+      "css": {
+        "fontFamily": "Arial Black, sans-serif",
+        "textAlign": "center",
+        "position": "absolute",
+        "bottom": "15%",
+        "width": "90%",
+        "left": "5%",
+        "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+        "color": "#FFFFFF",
+        "fontSize": "48px",
+        "fontWeight": "900"
+      },
+      "character": "Água Sanitária"
+    },
+    {
+      "time_seconds": 2,
+      "time_formatted": "00:02.00",
+      "text": "e você me trata como suco!",
+      "style": "regular",
+      "css": {
+        "fontFamily": "Arial Black, sans-serif",
+        "textAlign": "center",
+        "position": "absolute",
+        "bottom": "15%",
+        "width": "90%",
+        "left": "5%",
+        "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+        "color": "#FFFFFF",
+        "fontSize": "38px",
+        "fontWeight": "900"
+      },
+      "character": "Água Sanitária"
+    },
+    {
+      "time_seconds": 5,
+      "time_formatted": "00:05.00",
+      "text": "MISTURA COM VINAGRE?!",
+      "style": "bold",
+      "css": {
+        "fontFamily": "Arial Black, sans-serif",
+        "textAlign": "center",
+        "position": "absolute",
+        "bottom": "15%",
+        "width": "90%",
+        "left": "5%",
+        "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+        "color": "#FFFFFF",
+        "fontSize": "48px",
+        "fontWeight": "900"
+      },
+      "character": "Água Sanitária"
+    },
+    {
+      "time_seconds": 8,
+      "time_formatted": "00:08.00",
+      "text": "Você acabou com meu poder desinfetante!",
+      "style": "regular",
+      "css": {
+        "fontFamily": "Arial Black, sans-serif",
+        "textAlign": "center",
+        "position": "absolute",
+        "bottom": "15%",
+        "width": "90%",
+        "left": "5%",
+        "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+        "color": "#FFFFFF",
+        "fontSize": "38px",
+        "fontWeight": "900"
+      },
+      "character": "Água Sanitária"
+    },
+    {
+      "time_seconds": 20,
+      "time_formatted": "00:20.00",
+      "text": "EU TENHO MAIS BACTÉRIA...",
+      "style": "bold",
+      "css": {
+        "fontFamily": "Arial Black, sans-serif",
+        "textAlign": "center",
+        "position": "absolute",
+        "bottom": "15%",
+        "width": "90%",
+        "left": "5%",
+        "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+        "color": "#FFFFFF",
+        "fontSize": "48px",
+        "fontWeight": "900"
+      },
+      "character": "Celular"
+    },
+    {
+      "time_seconds": 22,
+      "time_formatted": "00:22.00",
+      "text": "que o seu vaso sanitário!",
+      "style": "bold",
+      "css": {
+        "fontFamily": "Arial Black, sans-serif",
+        "textAlign": "center",
+        "position": "absolute",
+        "bottom": "15%",
+        "width": "90%",
+        "left": "5%",
+        "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+        "color": "#FFFFFF",
+        "fontSize": "48px",
+        "fontWeight": "900"
+      },
+      "character": "Celular"
+    },
+    {
+      "time_seconds": 25,
+      "time_formatted": "00:25.00",
+      "text": "E você me bota no rosto??",
+      "style": "regular",
+      "css": {
+        "fontFamily": "Arial Black, sans-serif",
+        "textAlign": "center",
+        "position": "absolute",
+        "bottom": "15%",
+        "width": "90%",
+        "left": "5%",
+        "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+        "color": "#FFFFFF",
+        "fontSize": "38px",
+        "fontWeight": "900"
+      },
+      "character": "Celular"
+    },
+    {
+      "time_seconds": 28,
+      "time_formatted": "00:28.00",
+      "text": "Que NOJO de você...",
+      "style": "bold",
+      "css": {
+        "fontFamily": "Arial Black, sans-serif",
+        "textAlign": "center",
+        "position": "absolute",
+        "bottom": "15%",
+        "width": "90%",
+        "left": "5%",
+        "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+        "color": "#FFFFFF",
+        "fontSize": "48px",
+        "fontWeight": "900"
+      },
+      "character": "Celular"
+    },
+    {
+      "time_seconds": 40,
+      "time_formatted": "00:40.00",
+      "text": "HÁ QUANTOS DIAS...",
+      "style": "bold",
+      "css": {
+        "fontFamily": "Arial Black, sans-serif",
+        "textAlign": "center",
+        "position": "absolute",
+        "bottom": "15%",
+        "width": "90%",
+        "left": "5%",
+        "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+        "color": "#FFFFFF",
+        "fontSize": "48px",
+        "fontWeight": "900"
+      },
+      "character": "Lixeira"
+    },
+    {
+      "time_seconds": 42,
+      "time_formatted": "00:42.00",
+      "text": "você não me esvazia?!",
+      "style": "regular",
+      "css": {
+        "fontFamily": "Arial Black, sans-serif",
+        "textAlign": "center",
+        "position": "absolute",
+        "bottom": "15%",
+        "width": "90%",
+        "left": "5%",
+        "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+        "color": "#FFFFFF",
+        "fontSize": "38px",
+        "fontWeight": "900"
+      },
+      "character": "Lixeira"
+    },
+    {
+      "time_seconds": 45,
+      "time_formatted": "00:45.00",
+      "text": "SEM SACO PLÁSTICO?!",
+      "style": "bold",
+      "css": {
+        "fontFamily": "Arial Black, sans-serif",
+        "textAlign": "center",
+        "position": "absolute",
+        "bottom": "15%",
+        "width": "90%",
+        "left": "5%",
+        "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+        "color": "#FFFFFF",
+        "fontSize": "48px",
+        "fontWeight": "900"
+      },
+      "character": "Lixeira"
+    },
+    {
+      "time_seconds": 47,
+      "time_formatted": "00:47.00",
+      "text": "Você criou uma fábrica de moscas na sua cozinha!",
+      "style": "regular",
+      "css": {
+        "fontFamily": "Arial Black, sans-serif",
+        "textAlign": "center",
+        "position": "absolute",
+        "bottom": "15%",
+        "width": "90%",
+        "left": "5%",
+        "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+        "color": "#FFFFFF",
+        "fontSize": "38px",
+        "fontWeight": "900"
+      },
+      "character": "Lixeira"
+    }
+  ],
+  "capcut_import": {
+    "instructions": "Import each clip_url in order in CapCut. Use the captions array for text overlays.",
+    "clips_in_order": [
+      {
+        "order": 1,
+        "character": "Água Sanitária",
+        "url": "https://v3b.fal.media/files/b/0a959f2e/b7dSLPzxG0PZqFDpxGD_1_tmpdl6k4agy.mp4",
+        "duration": "10s"
+      },
+      {
+        "order": 2,
+        "character": "Celular",
+        "url": "https://v3b.fal.media/files/b/0a959f35/ZN6MZJEwyRokDhaaLRWPy_tmp9dif1f8t.mp4",
+        "duration": "10s"
+      },
+      {
+        "order": 3,
+        "character": "Lixeira",
+        "url": "https://v3b.fal.media/files/b/0a959f3c/goOHBnrODHZ6y1cCxf_-S_tmp88psmnxl.mp4",
+        "duration": "10s"
+      }
+    ],
+    "captions": [
+      {
+        "time": "00:00.00",
+        "text": "EU SOU A ÁGUA SANITÁRIA...",
+        "style": "bold"
+      },
+      {
+        "time": "00:02.00",
+        "text": "e você me trata como suco!",
+        "style": "regular"
+      },
+      {
+        "time": "00:05.00",
+        "text": "MISTURA COM VINAGRE?!",
+        "style": "bold"
+      },
+      {
+        "time": "00:08.00",
+        "text": "Você acabou com meu poder desinfetante!",
+        "style": "regular"
+      },
+      {
+        "time": "00:20.00",
+        "text": "EU TENHO MAIS BACTÉRIA...",
+        "style": "bold"
+      },
+      {
+        "time": "00:22.00",
+        "text": "que o seu vaso sanitário!",
+        "style": "bold"
+      },
+      {
+        "time": "00:25.00",
+        "text": "E você me bota no rosto??",
+        "style": "regular"
+      },
+      {
+        "time": "00:28.00",
+        "text": "Que NOJO de você...",
+        "style": "bold"
+      },
+      {
+        "time": "00:40.00",
+        "text": "HÁ QUANTOS DIAS...",
+        "style": "bold"
+      },
+      {
+        "time": "00:42.00",
+        "text": "você não me esvazia?!",
+        "style": "regular"
+      },
+      {
+        "time": "00:45.00",
+        "text": "SEM SACO PLÁSTICO?!",
+        "style": "bold"
+      },
+      {
+        "time": "00:47.00",
+        "text": "Você criou uma fábrica de moscas na sua cozinha!",
+        "style": "regular"
+      }
+    ]
+  },
+  "cost_estimate": {
+    "per_image_usd": "0.030",
+    "per_tts_usd": "0.300",
+    "per_lipsync_usd": "0.80",
+    "per_clip_usd": "1.13",
+    "total_usd": "$3.39",
+    "clips_count": 3
+  }
+}

@@ -1,0 +1,392 @@
+{
+  "meta": {
+    "niche": "casa",
+    "topic_pt": "Objetos mais sujos da cozinha",
+    "topic_en": "Dirtiest objects in the kitchen",
+    "tone": "angry",
+    "duration": 30,
+    "objects_count": 2,
+    "generated_at": "2026-04-10T00:18:22.580Z"
+  },
+  "characters": [
+    {
+      "id": 1,
+      "name_pt": "Lixeira",
+      "name_en": "Trash Can",
+      "emoji": "🗑️",
+      "timestamp_start": "0s",
+      "timestamp_end": "15s",
+      "environment_pt": "Cozinha brasileira moderna, azulejos brancos com detalhes azuis, lixeira vermelha no canto perto da pia, luz quente amarelada, vapor saindo da lixeira indicando mau cheiro",
+      "environment_en": "Modern Brazilian kitchen, white tiles with blue details, red trash can in the corner near the sink, warm yellow lighting, steam rising from the trash can indicating bad smell",
+      "expression_arc": [
+        "furiosa com sobrancelhas franzidas",
+        "explosiva com bocão aberto e vapor saindo",
+        "exausta mas ainda indignada com olhos arregalados"
+      ],
+      "error_denounced_pt": "Pessoas que jogam restos de comida úmidos sem ensacar direito, deixam a tampa aberta por dias e nunca lavam o interior da lixeira",
+      "error_denounced_en": "People who throw in wet food scraps without proper bagging, leave the lid open for days and never clean the inside of the trash can",
+      "human_background_pt": "Mulher de costas jogando cascas de frutas e restos molhados diretamente na lixeira sem saco plástico, tampa caída no chão",
+      "human_background_en": "Woman seen from behind throwing fruit peels and wet scraps directly into the trash can without a plastic bag, lid fallen on the floor",
+      "captions": [
+        {
+          "time": "0s",
+          "text_pt": "EU SOU A MAIS ODIADA DA COZINHA?!",
+          "text_en": "I'M THE MOST HATED IN THE KITCHEN?!",
+          "style": "bold"
+        },
+        {
+          "time": "3s",
+          "text_pt": "Coloca lixo MOLHADO sem saco…",
+          "text_en": "Throws in WET garbage without a bag…",
+          "style": "regular"
+        },
+        {
+          "time": 6,
+          "text_pt": "NUNCA me lavam por dentro!",
+          "text_en": "NEVER clean me inside!",
+          "style": "bold"
+        },
+        {
+          "time": "9s",
+          "text_pt": "Sou um criadouro de bactérias!",
+          "text_en": "I'm a bacteria breeding ground!",
+          "style": "bold"
+        },
+        {
+          "time": "12s",
+          "text_pt": "Me LIMPA. Agora.",
+          "text_en": "CLEAN me. Right now.",
+          "style": "bold"
+        }
+      ],
+      "voice_script_pt": "Eu não acredito! [pausa] Jogam lixo MOLHADO aqui dentro sem saco nenhum! [ÊNFASE] Banana podre, resto de feijão, gordura! Tudo junto! [pausa] E sabe quando me lavam por dentro? NUNCA! [pausa longa] Eu sou a mais suja da cozinha e a culpa é de vocês! Me limpa AGORA!",
+      "voice_script_en": "I can't believe it! [pause] They throw WET garbage inside me with no bag at all! [EMPHASIS] Rotten banana, leftover beans, grease! All mixed together! [pause] And you know when they clean me inside? NEVER! [long pause] I am the dirtiest thing in the kitchen and it's YOUR fault! Clean me RIGHT NOW!",
+      "ai_prompt_midjourney": "Angry anthropomorphic red trash can character, Pixar 3D Disney style, big expressive furious eyes with heavy furrowed brows, wide open mouth showing rage, steam and stink lines rising from the top, small arms raised in frustration, standing in a modern Brazilian kitchen with white and blue tiles, warm yellow ambient light, woman blurred in background throwing wet food scraps without a bag, vertical 9:16 composition, cinematic depth of field, ultra-detailed render, vibrant colors --ar 9:16 --v 6",
+      "ai_prompt_kling": "Angry red trash can character with expressive Pixar-style face, starts with lid slamming open as eyes burst wide in rage, body shakes violently side to side, small stubby arms wave furiously in the air, steam puffs explode upward from opening, character leans forward aggressively toward camera during peak anger line, then slumps back exhausted at the end but eyes remain narrowed in defiance, looping 15-second animation, smooth 3D motion, exaggerated cartoon physics"
+    },
+    {
+      "id": 2,
+      "name_pt": "Esponja de Pia",
+      "name_en": "Kitchen Sponge",
+      "emoji": "🧽",
+      "timestamp_start": "15s",
+      "timestamp_end": "30s",
+      "environment_pt": "Pia de cozinha brasileira, louças empilhadas, esponja amarela e verde encharcada sobre o escorredor de louça, luz fria fluorescente, manchas de gordura na pia ao redor",
+      "environment_en": "Brazilian kitchen sink, stacked dishes, soaking wet yellow and green sponge on the dish rack, cold fluorescent light, grease stains on the surrounding sink area",
+      "expression_arc": [
+        "enojada consigo mesma com expressão de nojo profundo",
+        "histérica percebendo a quantidade de germes que carrega",
+        "derrotada e implorando por ser substituída"
+      ],
+      "error_denounced_pt": "Pessoas que usam a mesma esponja por meses, nunca a higienizam entre um uso e outro e a deixam encharcada em cima da pia acumulando bactérias",
+      "error_denounced_en": "People who use the same sponge for months, never sanitize it between uses and leave it soaking wet on the sink accumulating bacteria",
+      "human_background_pt": "Homem esfregando um prato com a esponja velha e desgastada, a mesma esponja sendo usada há semanas, manchas escuras visíveis na esponja",
+      "human_background_en": "Man scrubbing a plate with the old worn-out sponge, the same sponge used for weeks, dark stains visibly covering the sponge",
+      "captions": [
+        {
+          "time": "15s",
+          "text_pt": "Eu sou o objeto mais contaminado da cozinha.",
+          "text_en": "I am the most contaminated object in the kitchen.",
+          "style": "bold"
+        },
+        {
+          "time": "18s",
+          "text_pt": "Carrego MILHÕES de bactérias…",
+          "text_en": "I carry MILLIONS of bacteria…",
+          "style": "regular"
+        },
+        {
+          "time": "21s",
+          "text_pt": "E você me usa pra LAVAR a louça?!",
+          "text_en": "And you use me to WASH the dishes?!",
+          "style": "bold"
+        },
+        {
+          "time": "24s",
+          "text_pt": "Estou me sentindo HORRÍVEL!",
+          "text_en": "I'm feeling DISGUSTING!",
+          "style": "bold"
+        },
+        {
+          "time": "27s",
+          "text_pt": "Me troca. Por favor. EU TE IMPLORO.",
+          "text_en": "Replace me. Please. I BEG YOU.",
+          "style": "bold"
+        }
+      ],
+      "voice_script_pt": "Gente… [pausa] Eu preciso falar uma coisa. Eu sou NOJENTA. [pausa] Carrego mais bactérias do que o vaso sanitário de vocês! [ÊNFASE] Salmonela, E. coli, fungos! Tudo aqui dentro! [pausa longa] E vocês me usam pra lavar a louça que vão comer depois?! [ÊNFASE] Me higieniza! Me troca! Eu não aguento mais!",
+      "voice_script_en": "Guys… [pause] I need to say something. I am DISGUSTING. [pause] I carry more bacteria than your toilet! [EMPHASIS] Salmonella, E. coli, fungi! All inside me! [long pause] And you use me to wash the dishes you're going to eat off later?! [EMPHASIS] Sanitize me! Replace me! I can't take it anymore!",
+      "ai_prompt_midjourney": "Disgusted anthropomorphic kitchen sponge character, yellow and green, Pixar 3D Disney style, deeply nauseous expression with droopy sad eyes and grimacing mouth, dark contamination spots visibly covering the body, dripping wet with dirty water droplets, small shaking arms hugging itself in horror, standing on a Brazilian kitchen sink counter surrounded by stacked dishes and grease stains, cold fluorescent overhead light casting blue-white shadows, blurred man in background scrubbing dishes, vertical 9:16 composition, ultra-detailed 3D render, expressive cartoon face --ar 9:16 --v 6",
+      "ai_prompt_kling": "Disgusted kitchen sponge character with Pixar-style expressive face, opens scene trembling slightly with eyes wide in self-horror, body drips visibly with dirty water droplets each time it moves, raises tiny arms to look at itself in disgust then recoils, mid-scene breaks into a panicked shake as eyes go wide and mouth drops open in hysteria, final seconds character reaches arms out toward camera in a begging desperate gesture before slumping down exhausted, 15-second animation, smooth exaggerated 3D cartoon physics, fluid motion"
+    }
+  ],
+  "post_copy": {
+    "hook_pt": "⚠️ Os objetos mais sujos da sua cozinha estão FURIOSOS com você 😤🗑️🧽",
+    "hook_en": "⚠️ The dirtiest objects in your kitchen are FURIOUS at you 😤🗑️🧽",
+    "body_pt": "Você acha que sua cozinha está limpa? Seus próprios objetos discordam — e estão com RAIVA 😤\n\n🗑️ A LIXEIRA: Recebe lixo molhado, gordura, cascas e NUNCA é lavada por dentro. É o paraíso das bactérias.\n\n🧽 A ESPONJA DE PIA: Carrega mais germes do que o seu vaso sanitário. Você a usa pra lavar louça. Todo. Dia.\n\nA ciência comprova: esses dois objetos são os mais contaminados de qualquer cozinha doméstica.\n\n✅ Troca a esponja a cada 7 dias\n✅ Higieniza a esponja com água quente e vinagre entre os usos\n✅ Usa sempre saco plástico na lixeira\n✅ Lava o interior da lixeira com água sanitária toda semana\n\nSalva esse post antes de ir pra cozinha 👇",
+    "body_en": "Think your kitchen is clean? Your own objects disagree — and they're ANGRY 😤\n\n🗑️ THE TRASH CAN: Receives wet garbage, grease, scraps and is NEVER cleaned inside. It's a bacteria paradise.\n\n🧽 THE KITCHEN SPONGE: Carries more germs than your toilet. You use it to wash your dishes. Every. Single. Day.\n\nScience confirms: these two objects are the most contaminated in any home kitchen.\n\n✅ Replace your sponge every 7 days\n✅ Sanitize your sponge with hot water and vinegar between uses\n✅ Always use a plastic bag in your trash can\n✅ Wash the inside of your trash can with bleach every week\n\nSave this post before you go to the kitchen 👇",
+    "cta_pt": "💾 Salva e manda pra aquela pessoa que NUNCA troca a esponja! Marca ela nos comentários 👇😂",
+    "cta_en": "💾 Save this and send it to that person who NEVER replaces the sponge! Tag them in the comments 👇😂",
+    "hashtags_pt": [
+      "#limpezadacozinha",
+      "#cozinhalimpa",
+      "#dicasdelimpeza",
+      "#lixeiradacozinha",
+      "#esponjadenia",
+      "#bacterias",
+      "#higienecaseira",
+      "#dicasdecasa",
+      "#casalimpa",
+      "#organizacaodacasa",
+      "#limpezacaseira",
+      "#truquesdecasa",
+      "#saúdedafamilia",
+      "#cozinha",
+      "#objetosfalamdeboas",
+      "#rednossobre",
+      "#cozinhabrasileira",
+      "#limpeabem",
+      "#viralreels",
+      "#reelsbrasil",
+      "#ficadica",
+      "#vidaorganizada",
+      "#higienedoméstica",
+      "#doméstica",
+      "#talkingobject"
+    ],
+    "hashtags_en": [
+      "#kitchencleaning",
+      "#cleankitchen",
+      "#cleaningtips",
+      "#kitchenhygiene",
+      "#bacteriafacts",
+      "#spongehygiene",
+      "#trashcancleaning",
+      "#homecleaning",
+      "#cleaninghacks",
+      "#talkingobjects",
+      "#pixarvibes",
+      "#viralreels",
+      "#cleanhouse",
+      "#homehygiene",
+      "#germfacts",
+      "#kitchentips",
+      "#funnycleaning",
+      "#satisfyingcleaning",
+      "#reelsviral",
+      "#homeandfamily"
+    ]
+  },
+  "captions_full_script": [
+    {
+      "time": "0s",
+      "text_pt": "EU SOU A MAIS ODIADA DA COZINHA?!",
+      "text_en": "I'M THE MOST HATED IN THE KITCHEN?!",
+      "character": "Lixeira",
+      "style": "bold",
+      "color": "red"
+    },
+    {
+      "time": "3s",
+      "text_pt": "Coloca lixo MOLHADO sem saco…",
+      "text_en": "Throws in WET garbage without a bag…",
+      "character": "Lixeira",
+      "style": "regular",
+      "color": "white"
+    },
+    {
+      "time": "6s",
+      "text_pt": "NUNCA me lavam por dentro!",
+      "text_en": "NEVER clean me inside!",
+      "character": "Lixeira",
+      "style": "bold",
+      "color": "red"
+    },
+    {
+      "time": "9s",
+      "text_pt": "Sou um criadouro de bactérias!",
+      "text_en": "I'm a bacteria breeding ground!",
+      "character": "Lixeira",
+      "style": "bold",
+      "color": "red"
+    },
+    {
+      "time": "12s",
+      "text_pt": "Me LIMPA. Agora.",
+      "text_en": "CLEAN me. Right now.",
+      "character": "Lixeira",
+      "style": "bold",
+      "color": "red"
+    },
+    {
+      "time": "15s",
+      "text_pt": "Eu sou o objeto mais contaminado da cozinha.",
+      "text_en": "I am the most contaminated object in the kitchen.",
+      "character": "Esponja de Nia",
+      "style": "bold",
+      "color": "white"
+    },
+    {
+      "time": "18s",
+      "text_pt": "Carrego MILHÕES de bactérias…",
+      "text_en": "I carry MILLIONS of bacteria…",
+      "character": "Esponja de Nia",
+      "style": "regular",
+      "color": "white"
+    },
+    {
+      "time": "21s",
+      "text_pt": "E você me usa pra LAVAR a louça?!",
+      "text_en": "And you use me to WASH the dishes?!",
+      "character": "Esponja de Nia",
+      "style": "bold",
+      "color": "red"
+    },
+    {
+      "time": "24s",
+      "text_pt": "Estou me sentindo HORRÍVEL!",
+      "text_en": "I'm feeling DISGUSTING!",
+      "character": "Esponja de Nia",
+      "style": "bold",
+      "color": "red"
+    },
+    {
+      "time": "27s",
+      "text_pt": "Me troca. Por favor. EU TE IMPLORO.",
+      "text_en": "Replace me. Please. I BEG YOU.",
+      "character": "Esponja de Nia",
+      "style": "bold",
+      "color": "red"
+    }
+  ],
+  "variations": [
+    {
+      "id": 1,
+      "angle_pt": "Versão educacional com dados científicos reais sobrepostos nas falas dos objetos",
+      "angle_en": "Educational version with real scientific data overlaid on the objects' speech",
+      "title_pt": "🧫 Quantas bactérias tem na sua cozinha? Os objetos revelam os números reais",
+      "title_en": "🧫 How many bacteria are in your kitchen? The objects reveal the real numbers",
+      "hook_pt": "Sua esponja tem 200.000 vezes mais bactérias do que seu vaso sanitário. E ela está furiosa.",
+      "hook_en": "Your sponge has 200,000 times more bacteria than your toilet. And it's furious.",
+      "objects": [
+        "esponja de nia",
+        "tábua de corte"
+      ],
+      "format_note_pt": "Adicionar texto animado com estatísticas científicas em vermelho aparecendo enquanto o personagem fala. Usar fonte bold estilo CNN/notícia para aumentar credibilidade e retenção.",
+      "format_note_en": "Add animated text with scientific statistics in red appearing while the character speaks. Use CNN/news-style bold font to increase credibility and retention.",
+      "tags": [
+        "educational",
+        "high-retention",
+        "viral"
+      ]
+    },
+    {
+      "id": 2,
+      "angle_pt": "Versão comédia: os objetos processam você judicialmente por maus-tratos",
+      "angle_en": "Comedy version: the objects are suing you for mistreatment",
+      "title_pt": "⚖️ Sua lixeira e sua esponja estão te processando por abandono",
+      "title_en": "⚖️ Your trash can and sponge are suing you for negligence",
+      "hook_pt": "Recebi uma intimação judicial. Da minha própria esponja.",
+      "hook_en": "I received a court summons. From my own sponge.",
+      "objects": [
+        "lixeira",
+        "esponja de nia"
+      ],
+      "format_note_pt": "Adicionar efeito visual de documento judicial aparecendo na tela com o nome do usuário em branco. Aumenta compartilhamento por humor e identificação pessoal.",
+      "format_note_en": "Add visual effect of a legal document appearing on screen with the user's name left blank. Increases sharing through humor and personal identification.",
+      "tags": [
+        "comedy",
+        "viral",
+        "high-shareability"
+      ]
+    },
+    {
+      "id": 3,
+      "angle_pt": "Versão antes e depois: os objetos mostram como deveriam ser tratados",
+      "angle_en": "Before and after version: the objects show how they should be treated",
+      "title_pt": "✨ Do nojo à limpeza: o antes e depois que vai mudar sua cozinha",
+      "title_en": "✨ From disgusting to clean: the before and after that will change your kitchen",
+      "hook_pt": "Minha lixeira estava com raiva. Depois que eu limpei, ela ficou irreconhecível.",
+      "hook_en": "My trash can was furious. After I cleaned it, it was unrecognizable.",
+      "objects": [
+        "lixeira",
+        "esponja de nia"
+      ],
+      "format_note_pt": "Split screen 50/50 com lado esquerdo mostrando personagem furioso (antes) e lado direito mostrando personagem sorridente e brilhante (depois). Alta taxa de conclusão de vídeo.",
+      "format_note_en": "50/50 split screen with left side showing furious character (before) and right side showing smiling glowing character (after). High video completion rate.",
+      "tags": [
+        "before-after",
+        "satisfying",
+        "high-retention",
+        "educational"
+      ]
+    },
+    {
+      "id": 4,
+      "angle_pt": "Versão série: cada semana um objeto diferente da cozinha denuncia um erro",
+      "angle_en": "Series version: each week a different kitchen object denounces a mistake",
+      "title_pt": "📺 Ep. 1 da série: Os Objetos da Cozinha Estão Furiosos",
+      "title_en": "📺 Ep. 1 of the series: Kitchen Objects Are Furious",
+      "hook_pt": "Toda semana um objeto da sua casa vai te denunciar. Começa hoje.",
+      "hook_en": "Every week one object in your home will call you out. Starts today.",
+      "objects": [
+        "lixeira",
+        "esponja de nia",
+        "pano de prato",
+        "tábua de corte"
+      ],
+      "format_note_pt": "Criar identidade visual de série com número de episódio e nome da série no início do vídeo. Aumenta seguidores por expectativa de continuidade e serialização de conteúdo.",
+      "format_note_en": "Create series visual identity with episode number and series name at the start of the video. Increases followers through continuity expectation and content serialization.",
+      "tags": [
+        "series",
+        "follower-growth",
+        "high-retention",
+        "viral"
+      ]
+    }
+  ],
+  "production_stack": [
+    {
+      "step": 1,
+      "tool": "Midjourney v6",
+      "purpose_pt": "Gerar as imagens estáticas dos personagens em estilo Pixar 3D no formato vertical 9:16 com expressões faciais detalhadas e cenários de cozinha brasileira",
+      "purpose_en": "Generate static character images in Pixar 3D style in vertical 9:16 format with detailed facial expressions and Brazilian kitchen settings",
+      "priority": "essential"
+    },
+    {
+      "step": 2,
+      "tool": "ElevenLabs",
+      "purpose_pt": "Gerar as vozes dos personagens em português e inglês com entonação furiosa, pausas dramáticas e ênfases corretas conforme o script de voz de cada personagem",
+      "purpose_en": "Generate character voices in Portuguese and English with furious intonation, dramatic pauses and correct emphasis as per each character's voice script",
+      "priority": "essential"
+    },
+    {
+      "step": 3,
+      "tool": "HeyGen",
+      "purpose_pt": "Animar os personagens com lip sync sincronizado ao áudio gerado, aplicar movimentos corporais expressivos e integrar os personagens ao cenário de cozinha",
+      "purpose_en": "Animate characters with lip sync synchronized to generated audio, apply expressive body movements and integrate characters into the kitchen setting",
+      "priority": "essential"
+    },
+    {
+      "step": 4,
+      "tool": "CapCut",
+      "purpose_pt": "Editar o vídeo final com legendas animadas em dois idiomas, aplicar efeitos sonoros de impacto, ajustar timing das cenas, adicionar trilha sonora e exportar em formato vertical 9:16 para reels",
+      "purpose_en": "Edit the final video with animated bilingual captions, apply impact sound effects, adjust scene timing, add background music track and export in vertical 9:16 format for reels",
+      "priority": "essential"
+    },
+    {
+      "step": 5,
+      "tool": "Kling AI",
+      "purpose_pt": "Gerar animações de movimento corporal alternativas para os personagens com física de desenho animado exagerada, como tremores de raiva e gestos dramáticos",
+      "purpose_en": "Generate alternative body movement animations for characters with exaggerated cartoon physics such as anger shakes and dramatic gestures",
+      "priority": "optional"
+    },
+    {
+      "step": 6,
+      "tool": "Adobe Premiere Pro",
+      "purpose_pt": "Edição avançada para criadores que precisam de maior controle sobre cor, áudio e efeitos visuais na versão final do reel",
+      "purpose_en": "Advanced editing for creators who need greater control over color grading, audio and visual effects in the final reel version",
+      "priority": "optional"
+    }
+  ]
+}

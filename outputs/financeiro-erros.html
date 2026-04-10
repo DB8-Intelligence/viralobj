@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ViralObj — Erros financeiros do dia a dia</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0d12;--surface:#111318;--surface2:#171b24;--border:#222840;--blue:#5b9fff;--blue-mid:#3d7fbd;--gold:#c9a84c;--cream:#e2e8f0;--text:#a8b8cc;--text-dim:#3d5060;--red:#ff5b5b;--green:#5bff7a;--orange:#ffaa5b}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font-size:13px;line-height:1.7;overflow-x:hidden}
+.page-wrap{max-width:920px;margin:0 auto;padding:40px 24px 80px}
+.header{border-bottom:1px solid var(--border);padding-bottom:28px;margin-bottom:28px;display:flex;align-items:flex-start;gap:18px}
+.header-icon{font-size:48px;animation:glow 3s ease-in-out infinite}
+@keyframes glow{0%,100%{filter:drop-shadow(0 0 12px rgba(91,159,255,.3))}50%{filter:drop-shadow(0 0 24px rgba(91,159,255,.6))}}
+.badge{display:inline-block;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--blue);background:rgba(91,159,255,.08);border:1px solid rgba(91,159,255,.2);padding:3px 10px;border-radius:2px;margin-bottom:8px}
+h1{font-family:'Fraunces',serif;font-size:30px;font-weight:900;color:var(--cream);margin-bottom:4px}
+h1 em{font-style:italic;color:var(--blue)}
+.subtitle{color:var(--text-dim);font-size:11px}
+.stat-row{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap}
+.stat{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:10px 16px;flex:1;min-width:80px;text-align:center}
+.stat-val{font-family:'Fraunces',serif;font-size:22px;font-weight:900;color:var(--blue);display:block}
+.stat-label{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim)}
+.tabs{display:flex;gap:2px;margin-bottom:22px;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;padding:10px 13px;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);transition:all .2s;white-space:nowrap;margin-bottom:-1px}
+.tab-btn:hover{color:var(--cream)}.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
+.panel{display:none;animation:fi .22s ease}.panel.active{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:20px 22px;margin-bottom:12px}
+.card-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.card-icon{font-size:17px}.card-title{font-family:'Fraunces',serif;font-size:14px;font-weight:700;color:var(--cream)}
+.card-meta{margin-left:auto;font-size:10px;letter-spacing:.1em;color:var(--text-dim);text-transform:uppercase}
+.char-card{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:15px 17px;margin-bottom:10px}
+.char-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.char-num{font-family:'Fraunces',serif;font-size:26px;font-weight:900;color:var(--border);min-width:32px}
+.char-name{font-family:'Fraunces',serif;font-size:14px;font-weight:700;color:var(--cream)}
+.char-sub{font-size:10px;color:var(--text-dim)}
+.time-badge{margin-left:auto;font-size:10px;color:var(--blue-mid);letter-spacing:.08em}
+.expr-row{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.expr-badge{font-size:10px;padding:2px 8px;border-radius:12px;background:rgba(91,159,255,.08);border:1px solid rgba(91,159,255,.15);color:var(--blue)}
+.expr-arrow{color:var(--text-dim);font-size:12px;line-height:2}
+.row{display:grid;grid-template-columns:70px 1fr;gap:6px;margin-bottom:4px;font-size:12px}
+.row-lbl{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);padding-top:1px}
+.row-val{color:var(--text)}
+.prompt-block{background:#080a0f;border:1px solid var(--border);border-radius:4px;padding:10px 12px;margin-top:8px;font-size:11px;color:var(--blue-mid);line-height:1.6}
+.prompt-lbl{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px}
+.cap-table{width:100%;border-collapse:collapse;font-size:12px}
+.cap-table th{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim);text-align:left;padding:7px 10px;border-bottom:1px solid var(--border)}
+.cap-table td{padding:7px 10px;border-bottom:1px solid rgba(34,40,64,.5);vertical-align:top}
+.cap-table tr:hover td{background:rgba(91,159,255,.02)}
+.tc-time{color:var(--blue-mid);font-size:11px;width:50px}.tc-text{color:var(--cream)}.tc-style{color:var(--text-dim);font-size:11px}
+.post-preview{background:#080a0f;border:1px solid var(--border);border-radius:8px;padding:18px 20px;font-size:13px;line-height:1.9;color:var(--text);white-space:pre-line;font-family:'DM Mono',monospace}
+.post-gancho{font-family:'Fraunces',serif;font-size:16px;font-weight:700;color:var(--cream);margin-bottom:10px;display:block}
+.hashtags{margin-top:12px;color:var(--blue-mid);font-size:11px;line-height:1.9;word-break:break-word}
+.copy-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(91,159,255,.06);border:1px solid rgba(91,159,255,.2);border-radius:4px;padding:5px 12px;color:var(--blue);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .15s;margin-top:10px}
+.copy-btn:hover{background:rgba(91,159,255,.12)}
+.lang-toggle{display:flex;gap:4px;margin-bottom:12px}
+.lang-btn{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:4px 12px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;color:var(--text-dim);transition:all .15s}
+.lang-btn.active{background:rgba(91,159,255,.1);border-color:rgba(91,159,255,.3);color:var(--blue)}
+.var-card{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:14px 16px;margin-bottom:10px}
+.var-num{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px}
+.var-title{font-family:'Fraunces',serif;font-size:14px;font-weight:700;color:var(--cream);margin-bottom:6px}
+.var-hook{font-style:italic;color:var(--blue-mid);font-size:12px;margin-bottom:3px;padding-left:10px;border-left:2px solid var(--border)}
+.var-hook.en{color:var(--text-dim)}
+.tag{display:inline-block;padding:2px 7px;border-radius:2px;font-size:10px;letter-spacing:.07em;text-transform:uppercase;margin:2px 2px 2px 0}
+.tag-b{background:rgba(91,159,255,.1);color:var(--blue);border:1px solid rgba(91,159,255,.2)}
+.tag-g{background:rgba(91,255,122,.1);color:var(--green);border:1px solid rgba(91,255,122,.2)}
+.tag-o{background:rgba(201,168,76,.1);color:var(--gold);border:1px solid rgba(201,168,76,.2)}
+.tool-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px}
+.tool-row:last-child{border-bottom:none}
+.step-num{color:var(--text-dim);font-size:10px;min-width:18px}
+.tool-name{color:var(--cream);font-weight:500;min-width:110px}
+.tool-use{color:var(--text-dim);flex:1}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:16px 0}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+  <div class="header">
+    <div class="header-icon">🎭</div>
+    <div>
+      <div class="badge">ViralObj · viralobj.com · Talking Object Generator</div>
+      <h1>Erros financeiros do dia a dia <em>/ Everyday financial mistakes</em></h1>
+      <div class="subtitle">financeiro · dramatic · 30s · 3 character(s)</div>
+    </div>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat"><span class="stat-val">3</span><span class="stat-label">Characters</span></div>
+    <div class="stat"><span class="stat-val">30s</span><span class="stat-label">Duration</span></div>
+    <div class="stat"><span class="stat-val">3</span><span class="stat-label">AI Prompts</span></div>
+    <div class="stat"><span class="stat-val">4</span><span class="stat-label">Variations</span></div>
+    <div class="stat"><span class="stat-val">45</span><span class="stat-label">Hashtags</span></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="st('roteiro',this)">🎬 Script</button>
+    <button class="tab-btn" onclick="st('legendas',this)">📝 Captions</button>
+    <button class="tab-btn" onclick="st('voz',this)">🎙️ Voice</button>
+    <button class="tab-btn" onclick="st('post',this)">📱 Post</button>
+    <button class="tab-btn" onclick="st('variacoes',this)">🔁 Variations</button>
+    <button class="tab-btn" onclick="st('stack',this)">🛠️ Stack</button>
+  </div>
+
+  <div class="panel active" id="panel-roteiro">
+    <div class="card">
+      <div class="card-header"><span class="card-icon">🎬</span><span class="card-title">Scene Script + AI Prompts</span><span class="card-meta">30s · 9:16</span></div>
+      
+    <div class="char-card">
+      <div class="char-header">
+        <span class="char-num">01</span>
+        <div class="char-info">
+          <div class="char-name">💵 Nota de R$50 / R$50 Bill</div>
+          <div class="char-sub">Caixa registradora de supermercado, luz fria de néon, prateleiras lotadas ao fundo</div>
+        </div>
+        <span class="time-badge">0s–10s</span>
+      </div>
+      <div class="expr-row">
+        <span class="expr-badge">angustiada</span><span class="expr-arrow">→</span><span class="expr-badge">indignada</span><span class="expr-arrow">→</span><span class="expr-badge">desesperada</span>
+      </div>
+      <div class="row"><div class="row-lbl">Error PT</div><div class="row-val">Gastar o dinheiro do mês inteiro em compras por impulso no supermercado</div></div>
+      <div class="row"><div class="row-lbl">Error EN</div><div class="row-val">Spending the entire monthly budget on impulse purchases at the supermarket</div></div>
+      <div class="prompt-block">
+        <div class="prompt-lbl">🖼️ Midjourney Prompt</div>
+        Anthropomorphic R$50 Brazilian banknote character, Pixar 3D render style, big expressive teary eyes, small trembling hands, dramatic lighting with cold neon supermarket glow, 9:16 vertical format, shallow depth of field, blurred background showing a Brazilian person loading a shopping cart with random items, emotional facial expression shifting from hopeful to devastated, ultra-detailed paper texture, green and purple color tones of real R$50 bill, cinematic composition, Disney-Pixar quality rendering --ar 9:16 --v 6
+      </div>
+    </div>
+    <div class="char-card">
+      <div class="char-header">
+        <span class="char-num">02</span>
+        <div class="char-info">
+          <div class="char-name">💳 Cartão de Crédito / Credit Card</div>
+          <div class="char-sub">Mesa de escritório doméstico à noite, luz de tela de computador azulada, contas espalhadas ao redor</div>
+        </div>
+        <span class="time-badge">10s–20s</span>
+      </div>
+      <div class="expr-row">
+        <span class="expr-badge">exausta</span><span class="expr-arrow">→</span><span class="expr-badge">sobrecarregada</span><span class="expr-arrow">→</span><span class="expr-badge">à beira do colapso</span>
+      </div>
+      <div class="row"><div class="row-lbl">Error PT</div><div class="row-val">Parcelar compras desnecessárias e pagar apenas o mínimo da fatura todo mês</div></div>
+      <div class="row"><div class="row-lbl">Error EN</div><div class="row-val">Installment buying unnecessary items and only paying the minimum balance every month</div></div>
+      <div class="prompt-block">
+        <div class="prompt-lbl">🖼️ Midjourney Prompt</div>
+        Anthropomorphic credit card character, Pixar 3D render style, exhausted dark circles under expressive eyes, hunched posture, cracked and worn edges, dramatic blue computer screen backlight glow in a messy home office at night, 9:16 vertical format, bills and papers scattered on desk, blurred background showing a stressed Brazilian person at computer, ultra-detailed plastic card texture with generic bank logo, emotional expression of total exhaustion and overwhelm, cinematic dramatic lighting, Disney-Pixar quality rendering --ar 9:16 --v 6
+      </div>
+    </div>
+    <div class="char-card">
+      <div class="char-header">
+        <span class="char-num">03</span>
+        <div class="char-info">
+          <div class="char-name">📄 Boleto / Bill/Invoice</div>
+          <div class="char-sub">Aplicativo de banco no celular, fundo escuro e dramático, código de barras pulsando como um coração ameaçador</div>
+        </div>
+        <span class="time-badge">20s–30s</span>
+      </div>
+      <div class="expr-row">
+        <span class="expr-badge">ameaçador</span><span class="expr-arrow">→</span><span class="expr-badge">implacável</span><span class="expr-arrow">→</span><span class="expr-badge">triunfante</span>
+      </div>
+      <div class="row"><div class="row-lbl">Error PT</div><div class="row-val">Deixar boletos vencerem por esquecimento e pagar multa e juros desnecessários</div></div>
+      <div class="row"><div class="row-lbl">Error EN</div><div class="row-val">Letting bills expire from forgetfulness and paying unnecessary fines and interest</div></div>
+      <div class="prompt-block">
+        <div class="prompt-lbl">🖼️ Midjourney Prompt</div>
+        Anthropomorphic paper bill/boleto character, Pixar 3D render style, menacing sharp eyes, stern authoritative expression, glowing red barcode like a warning signal, dark dramatic cinematic background with red and black tones, 9:16 vertical format, small arms crossed in a powerful stance, crinkled paper texture with visible Brazilian bill formatting, blurred background showing a panicked Brazilian person holding a phone, dramatic underlighting creating villain-like shadows, Disney-Pixar quality rendering --ar 9:16 --v 6
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-legendas">
+    <div class="card">
+      <div class="card-header"><span class="card-icon">📝</span><span class="card-title">Caption Timeline</span><span class="card-meta">PT-BR + EN</span></div>
+      <table class="cap-table">
+        <thead><tr><th>Time</th><th>PT-BR</th><th>English</th><th>Character / Style</th></tr></thead>
+        <tbody>
+    <tr>
+      <td class="tc-time">[0s]</td>
+      <td class="tc-text">Eu era feliz...</td>
+      <td class="tc-text" style="color:#7ba8cc">I was happy once...</td>
+      <td class="tc-style">Nota de R$50 · bold</td>
+    </tr>
+    <tr>
+      <td class="tc-time">[2s]</td>
+      <td class="tc-text">...até você entrar no mercado.</td>
+      <td class="tc-text" style="color:#7ba8cc">...until you walked into that store.</td>
+      <td class="tc-style">Nota de R$50 · regular</td>
+    </tr>
+    <tr>
+      <td class="tc-time">[5s]</td>
+      <td class="tc-text">IMPULSO NÃO É NECESSIDADE!</td>
+      <td class="tc-text" style="color:#7ba8cc">IMPULSE IS NOT A NEED!</td>
+      <td class="tc-style">Nota de R$50 · bold</td>
+    </tr>
+    <tr>
+      <td class="tc-time">[8s]</td>
+      <td class="tc-text">Eu merecia um futuro melhor.</td>
+      <td class="tc-text" style="color:#7ba8cc">I deserved a better future.</td>
+      <td class="tc-style">Nota de R$50 · regular</td>
+    </tr>
+    <tr>
+      <td class="tc-time">[10s]</td>
+      <td class="tc-text">Eu carrego o peso dos seus caprichos.</td>
+      <td class="tc-text" style="color:#7ba8cc">I carry the weight of your whims.</td>
+      <td class="tc-style">Cartão de Crédito · bold</td>
+    </tr>
+    <tr>
+      <td class="tc-time">[12s]</td>
+      <td class="tc-text">12x de 'só R$29,90'...</td>
+      <td class="tc-text" style="color:#7ba8cc">12 installments of 'just R$29.90'...</td>
+      <td class="tc-style">Cartão de Crédito · regular</td>
+    </tr>
+    <tr>
+      <td class="tc-time">[15s]</td>
+      <td class="tc-text">JUROS DE 400% AO ANO!</td>
+      <td class="tc-text" style="color:#7ba8cc">400% ANNUAL INTEREST!</td>
+      <td class="tc-style">Cartão de Crédito · bold</td>
+    </tr>
+    <tr>
+      <td class="tc-time">[18s]</td>
+      <td class="tc-text">Você chamou isso de 'necessidade'.</td>
+      <td class="tc-text" style="color:#7ba8cc">You called this a 'necessity'.</td>
+      <td class="tc-style">Cartão de Crédito · regular</td>
+    </tr>
+    <tr>
+      <td class="tc-time">[20s]</td>
+      <td class="tc-text">Eu avisei. Você ignorou.</td>
+      <td class="tc-text" style="color:#7ba8cc">I warned you. You ignored me.</td>
+      <td class="tc-style">Boleto · bold</td>
+    </tr>
+    <tr>
+      <td class="tc-time">[22s]</td>
+      <td class="tc-text">Vencimento: ontem.</td>
+      <td class="tc-text" style="color:#7ba8cc">Due date: yesterday.</td>
+      <td class="tc-style">Boleto · regular</td>
+    </tr>
+    <tr>
+      <td class="tc-time">[25s]</td>
+      <td class="tc-text">MULTA + JUROS = SEU CASTIGO.</td>
+      <td class="tc-text" style="color:#7ba8cc">FINE + INTEREST = YOUR PUNISHMENT.</td>
+      <td class="tc-style">Boleto · bold</td>
+    </tr>
+    <tr>
+      <td class="tc-time">[28s]</td>
+      <td class="tc-text">Eu sempre volto. Atualizado.</td>
+      <td class="tc-text" style="color:#7ba8cc">I always come back. Updated.</td>
+      <td class="tc-style">Boleto · bold</td>
+    </tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-voz">
+    <div class="card">
+      <div class="card-header"><span class="card-icon">🎙️</span><span class="card-title">Voice Scripts</span></div>
+      
+      <div style="margin-bottom:16px">
+        <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">💵 Nota de R$50 — 0s–10s</div>
+        <div style="background:var(--surface2);border-left:3px solid var(--gold);padding:12px 16px;border-radius:0 4px 4px 0;margin-bottom:6px">
+          <div style="font-size:9px;color:var(--text-dim);margin-bottom:4px">🇧🇷 PT-BR</div>
+          <div style="font-family:'Fraunces',serif;font-style:italic;color:var(--cream);font-size:13px;line-height:1.9">Eu estava ali, guardadinha na sua carteira... [pausa] com tanto potencial! [pausa] Poderia ter virado investimento, reserva de emergência, [ÊNFASE] qualquer coisa útil! [pausa] Mas não... você me viu no mercado e pensou: 'ah, esse chocolate não está na lista, mas MERECE.' [pausa longa] Merece?! [ÊNFASE] EU que merecia respeito!</div>
+        </div>
+        <div style="background:var(--surface2);border-left:3px solid var(--blue-mid);padding:12px 16px;border-radius:0 4px 4px 0">
+          <div style="font-size:9px;color:var(--text-dim);margin-bottom:4px">🇺🇸 EN</div>
+          <div style="font-family:'Fraunces',serif;font-style:italic;color:var(--cream);font-size:13px;line-height:1.9">I was right there, tucked safely in your wallet... [pause] with so much potential! [pause] I could have become an investment, an emergency fund, [EMPHASIS] anything useful! [pause] But no... you saw me at the store and thought: 'oh, that chocolate isn't on the list, but I DESERVE it.' [long pause] Deserve?! [EMPHASIS] I'M the one who deserved respect!</div>
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">💳 Cartão de Crédito — 10s–20s</div>
+        <div style="background:var(--surface2);border-left:3px solid var(--gold);padding:12px 16px;border-radius:0 4px 4px 0;margin-bottom:6px">
+          <div style="font-size:9px;color:var(--text-dim);margin-bottom:4px">🇧🇷 PT-BR</div>
+          <div style="font-family:'Fraunces',serif;font-style:italic;color:var(--cream);font-size:13px;line-height:1.9">Você sabe quantas vezes me passou essa semana? [pausa] SETE. [ÊNFASE] Sete vezes! [pausa] 'Ah, são só 12 parcelas...' [pausa] 'Ah, pago o mínimo esse mês...' [ÊNFASE] O MÍNIMO! [pausa] Sabe o que é o mínimo? É a porta de entrada do inferno financeiro! [pausa longa] Eu não aguento mais. Minhas bordas estão desgastadas de tanto trabalho... e você ainda quer me passar no débito?</div>
+        </div>
+        <div style="background:var(--surface2);border-left:3px solid var(--blue-mid);padding:12px 16px;border-radius:0 4px 4px 0">
+          <div style="font-size:9px;color:var(--text-dim);margin-bottom:4px">🇺🇸 EN</div>
+          <div style="font-family:'Fraunces',serif;font-style:italic;color:var(--cream);font-size:13px;line-height:1.9">Do you know how many times you swiped me this week? [pause] SEVEN. [EMPHASIS] Seven times! [pause] 'Oh, it's only 12 installments...' [pause] 'Oh, I'll just pay the minimum this month...' [EMPHASIS] THE MINIMUM! [pause] Do you know what the minimum payment is? It's the entrance gate to financial hell! [long pause] I can't take it anymore. My edges are worn out from overwork... and you still want to tap me for contactless?</div>
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">📄 Boleto — 20s–30s</div>
+        <div style="background:var(--surface2);border-left:3px solid var(--gold);padding:12px 16px;border-radius:0 4px 4px 0;margin-bottom:6px">
+          <div style="font-size:9px;color:var(--text-dim);margin-bottom:4px">🇧🇷 PT-BR</div>
+          <div style="font-family:'Fraunces',serif;font-style:italic;color:var(--cream);font-size:13px;line-height:1.9">Eu cheguei na semana passada. [pausa] Estava lá. Na sua caixa de entrada. No aplicativo. [pausa] Você viu. [ÊNFASE] E escolheu ignorar. [pausa longa] Então agora... [ÊNFASE] me pague. Com multa. Com juros. Com arrependimento. [pausa] Porque eu, diferente dos seus sonhos, [ÊNFASE] nunca desapareço. Eu vivo. Eu cresço. Eu volto. [pausa] Sempre atualizado.</div>
+        </div>
+        <div style="background:var(--surface2);border-left:3px solid var(--blue-mid);padding:12px 16px;border-radius:0 4px 4px 0">
+          <div style="font-size:9px;color:var(--text-dim);margin-bottom:4px">🇺🇸 EN</div>
+          <div style="font-family:'Fraunces',serif;font-style:italic;color:var(--cream);font-size:13px;line-height:1.9">I arrived last week. [pause] I was right there. In your inbox. In the app. [pause] You saw me. [EMPHASIS] And chose to ignore me. [long pause] So now... [EMPHASIS] pay me. With the fine. With the interest. With the regret. [pause] Because I, unlike your dreams, [EMPHASIS] never disappear. I live. I grow. I come back. [pause] Always updated.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-post">
+    <div class="card">
+      <div class="card-header"><span class="card-icon">📱</span><span class="card-title">Post Copy</span></div>
+      <div class="lang-toggle">
+        <button class="lang-btn active" onclick="showLang('pt',this)">🇧🇷 PT-BR</button>
+        <button class="lang-btn" onclick="showLang('en',this)">🇺🇸 English</button>
+      </div>
+      <div id="post-pt">
+        <div class="post-preview"><span class="post-gancho">🚨 Seus objetos financeiros têm algo a te dizer... e você NÃO vai gostar.</span>Todo dia você comete erros financeiros que custam caro — e seus próprios objetos estão fartos de te ver sofrendo!
+
+💵 A Nota de R$50 chora toda vez que você compra por impulso no mercado
+💳 O Cartão de Crédito está exausto de carregar parcelas de coisas que você nem usa mais
+📄 O Boleto? Ele nunca perdoa. Venceu? Multa. Sempre.
+
+Reconheceu algum desses erros? Você não está sozinho — mas precisa parar AGORA.
+
+👇 Salva esse vídeo e manda pra aquele amigo que vive no limite do cartão.
+
+💾 Salva esse vídeo antes que seu boleto vença! Comenta aqui qual erro você comete mais 👇</div>
+        <div class="hashtags">#educacaofinanceira #financaspessoais #dinheiro #errosfinanceiros #cartraodecredito #boleto #independenciafinanceira #viralfinancas #dicasfinanceiras #gastosimpulso #controlefinanceiro #vidafinanceira #reservadeemergencia #juros #dividas #economizar #planejamentofinanceiro #liberdadefinanceira #brasilfinancas #mesada #investimentos #orcamentodomestico #pobrezafinanceira #conscienciafinanceira #talkingobject</div>
+        <button class="copy-btn" onclick="cp('pt')">📋 Copiar PT-BR</button>
+      </div>
+      <div id="post-en" style="display:none">
+        <div class="post-preview"><span class="post-gancho">🚨 Your financial objects have something to tell you... and you WON'T like it.</span>Every day you make financial mistakes that cost you dearly — and your own financial objects are tired of watching you suffer!
+
+💵 The R$50 Bill cries every time you make an impulse buy at the supermarket
+💳 The Credit Card is exhausted from carrying installments on things you don't even use anymore
+📄 The Bill/Invoice? It never forgives. Expired? Fine. Always.
+
+Recognize any of these mistakes? You're not alone — but you need to stop NOW.
+
+👇 Save this video and send it to that friend who's always maxed out.
+
+💾 Save this video before your next bill is due! Comment which mistake you make the most 👇</div>
+        <div class="hashtags">#financialmistakes #personalfinance #moneytips #creditcarddebt #budgeting #financialeducation #moneymanagement #debtfree #savemoney #financialfreedom #talkingobjects #viralfinance #moneyadvice #brazilianfinance #impulsespending #financialgoals #pixarstyle #aianimation #moneyreels #financetips</div>
+        <button class="copy-btn" onclick="cp('en')">📋 Copy EN</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-variacoes">
+    <div class="card">
+      <div class="card-header"><span class="card-icon">🔁</span><span class="card-title">Variations</span><span class="card-meta">3 angles</span></div>
+      
+    <div class="var-card">
+      <div class="var-num">Variation 01 · Comedy version — the objects argue among themselves about who suffers the most from their owner's mistakes</div>
+      <div class="var-title">A Briga dos Objetos Financeiros</div>
+      <div class="var-hook">"😂 Meu cartão e meu boleto entraram em briga por minha causa... e eu mereço."</div>
+      <div class="var-hook en">"😂 My credit card and my bill got into a fight because of me... and I deserve it."</div>
+      <p style="font-size:12px;color:var(--text);margin-top:6px">Cena dividida ao meio: cartão e boleto um de cada lado discutindo com gestos exagerados. Ideal para Reels de 15s com corte rápido.</p>
+      <div style="margin-top:8px"><span class="tag tag-b">high-retention</span> <span class="tag tag-b">viral</span> <span class="tag tag-b">comedy</span></div>
+    </div>
+    <div class="var-card">
+      <div class="var-num">Variation 02 · Educational version — each object teaches a practical tip to avoid the mistake it exposes</div>
+      <div class="var-title">O Que Seus Objetos Queriam Que Você Soubesse</div>
+      <div class="var-hook">"📚 E se seus objetos financeiros pudessem te ensinar a não sofrer mais?"</div>
+      <div class="var-hook en">"📚 What if your financial objects could teach you how to stop suffering?"</div>
+      <p style="font-size:12px;color:var(--text);margin-top:6px">Após o discurso dramático de cada objeto, inserir card educacional de 2s com a dica. Ideal para salvar e compartilhar.</p>
+      <div style="margin-top:8px"><span class="tag tag-b">educational</span> <span class="tag tag-b">high-retention</span> <span class="tag tag-b">saveable</span></div>
+    </div>
+    <div class="var-card">
+      <div class="var-num">Variation 03 · End of Month version — objects react to a zeroed bank statement on the 30th</div>
+      <div class="var-title">Dia 30: A Tragédia Financeira</div>
+      <div class="var-hook">"😱 Dia 30 na conta bancária — uma história de terror real."</div>
+      <div class="var-hook en">"😱 Day 30 in the bank account — a real horror story."</div>
+      <p style="font-size:12px;color:var(--text);margin-top:6px">Ambiência noturna dramática, efeitos de som de suspense, close no saldo zerado. Formato ideal 30-45s para maior engajamento.</p>
+      <div style="margin-top:8px"><span class="tag tag-b">viral</span> <span class="tag tag-b">relatable</span> <span class="tag tag-b">high-retention</span></div>
+    </div>
+    <div class="var-card">
+      <div class="var-num">Variation 04 · Hero version — the objects teach what to do RIGHT and celebrate when the user gets it right</div>
+      <div class="var-title">Quando Você Finalmente Acerta nas Finanças</div>
+      <div class="var-hook">"🎉 E se seus objetos financeiros ficassem ORGULHOSOS de você?"</div>
+      <div class="var-hook en">"🎉 What if your financial objects were actually PROUD of you?"</div>
+      <p style="font-size:12px;color:var(--text);margin-top:6px">Tom inspiracional em vez de dramático. Transição de cena triste para alegre. Ideal para início de mês ou virada de ano.</p>
+      <div style="margin-top:8px"><span class="tag tag-b">inspirational</span> <span class="tag tag-b">positive</span> <span class="tag tag-b">shareable</span></div>
+    </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-stack">
+    <div class="card">
+      <div class="card-header"><span class="card-icon">🛠️</span><span class="card-title">Production Stack</span></div>
+      
+    <div class="tool-row">
+      <span class="step-num">1</span>
+      <span class="tool-name">Midjourney v6</span>
+      <span class="tool-use">Gerar os personagens 3D estilo Pixar de cada objeto financeiro com os prompts fornecidos, no formato 9:16 vertical</span>
+      <span class="tag tag-g">essential</span>
+    </div>
+    <div class="tool-row">
+      <span class="step-num">2</span>
+      <span class="tool-name">ElevenLabs</span>
+      <span class="tool-use">Sintetizar as vozes dramáticas de cada personagem em português e inglês, usando os voice scripts com marcações de pausa e ênfase</span>
+      <span class="tag tag-g">essential</span>
+    </div>
+    <div class="tool-row">
+      <span class="step-num">3</span>
+      <span class="tool-name">Kling AI / Runway Gen-3</span>
+      <span class="tool-use">Animar os personagens estáticos gerados no Midjourney com os movimentos corporais descritos nos prompts de animação</span>
+      <span class="tag tag-g">essential</span>
+    </div>
+    <div class="tool-row">
+      <span class="step-num">4</span>
+      <span class="tool-name">CapCut</span>
+      <span class="tool-use">Montar o reel final: sincronizar áudio, adicionar legendas com estilos e cores definidos, inserir efeitos sonoros dramáticos e transições entre os personagens</span>
+      <span class="tag tag-g">essential</span>
+    </div>
+    <div class="tool-row">
+      <span class="step-num">5</span>
+      <span class="tool-name">Adobe Premiere Pro / DaVinci Resolve</span>
+      <span class="tool-use">Edição avançada opcional: color grading dramático, correção de sincronização labial e ajustes finos de timing para máximo engajamento</span>
+      <span class="tag tag-b">optional</span>
+    </div>
+    <div class="tool-row">
+      <span class="step-num">6</span>
+      <span class="tool-name">HeyGen</span>
+      <span class="tool-use">Alternativa ao Kling para sincronização labial dos personagens animados com o áudio gerado no ElevenLabs</span>
+      <span class="tag tag-g">essential</span>
+    </div>
+    </div>
+  </div>
+</div>
+<script>
+function st(id,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+function showLang(lang,btn){
+  document.getElementById('post-pt').style.display=lang==='pt'?'block':'none';
+  document.getElementById('post-en').style.display=lang==='en'?'block':'none';
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+const postData={
+  pt:"%F0%9F%9A%A8%20Seus%20objetos%20financeiros%20t%C3%AAm%20algo%20a%20te%20dizer...%20e%20voc%C3%AA%20N%C3%83O%20vai%20gostar.%0A%0ATodo%20dia%20voc%C3%AA%20comete%20erros%20financeiros%20que%20custam%20caro%20%E2%80%94%20e%20seus%20pr%C3%B3prios%20objetos%20est%C3%A3o%20fartos%20de%20te%20ver%20sofrendo!%0A%0A%F0%9F%92%B5%20A%20Nota%20de%20R%2450%20chora%20toda%20vez%20que%20voc%C3%AA%20compra%20por%20impulso%20no%20mercado%0A%F0%9F%92%B3%20O%20Cart%C3%A3o%20de%20Cr%C3%A9dito%20est%C3%A1%20exausto%20de%20carregar%20parcelas%20de%20coisas%20que%20voc%C3%AA%20nem%20usa%20mais%0A%F0%9F%93%84%20O%20Boleto%3F%20Ele%20nunca%20perdoa.%20Venceu%3F%20Multa.%20Sempre.%0A%0AReconheceu%20algum%20desses%20erros%3F%20Voc%C3%AA%20n%C3%A3o%20est%C3%A1%20sozinho%20%E2%80%94%20mas%20precisa%20parar%20AGORA.%0A%0A%F0%9F%91%87%20Salva%20esse%20v%C3%ADdeo%20e%20manda%20pra%20aquele%20amigo%20que%20vive%20no%20limite%20do%20cart%C3%A3o.%0A%0A%F0%9F%92%BE%20Salva%20esse%20v%C3%ADdeo%20antes%20que%20seu%20boleto%20ven%C3%A7a!%20Comenta%20aqui%20qual%20erro%20voc%C3%AA%20comete%20mais%20%F0%9F%91%87%0A%0A%23educacaofinanceira%20%23financaspessoais%20%23dinheiro%20%23errosfinanceiros%20%23cartraodecredito%20%23boleto%20%23independenciafinanceira%20%23viralfinancas%20%23dicasfinanceiras%20%23gastosimpulso%20%23controlefinanceiro%20%23vidafinanceira%20%23reservadeemergencia%20%23juros%20%23dividas%20%23economizar%20%23planejamentofinanceiro%20%23liberdadefinanceira%20%23brasilfinancas%20%23mesada%20%23investimentos%20%23orcamentodomestico%20%23pobrezafinanceira%20%23conscienciafinanceira%20%23talkingobject",
+  en:"%F0%9F%9A%A8%20Your%20financial%20objects%20have%20something%20to%20tell%20you...%20and%20you%20WON'T%20like%20it.%0A%0AEvery%20day%20you%20make%20financial%20mistakes%20that%20cost%20you%20dearly%20%E2%80%94%20and%20your%20own%20financial%20objects%20are%20tired%20of%20watching%20you%20suffer!%0A%0A%F0%9F%92%B5%20The%20R%2450%20Bill%20cries%20every%20time%20you%20make%20an%20impulse%20buy%20at%20the%20supermarket%0A%F0%9F%92%B3%20The%20Credit%20Card%20is%20exhausted%20from%20carrying%20installments%20on%20things%20you%20don't%20even%20use%20anymore%0A%F0%9F%93%84%20The%20Bill%2FInvoice%3F%20It%20never%20forgives.%20Expired%3F%20Fine.%20Always.%0A%0ARecognize%20any%20of%20these%20mistakes%3F%20You're%20not%20alone%20%E2%80%94%20but%20you%20need%20to%20stop%20NOW.%0A%0A%F0%9F%91%87%20Save%20this%20video%20and%20send%20it%20to%20that%20friend%20who's%20always%20maxed%20out.%0A%0A%F0%9F%92%BE%20Save%20this%20video%20before%20your%20next%20bill%20is%20due!%20Comment%20which%20mistake%20you%20make%20the%20most%20%F0%9F%91%87%0A%0A%23financialmistakes%20%23personalfinance%20%23moneytips%20%23creditcarddebt%20%23budgeting%20%23financialeducation%20%23moneymanagement%20%23debtfree%20%23savemoney%20%23financialfreedom%20%23talkingobjects%20%23viralfinance%20%23moneyadvice%20%23brazilianfinance%20%23impulsespending%20%23financialgoals%20%23pixarstyle%20%23aianimation%20%23moneyreels%20%23financetips"
+};
+function cp(lang){
+  navigator.clipboard.writeText(decodeURIComponent(postData[lang]||'')).then(()=>{
+    const b=document.querySelector('.copy-btn');
+    const o=b.innerHTML;b.innerHTML='✅ Copied!';setTimeout(()=>b.innerHTML=o,2000);
+  });
+}
+</script>
+</body>
+</html>

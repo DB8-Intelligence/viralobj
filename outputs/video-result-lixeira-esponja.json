@@ -1,0 +1,496 @@
+{
+  "meta": {
+    "niche": "casa",
+    "topic_pt": "Objetos mais sujos da cozinha",
+    "topic_en": "Dirtiest objects in the kitchen",
+    "tone": "angry",
+    "duration": 30,
+    "objects_count": 2,
+    "generated_at": "2026-04-10T00:35:15.586Z",
+    "lang": "pt",
+    "quality": "standard",
+    "caption_style": "bold_white",
+    "total_clips": 2,
+    "pipeline": "FLUX.2 Pro → MiniMax TTS → VEED Fabric"
+  },
+  "clips": [
+    {
+      "character_pt": "Lixeira",
+      "character_en": "Trash Can",
+      "emoji": "🗑️",
+      "timestamp_start": "0s",
+      "timestamp_end": "15s",
+      "image_url": "https://v3b.fal.media/files/b/0a95a083/3j7lT5nPuxZzyENQHCLc7_d5c385c68a814eeb9f9f62bc6580768a.jpg",
+      "audio_url": "https://v3b.fal.media/files/b/0a95a083/cA5Rkv-P5Wq-4kGwUx_Ur_speech.mp3",
+      "clip_url": "https://v3b.fal.media/files/b/0a95a08a/uWQsE6JIoaRf1dHl4mCbH_tmpz9tui2ad.mp4",
+      "voice_profile": {
+        "voice_id": "Wise_Woman",
+        "emotion": "angry",
+        "speed": 1.25,
+        "pitch": -2,
+        "description": "Furious, explosive, at the limit"
+      },
+      "captions": [
+        {
+          "time": "0s",
+          "text": "EU SOU A MAIS ODIADA DA COZINHA?!",
+          "style": "bold",
+          "css": {
+            "fontFamily": "Arial Black, sans-serif",
+            "textAlign": "center",
+            "position": "absolute",
+            "bottom": "15%",
+            "width": "90%",
+            "left": "5%",
+            "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            "color": "#FFFFFF",
+            "fontSize": "48px",
+            "fontWeight": "900"
+          }
+        },
+        {
+          "time": "3s",
+          "text": "Coloca lixo MOLHADO sem saco…",
+          "style": "regular",
+          "css": {
+            "fontFamily": "Arial Black, sans-serif",
+            "textAlign": "center",
+            "position": "absolute",
+            "bottom": "15%",
+            "width": "90%",
+            "left": "5%",
+            "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            "color": "#FFFFFF",
+            "fontSize": "38px",
+            "fontWeight": "900"
+          }
+        },
+        {
+          "time": 6,
+          "text": "NUNCA me lavam por dentro!",
+          "style": "bold",
+          "css": {
+            "fontFamily": "Arial Black, sans-serif",
+            "textAlign": "center",
+            "position": "absolute",
+            "bottom": "15%",
+            "width": "90%",
+            "left": "5%",
+            "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            "color": "#FFFFFF",
+            "fontSize": "48px",
+            "fontWeight": "900"
+          }
+        },
+        {
+          "time": "9s",
+          "text": "Sou um criadouro de bactérias!",
+          "style": "bold",
+          "css": {
+            "fontFamily": "Arial Black, sans-serif",
+            "textAlign": "center",
+            "position": "absolute",
+            "bottom": "15%",
+            "width": "90%",
+            "left": "5%",
+            "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            "color": "#FFFFFF",
+            "fontSize": "48px",
+            "fontWeight": "900"
+          }
+        },
+        {
+          "time": "12s",
+          "text": "Me LIMPA. Agora.",
+          "style": "bold",
+          "css": {
+            "fontFamily": "Arial Black, sans-serif",
+            "textAlign": "center",
+            "position": "absolute",
+            "bottom": "15%",
+            "width": "90%",
+            "left": "5%",
+            "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            "color": "#FFFFFF",
+            "fontSize": "48px",
+            "fontWeight": "900"
+          }
+        }
+      ]
+    },
+    {
+      "character_pt": "Esponja de Pia",
+      "character_en": "Kitchen Sponge",
+      "emoji": "🧽",
+      "timestamp_start": "15s",
+      "timestamp_end": "30s",
+      "image_url": "https://v3b.fal.media/files/b/0a95a08b/Ppe_VngeIhoqDSZh4Udkr_7d90559ab75841eb9b4ed8898b1f3870.png",
+      "audio_url": "https://v3b.fal.media/files/b/0a95a08b/v9Ca0IP7oLUtfQsg002JF_speech.mp3",
+      "clip_url": "https://v3b.fal.media/files/b/0a95a093/Xin82mHra5tQz2VK0b6ox_tmpl_sz0_tv.mp4",
+      "voice_profile": {
+        "voice_id": "Friendly_Person",
+        "emotion": "angry",
+        "speed": 1.1,
+        "pitch": 0,
+        "description": "Angry, indignant, resentful"
+      },
+      "captions": [
+        {
+          "time": "15s",
+          "text": "Eu sou o objeto mais contaminado da cozinha.",
+          "style": "bold",
+          "css": {
+            "fontFamily": "Arial Black, sans-serif",
+            "textAlign": "center",
+            "position": "absolute",
+            "bottom": "15%",
+            "width": "90%",
+            "left": "5%",
+            "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            "color": "#FFFFFF",
+            "fontSize": "48px",
+            "fontWeight": "900"
+          }
+        },
+        {
+          "time": "18s",
+          "text": "Carrego MILHÕES de bactérias…",
+          "style": "regular",
+          "css": {
+            "fontFamily": "Arial Black, sans-serif",
+            "textAlign": "center",
+            "position": "absolute",
+            "bottom": "15%",
+            "width": "90%",
+            "left": "5%",
+            "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            "color": "#FFFFFF",
+            "fontSize": "38px",
+            "fontWeight": "900"
+          }
+        },
+        {
+          "time": "21s",
+          "text": "E você me usa pra LAVAR a louça?!",
+          "style": "bold",
+          "css": {
+            "fontFamily": "Arial Black, sans-serif",
+            "textAlign": "center",
+            "position": "absolute",
+            "bottom": "15%",
+            "width": "90%",
+            "left": "5%",
+            "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            "color": "#FFFFFF",
+            "fontSize": "48px",
+            "fontWeight": "900"
+          }
+        },
+        {
+          "time": "24s",
+          "text": "Estou me sentindo HORRÍVEL!",
+          "style": "bold",
+          "css": {
+            "fontFamily": "Arial Black, sans-serif",
+            "textAlign": "center",
+            "position": "absolute",
+            "bottom": "15%",
+            "width": "90%",
+            "left": "5%",
+            "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            "color": "#FFFFFF",
+            "fontSize": "48px",
+            "fontWeight": "900"
+          }
+        },
+        {
+          "time": "27s",
+          "text": "Me troca. Por favor. EU TE IMPLORO.",
+          "style": "bold",
+          "css": {
+            "fontFamily": "Arial Black, sans-serif",
+            "textAlign": "center",
+            "position": "absolute",
+            "bottom": "15%",
+            "width": "90%",
+            "left": "5%",
+            "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+            "color": "#FFFFFF",
+            "fontSize": "48px",
+            "fontWeight": "900"
+          }
+        }
+      ]
+    }
+  ],
+  "final_video_url": null,
+  "caption_script": [
+    {
+      "time_seconds": 0,
+      "time_formatted": "00:00.00",
+      "text": "EU SOU A MAIS ODIADA DA COZINHA?!",
+      "style": "bold",
+      "css": {
+        "fontFamily": "Arial Black, sans-serif",
+        "textAlign": "center",
+        "position": "absolute",
+        "bottom": "15%",
+        "width": "90%",
+        "left": "5%",
+        "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+        "color": "#FFFFFF",
+        "fontSize": "48px",
+        "fontWeight": "900"
+      },
+      "character": "Lixeira"
+    },
+    {
+      "time_seconds": 3,
+      "time_formatted": "00:03.00",
+      "text": "Coloca lixo MOLHADO sem saco…",
+      "style": "regular",
+      "css": {
+        "fontFamily": "Arial Black, sans-serif",
+        "textAlign": "center",
+        "position": "absolute",
+        "bottom": "15%",
+        "width": "90%",
+        "left": "5%",
+        "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+        "color": "#FFFFFF",
+        "fontSize": "38px",
+        "fontWeight": "900"
+      },
+      "character": "Lixeira"
+    },
+    {
+      "time_seconds": 6,
+      "time_formatted": "00:06.00",
+      "text": "NUNCA me lavam por dentro!",
+      "style": "bold",
+      "css": {
+        "fontFamily": "Arial Black, sans-serif",
+        "textAlign": "center",
+        "position": "absolute",
+        "bottom": "15%",
+        "width": "90%",
+        "left": "5%",
+        "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+        "color": "#FFFFFF",
+        "fontSize": "48px",
+        "fontWeight": "900"
+      },
+      "character": "Lixeira"
+    },
+    {
+      "time_seconds": 9,
+      "time_formatted": "00:09.00",
+      "text": "Sou um criadouro de bactérias!",
+      "style": "bold",
+      "css": {
+        "fontFamily": "Arial Black, sans-serif",
+        "textAlign": "center",
+        "position": "absolute",
+        "bottom": "15%",
+        "width": "90%",
+        "left": "5%",
+        "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+        "color": "#FFFFFF",
+        "fontSize": "48px",
+        "fontWeight": "900"
+      },
+      "character": "Lixeira"
+    },
+    {
+      "time_seconds": 12,
+      "time_formatted": "00:12.00",
+      "text": "Me LIMPA. Agora.",
+      "style": "bold",
+      "css": {
+        "fontFamily": "Arial Black, sans-serif",
+        "textAlign": "center",
+        "position": "absolute",
+        "bottom": "15%",
+        "width": "90%",
+        "left": "5%",
+        "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+        "color": "#FFFFFF",
+        "fontSize": "48px",
+        "fontWeight": "900"
+      },
+      "character": "Lixeira"
+    },
+    {
+      "time_seconds": 30,
+      "time_formatted": "00:30.00",
+      "text": "Eu sou o objeto mais contaminado da cozinha.",
+      "style": "bold",
+      "css": {
+        "fontFamily": "Arial Black, sans-serif",
+        "textAlign": "center",
+        "position": "absolute",
+        "bottom": "15%",
+        "width": "90%",
+        "left": "5%",
+        "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+        "color": "#FFFFFF",
+        "fontSize": "48px",
+        "fontWeight": "900"
+      },
+      "character": "Esponja de Pia"
+    },
+    {
+      "time_seconds": 33,
+      "time_formatted": "00:33.00",
+      "text": "Carrego MILHÕES de bactérias…",
+      "style": "regular",
+      "css": {
+        "fontFamily": "Arial Black, sans-serif",
+        "textAlign": "center",
+        "position": "absolute",
+        "bottom": "15%",
+        "width": "90%",
+        "left": "5%",
+        "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+        "color": "#FFFFFF",
+        "fontSize": "38px",
+        "fontWeight": "900"
+      },
+      "character": "Esponja de Pia"
+    },
+    {
+      "time_seconds": 36,
+      "time_formatted": "00:36.00",
+      "text": "E você me usa pra LAVAR a louça?!",
+      "style": "bold",
+      "css": {
+        "fontFamily": "Arial Black, sans-serif",
+        "textAlign": "center",
+        "position": "absolute",
+        "bottom": "15%",
+        "width": "90%",
+        "left": "5%",
+        "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+        "color": "#FFFFFF",
+        "fontSize": "48px",
+        "fontWeight": "900"
+      },
+      "character": "Esponja de Pia"
+    },
+    {
+      "time_seconds": 39,
+      "time_formatted": "00:39.00",
+      "text": "Estou me sentindo HORRÍVEL!",
+      "style": "bold",
+      "css": {
+        "fontFamily": "Arial Black, sans-serif",
+        "textAlign": "center",
+        "position": "absolute",
+        "bottom": "15%",
+        "width": "90%",
+        "left": "5%",
+        "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+        "color": "#FFFFFF",
+        "fontSize": "48px",
+        "fontWeight": "900"
+      },
+      "character": "Esponja de Pia"
+    },
+    {
+      "time_seconds": 42,
+      "time_formatted": "00:42.00",
+      "text": "Me troca. Por favor. EU TE IMPLORO.",
+      "style": "bold",
+      "css": {
+        "fontFamily": "Arial Black, sans-serif",
+        "textAlign": "center",
+        "position": "absolute",
+        "bottom": "15%",
+        "width": "90%",
+        "left": "5%",
+        "textShadow": "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+        "color": "#FFFFFF",
+        "fontSize": "48px",
+        "fontWeight": "900"
+      },
+      "character": "Esponja de Pia"
+    }
+  ],
+  "capcut_import": {
+    "instructions": "Import each clip_url in order in CapCut. Use the captions array for text overlays.",
+    "clips_in_order": [
+      {
+        "order": 1,
+        "character": "Lixeira",
+        "url": "https://v3b.fal.media/files/b/0a95a08a/uWQsE6JIoaRf1dHl4mCbH_tmpz9tui2ad.mp4",
+        "duration": "15s"
+      },
+      {
+        "order": 2,
+        "character": "Esponja de Pia",
+        "url": "https://v3b.fal.media/files/b/0a95a093/Xin82mHra5tQz2VK0b6ox_tmpl_sz0_tv.mp4",
+        "duration": "15s"
+      }
+    ],
+    "captions": [
+      {
+        "time": "00:00.00",
+        "text": "EU SOU A MAIS ODIADA DA COZINHA?!",
+        "style": "bold"
+      },
+      {
+        "time": "00:03.00",
+        "text": "Coloca lixo MOLHADO sem saco…",
+        "style": "regular"
+      },
+      {
+        "time": "00:06.00",
+        "text": "NUNCA me lavam por dentro!",
+        "style": "bold"
+      },
+      {
+        "time": "00:09.00",
+        "text": "Sou um criadouro de bactérias!",
+        "style": "bold"
+      },
+      {
+        "time": "00:12.00",
+        "text": "Me LIMPA. Agora.",
+        "style": "bold"
+      },
+      {
+        "time": "00:30.00",
+        "text": "Eu sou o objeto mais contaminado da cozinha.",
+        "style": "bold"
+      },
+      {
+        "time": "00:33.00",
+        "text": "Carrego MILHÕES de bactérias…",
+        "style": "regular"
+      },
+      {
+        "time": "00:36.00",
+        "text": "E você me usa pra LAVAR a louça?!",
+        "style": "bold"
+      },
+      {
+        "time": "00:39.00",
+        "text": "Estou me sentindo HORRÍVEL!",
+        "style": "bold"
+      },
+      {
+        "time": "00:42.00",
+        "text": "Me troca. Por favor. EU TE IMPLORO.",
+        "style": "bold"
+      }
+    ]
+  },
+  "cost_estimate": {
+    "per_image_usd": "0.030",
+    "per_tts_usd": "0.300",
+    "per_lipsync_usd": "0.80",
+    "per_clip_usd": "1.13",
+    "total_usd": "$2.26",
+    "clips_count": 2
+  }
+}

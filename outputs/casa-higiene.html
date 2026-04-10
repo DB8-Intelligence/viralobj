@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ViralObj — Erros de higiene doméstica</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0d12;--surface:#111318;--surface2:#171b24;--border:#222840;--blue:#5b9fff;--blue-mid:#3d7fbd;--gold:#c9a84c;--cream:#e2e8f0;--text:#a8b8cc;--text-dim:#3d5060;--red:#ff5b5b;--green:#5bff7a;--orange:#ffaa5b}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font-size:13px;line-height:1.7;overflow-x:hidden}
+.page-wrap{max-width:920px;margin:0 auto;padding:40px 24px 80px}
+.header{border-bottom:1px solid var(--border);padding-bottom:28px;margin-bottom:28px;display:flex;align-items:flex-start;gap:18px}
+.header-icon{font-size:48px;animation:glow 3s ease-in-out infinite}
+@keyframes glow{0%,100%{filter:drop-shadow(0 0 12px rgba(91,159,255,.3))}50%{filter:drop-shadow(0 0 24px rgba(91,159,255,.6))}}
+.badge{display:inline-block;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--blue);background:rgba(91,159,255,.08);border:1px solid rgba(91,159,255,.2);padding:3px 10px;border-radius:2px;margin-bottom:8px}
+h1{font-family:'Fraunces',serif;font-size:30px;font-weight:900;color:var(--cream);margin-bottom:4px}
+h1 em{font-style:italic;color:var(--blue)}
+.subtitle{color:var(--text-dim);font-size:11px}
+.stat-row{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap}
+.stat{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:10px 16px;flex:1;min-width:80px;text-align:center}
+.stat-val{font-family:'Fraunces',serif;font-size:22px;font-weight:900;color:var(--blue);display:block}
+.stat-label{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim)}
+.tabs{display:flex;gap:2px;margin-bottom:22px;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;padding:10px 13px;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);transition:all .2s;white-space:nowrap;margin-bottom:-1px}
+.tab-btn:hover{color:var(--cream)}.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
+.panel{display:none;animation:fi .22s ease}.panel.active{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:20px 22px;margin-bottom:12px}
+.card-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.card-icon{font-size:17px}.card-title{font-family:'Fraunces',serif;font-size:14px;font-weight:700;color:var(--cream)}
+.card-meta{margin-left:auto;font-size:10px;letter-spacing:.1em;color:var(--text-dim);text-transform:uppercase}
+.char-card{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:15px 17px;margin-bottom:10px}
+.char-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.char-num{font-family:'Fraunces',serif;font-size:26px;font-weight:900;color:var(--border);min-width:32px}
+.char-name{font-family:'Fraunces',serif;font-size:14px;font-weight:700;color:var(--cream)}
+.char-sub{font-size:10px;color:var(--text-dim)}
+.time-badge{margin-left:auto;font-size:10px;color:var(--blue-mid);letter-spacing:.08em}
+.expr-row{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.expr-badge{font-size:10px;padding:2px 8px;border-radius:12px;background:rgba(91,159,255,.08);border:1px solid rgba(91,159,255,.15);color:var(--blue)}
+.expr-arrow{color:var(--text-dim);font-size:12px;line-height:2}
+.row{display:grid;grid-template-columns:70px 1fr;gap:6px;margin-bottom:4px;font-size:12px}
+.row-lbl{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);padding-top:1px}
+.row-val{color:var(--text)}
+.prompt-block{background:#080a0f;border:1px solid var(--border);border-radius:4px;padding:10px 12px;margin-top:8px;font-size:11px;color:var(--blue-mid);line-height:1.6}
+.prompt-lbl{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px}
+.cap-table{width:100%;border-collapse:collapse;font-size:12px}
+.cap-table th{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim);text-align:left;padding:7px 10px;border-bottom:1px solid var(--border)}
+.cap-table td{padding:7px 10px;border-bottom:1px solid rgba(34,40,64,.5);vertical-align:top}
+.cap-table tr:hover td{background:rgba(91,159,255,.02)}
+.tc-time{color:var(--blue-mid);font-size:11px;width:50px}.tc-text{color:var(--cream)}.tc-style{color:var(--text-dim);font-size:11px}
+.post-preview{background:#080a0f;border:1px solid var(--border);border-radius:8px;padding:18px 20px;font-size:13px;line-height:1.9;color:var(--text);white-space:pre-line;font-family:'DM Mono',monospace}
+.post-gancho{font-family:'Fraunces',serif;font-size:16px;font-weight:700;color:var(--cream);margin-bottom:10px;display:block}
+.hashtags{margin-top:12px;color:var(--blue-mid);font-size:11px;line-height:1.9;word-break:break-word}
+.copy-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(91,159,255,.06);border:1px solid rgba(91,159,255,.2);border-radius:4px;padding:5px 12px;color:var(--blue);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .15s;margin-top:10px}
+.copy-btn:hover{background:rgba(91,159,255,.12)}
+.lang-toggle{display:flex;gap:4px;margin-bottom:12px}
+.lang-btn{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:4px 12px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;color:var(--text-dim);transition:all .15s}
+.lang-btn.active{background:rgba(91,159,255,.1);border-color:rgba(91,159,255,.3);color:var(--blue)}
+.var-card{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:14px 16px;margin-bottom:10px}
+.var-num{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px}
+.var-title{font-family:'Fraunces',serif;font-size:14px;font-weight:700;color:var(--cream);margin-bottom:6px}
+.var-hook{font-style:italic;color:var(--blue-mid);font-size:12px;margin-bottom:3px;padding-left:10px;border-left:2px solid var(--border)}
+.var-hook.en{color:var(--text-dim)}
+.tag{display:inline-block;padding:2px 7px;border-radius:2px;font-size:10px;letter-spacing:.07em;text-transform:uppercase;margin:2px 2px 2px 0}
+.tag-b{background:rgba(91,159,255,.1);color:var(--blue);border:1px solid rgba(91,159,255,.2)}
+.tag-g{background:rgba(91,255,122,.1);color:var(--green);border:1px solid rgba(91,255,122,.2)}
+.tag-o{background:rgba(201,168,76,.1);color:var(--gold);border:1px solid rgba(201,168,76,.2)}
+.tool-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px}
+.tool-row:last-child{border-bottom:none}
+.step-num{color:var(--text-dim);font-size:10px;min-width:18px}
+.tool-name{color:var(--cream);font-weight:500;min-width:110px}
+.tool-use{color:var(--text-dim);flex:1}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:16px 0}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+  <div class="header">
+    <div class="header-icon">🎭</div>
+    <div>
+      <div class="badge">ViralObj · viralobj.com · Talking Object Generator</div>
+      <h1>Erros de higiene doméstica <em>/ Household hygiene mistakes</em></h1>
+      <div class="subtitle">casa · angry · 30s · 3 character(s)</div>
+    </div>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat"><span class="stat-val">3</span><span class="stat-label">Characters</span></div>
+    <div class="stat"><span class="stat-val">30s</span><span class="stat-label">Duration</span></div>
+    <div class="stat"><span class="stat-val">3</span><span class="stat-label">AI Prompts</span></div>
+    <div class="stat"><span class="stat-val">3</span><span class="stat-label">Variations</span></div>
+    <div class="stat"><span class="stat-val">45</span><span class="stat-label">Hashtags</span></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="st('roteiro',this)">🎬 Script</button>
+    <button class="tab-btn" onclick="st('legendas',this)">📝 Captions</button>
+    <button class="tab-btn" onclick="st('voz',this)">🎙️ Voice</button>
+    <button class="tab-btn" onclick="st('post',this)">📱 Post</button>
+    <button class="tab-btn" onclick="st('variacoes',this)">🔁 Variations</button>
+    <button class="tab-btn" onclick="st('stack',this)">🛠️ Stack</button>
+  </div>
+
+  <div class="panel active" id="panel-roteiro">
+    <div class="card">
+      <div class="card-header"><span class="card-icon">🎬</span><span class="card-title">Scene Script + AI Prompts</span><span class="card-meta">30s · 9:16</span></div>
+      
+    <div class="char-card">
+      <div class="char-header">
+        <span class="char-num">01</span>
+        <div class="char-info">
+          <div class="char-name">🧴 Água Sanitária / Bleach</div>
+          <div class="char-sub">Banheiro bagunçado com azulejos encardidos. Pia com manchas de mofo. Luz fria de banheiro.</div>
+        </div>
+        <span class="time-badge">0s–10s</span>
+      </div>
+      <div class="expr-row">
+        <span class="expr-badge">indignada</span><span class="expr-arrow">→</span><span class="expr-badge">revoltada</span><span class="expr-arrow">→</span><span class="expr-badge">furiosa</span>
+      </div>
+      <div class="row"><div class="row-lbl">Error PT</div><div class="row-val">Misturar água sanitária com outros produtos químicos sem saber que isso gera gás tóxico</div></div>
+      <div class="row"><div class="row-lbl">Error EN</div><div class="row-val">Mixing bleach with other chemicals without knowing it creates toxic gas</div></div>
+      <div class="prompt-block">
+        <div class="prompt-lbl">🖼️ Midjourney Prompt</div>
+        Angry anthropomorphic bleach bottle character with cartoon face, furious expression with gritted teeth and furrowed brows, standing in a messy Brazilian bathroom with grimy tiles and mold, cold fluorescent lighting, Pixar 3D render style, 9:16 vertical format, blurred human figure mixing chemicals in background, vibrant colors, Disney-quality character design, dramatic lighting --ar 9:16 --v 6
+      </div>
+    </div>
+    <div class="char-card">
+      <div class="char-header">
+        <span class="char-num">02</span>
+        <div class="char-info">
+          <div class="char-name">📱 Celular / Smartphone</div>
+          <div class="char-sub">Mesa de jantar com restos de comida. Celular apoiado contra um copo, tela suja de gordura. Luz quente de cozinha.</div>
+        </div>
+        <span class="time-badge">10s–20s</span>
+      </div>
+      <div class="expr-row">
+        <span class="expr-badge">enojado</span><span class="expr-arrow">→</span><span class="expr-badge">horrorizado</span><span class="expr-arrow">→</span><span class="expr-badge">implorando</span>
+      </div>
+      <div class="row"><div class="row-lbl">Error PT</div><div class="row-val">Usar o celular na mesa de jantar e no banheiro sem nunca limpar a tela</div></div>
+      <div class="row"><div class="row-lbl">Error EN</div><div class="row-val">Using phone at the dinner table and in the bathroom without ever cleaning the screen</div></div>
+      <div class="prompt-block">
+        <div class="prompt-lbl">🖼️ Midjourney Prompt</div>
+        Disgusted anthropomorphic smartphone character with cartoon face showing horror and nausea, greasy fingerprints visible on screen-body, standing on messy Brazilian dining table with food scraps, warm kitchen lighting, Pixar 3D render style, 9:16 vertical, person eating with greasy hands in blurred background, expressive Disney-quality character --ar 9:16 --v 6
+      </div>
+    </div>
+    <div class="char-card">
+      <div class="char-header">
+        <span class="char-num">03</span>
+        <div class="char-info">
+          <div class="char-name">🗑️ Lixeira / Trash Can</div>
+          <div class="char-sub">Cozinha brasileira com lixeira transbordando, sem saco plástico, líquido escorrendo. Luz quente lateral.</div>
+        </div>
+        <span class="time-badge">20s–30s</span>
+      </div>
+      <div class="expr-row">
+        <span class="expr-badge">furiosa</span><span class="expr-arrow">→</span><span class="expr-badge">explosiva</span><span class="expr-arrow">→</span><span class="expr-badge">determinada</span>
+      </div>
+      <div class="row"><div class="row-lbl">Error PT</div><div class="row-val">Não trocar o saco de lixo, deixar transbordar e não lavar a lixeira por dentro</div></div>
+      <div class="row"><div class="row-lbl">Error EN</div><div class="row-val">Not changing the trash bag, letting it overflow, and never washing the bin inside</div></div>
+      <div class="prompt-block">
+        <div class="prompt-lbl">🖼️ Midjourney Prompt</div>
+        Furious anthropomorphic trash can character with cartoon face showing explosive anger, overflowing with trash, no plastic bag visible, liquid leaking from bottom, Brazilian kitchen setting, warm dramatic side lighting, Pixar 3D render style, 9:16 vertical, person forcing more trash in background, Disney-quality expressive character design --ar 9:16 --v 6
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-legendas">
+    <div class="card">
+      <div class="card-header"><span class="card-icon">📝</span><span class="card-title">Caption Timeline</span><span class="card-meta">PT-BR + EN</span></div>
+      <table class="cap-table">
+        <thead><tr><th>Time</th><th>PT-BR</th><th>English</th><th>Character / Style</th></tr></thead>
+        <tbody>
+    <tr>
+      <td class="tc-time">[1s]</td>
+      <td class="tc-text">Vocês MISTURAM a gente com qualquer coisa!</td>
+      <td class="tc-text" style="color:#7ba8cc">You people MIX us with anything!</td>
+      <td class="tc-style">Água Sanitária · bold</td>
+    </tr>
+    <tr>
+      <td class="tc-time">[4s]</td>
+      <td class="tc-text">Água sanitária + vinagre = GÁS TÓXICO</td>
+      <td class="tc-text" style="color:#7ba8cc">Bleach + vinegar = TOXIC GAS</td>
+      <td class="tc-style">Água Sanitária · bold</td>
+    </tr>
+    <tr>
+      <td class="tc-time">[7s]</td>
+      <td class="tc-text">Eu LIMPO sozinha. Me respeita.</td>
+      <td class="tc-text" style="color:#7ba8cc">I CLEAN alone. Respect me.</td>
+      <td class="tc-style">Água Sanitária · bold</td>
+    </tr>
+    <tr>
+      <td class="tc-time">[11s]</td>
+      <td class="tc-text">Eu tenho MAIS bactéria que um vaso sanitário!</td>
+      <td class="tc-text" style="color:#7ba8cc">I have MORE bacteria than a toilet seat!</td>
+      <td class="tc-style">Celular · bold</td>
+    </tr>
+    <tr>
+      <td class="tc-time">[14s]</td>
+      <td class="tc-text">E vocês me encostam NA CARA!</td>
+      <td class="tc-text" style="color:#7ba8cc">And you press me against YOUR FACE!</td>
+      <td class="tc-style">Celular · bold</td>
+    </tr>
+    <tr>
+      <td class="tc-time">[18s]</td>
+      <td class="tc-text">Me limpa com álcool 70, PELO MENOS!</td>
+      <td class="tc-text" style="color:#7ba8cc">Clean me with 70% alcohol, AT LEAST!</td>
+      <td class="tc-style">Celular · bold</td>
+    </tr>
+    <tr>
+      <td class="tc-time">[21s]</td>
+      <td class="tc-text">EU SOU LIXEIRA, não depósito de chorume!</td>
+      <td class="tc-text" style="color:#7ba8cc">I'M A TRASH CAN, not a sewage dump!</td>
+      <td class="tc-style">Lixeira · bold</td>
+    </tr>
+    <tr>
+      <td class="tc-time">[24s]</td>
+      <td class="tc-text">Troca o saco ANTES de transbordar!</td>
+      <td class="tc-text" style="color:#7ba8cc">Change the bag BEFORE it overflows!</td>
+      <td class="tc-style">Lixeira · bold</td>
+    </tr>
+    <tr>
+      <td class="tc-time">[28s]</td>
+      <td class="tc-text">E me lava por dentro 1x por semana!</td>
+      <td class="tc-text" style="color:#7ba8cc">And wash me inside once a week!</td>
+      <td class="tc-style">Lixeira · bold</td>
+    </tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-voz">
+    <div class="card">
+      <div class="card-header"><span class="card-icon">🎙️</span><span class="card-title">Voice Scripts</span></div>
+      
+      <div style="margin-bottom:16px">
+        <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">🧴 Água Sanitária — 0s–10s</div>
+        <div style="background:var(--surface2);border-left:3px solid var(--gold);padding:12px 16px;border-radius:0 4px 4px 0;margin-bottom:6px">
+          <div style="font-size:9px;color:var(--text-dim);margin-bottom:4px">🇧🇷 PT-BR</div>
+          <div style="font-family:'Fraunces',serif;font-style:italic;color:var(--cream);font-size:13px;line-height:1.9">[ÊNFASE] Gente, pelo amor de Deus! [pausa] Vocês pegam eu, pegam vinagre, pegam detergente... e MISTURAM TUDO num balde?! [pausa longa] Isso é GÁS TÓXICO! [ÊNFASE] Tóxico! Eu trabalho SOZINHA. Não preciso de ajuda. Me diluam em água e pronto. [pausa] Para de tentar me inventar receita milagrosa!</div>
+        </div>
+        <div style="background:var(--surface2);border-left:3px solid var(--blue-mid);padding:12px 16px;border-radius:0 4px 4px 0">
+          <div style="font-size:9px;color:var(--text-dim);margin-bottom:4px">🇺🇸 EN</div>
+          <div style="font-family:'Fraunces',serif;font-style:italic;color:var(--cream);font-size:13px;line-height:1.9">[EMPHASIS] People, for the love of God! [pause] You grab me, grab vinegar, grab detergent... and MIX EVERYTHING in a bucket?! [long pause] That's TOXIC GAS! [EMPHASIS] Toxic! I work ALONE. I don't need help. Dilute me in water and that's it. [pause] Stop trying to make miracle recipes with me!</div>
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">📱 Celular — 10s–20s</div>
+        <div style="background:var(--surface2);border-left:3px solid var(--gold);padding:12px 16px;border-radius:0 4px 4px 0;margin-bottom:6px">
+          <div style="font-size:9px;color:var(--text-dim);margin-bottom:4px">🇧🇷 PT-BR</div>
+          <div style="font-family:'Fraunces',serif;font-style:italic;color:var(--cream);font-size:13px;line-height:1.9">[pausa] Tá vendo essa tela aqui? [ÊNFASE] Tem mais bactéria do que o vaso sanitário da sua casa! [pausa] E vocês me levam pra mesa de jantar... me levam pro banheiro... [ÊNFASE] E depois encostam eu NA CARA de vocês pra fazer ligação! [pausa longa] Pelo amor... passa um paninho com álcool 70 [pausa] pelo menos uma vez por dia!</div>
+        </div>
+        <div style="background:var(--surface2);border-left:3px solid var(--blue-mid);padding:12px 16px;border-radius:0 4px 4px 0">
+          <div style="font-size:9px;color:var(--text-dim);margin-bottom:4px">🇺🇸 EN</div>
+          <div style="font-family:'Fraunces',serif;font-style:italic;color:var(--cream);font-size:13px;line-height:1.9">[pause] See this screen right here? [EMPHASIS] It has more bacteria than your toilet seat! [pause] And you take me to the dinner table... take me to the bathroom... [EMPHASIS] And then press me against YOUR FACE to make a call! [long pause] Please... wipe me with 70% alcohol [pause] at least once a day!</div>
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">🗑️ Lixeira — 20s–30s</div>
+        <div style="background:var(--surface2);border-left:3px solid var(--gold);padding:12px 16px;border-radius:0 4px 4px 0;margin-bottom:6px">
+          <div style="font-size:9px;color:var(--text-dim);margin-bottom:4px">🇧🇷 PT-BR</div>
+          <div style="font-family:'Fraunces',serif;font-style:italic;color:var(--cream);font-size:13px;line-height:1.9">[ÊNFASE] CHEGA! [pausa] Eu tô AQUI transbordando, sem saco, com líquido escorrendo por dentro... [pausa] E vocês continuam empurrando lixo como se eu fosse infinita?! [ÊNFASE] Eu sou lixeira, não depósito de chorume! [pausa longa] Regra básica: troca o saco ANTES de transbordar. [pausa] E me lava por dentro pelo menos uma vez por semana com água sanitária. [ÊNFASE] É pedir demais?!</div>
+        </div>
+        <div style="background:var(--surface2);border-left:3px solid var(--blue-mid);padding:12px 16px;border-radius:0 4px 4px 0">
+          <div style="font-size:9px;color:var(--text-dim);margin-bottom:4px">🇺🇸 EN</div>
+          <div style="font-family:'Fraunces',serif;font-style:italic;color:var(--cream);font-size:13px;line-height:1.9">[EMPHASIS] ENOUGH! [pause] I'm HERE overflowing, no bag, liquid leaking inside... [pause] And you keep pushing trash like I'm infinite?! [EMPHASIS] I'm a trash can, not a sewage dump! [long pause] Basic rule: change the bag BEFORE it overflows. [pause] And wash me inside at least once a week with bleach. [EMPHASIS] Is that too much to ask?!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-post">
+    <div class="card">
+      <div class="card-header"><span class="card-icon">📱</span><span class="card-title">Post Copy</span></div>
+      <div class="lang-toggle">
+        <button class="lang-btn active" onclick="showLang('pt',this)">🇧🇷 PT-BR</button>
+        <button class="lang-btn" onclick="showLang('en',this)">🇺🇸 English</button>
+      </div>
+      <div id="post-pt">
+        <div class="post-preview"><span class="post-gancho">🚨 3 OBJETOS DA SUA CASA estão REVOLTADOS com você!</span>🧴 A água sanitária tá CANSADA de ser misturada com vinagre (isso gera GÁS TÓXICO!)
+
+📱 Seu celular tem MAIS bactéria que o vaso sanitário... e você encosta ele na cara
+
+🗑️ A lixeira transbordando sem saco? Ela quer te dizer umas verdades
+
+⚠️ Erros de higiene que TODO MUNDO comete sem saber
+
+💡 Compartilha com quem precisa ouvir isso!
+
+💬 Qual desses erros VOCÊ comete? Comenta aqui! 👇
+📌 Salva pra lembrar!
+🔄 Manda pro grupo da família!</div>
+        <div class="hashtags">#limpeza #higiene #casalimpa #dicasdelimpeza #limpezadecasa #organização #donadecasa #dicas #viral #reels #talkingobject #objetofalante #viralobj #dicasdecasa #higienedomestica #limpezaprofunda #rotinadelimpeza #casa #lar #limpezaresidencial #produtosdelimpeza #aguasanitaria #cozinhalimpa #banheirolimpo #organizaçãodomestica</div>
+        <button class="copy-btn" onclick="cp('pt')">📋 Copiar PT-BR</button>
+      </div>
+      <div id="post-en" style="display:none">
+        <div class="post-preview"><span class="post-gancho">🚨 3 OBJECTS in your house are FURIOUS with you!</span>🧴 Your bleach is TIRED of being mixed with vinegar (that creates TOXIC GAS!)
+
+📱 Your phone has MORE bacteria than a toilet seat... and you press it against your face
+
+🗑️ That overflowing trash can with no bag? She has some truths for you
+
+⚠️ Hygiene mistakes EVERYONE makes without knowing
+
+💡 Share with someone who needs to hear this!
+
+💬 Which of these mistakes do YOU make? Comment below! 👇
+📌 Save for later!
+🔄 Send to your family group chat!</div>
+        <div class="hashtags">#cleaning #hygiene #cleanhome #cleaningtips #homecleaning #organization #homemaker #tips #viral #reels #talkingobject #viralobj #hometips #householdhygiene #deepcleaning #cleaningroutine #home #cleaningproducts #bleach #kitchencleaning</div>
+        <button class="copy-btn" onclick="cp('en')">📋 Copy EN</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-variacoes">
+    <div class="card">
+      <div class="card-header"><span class="card-icon">🔁</span><span class="card-title">Variations</span><span class="card-meta">3 angles</span></div>
+      
+    <div class="var-card">
+      <div class="var-num">Variation 01 · Comedy version: objects in group therapy</div>
+      <div class="var-title">Terapia dos Objetos Domésticos</div>
+      <div class="var-hook">"🛋️ Seus objetos de casa precisaram de TERAPIA por sua culpa"</div>
+      <div class="var-hook en">"🛋️ Your household objects needed THERAPY because of you"</div>
+      <p style="font-size:12px;color:var(--text);margin-top:6px">Cenário de consultório com sofá. Cada objeto desabafa sobre o dono. Tom mais leve e engraçado.</p>
+      <div style="margin-top:8px"><span class="tag tag-b">high-retention</span> <span class="tag tag-b">comedy</span> <span class="tag tag-b">relatable</span></div>
+    </div>
+    <div class="var-card">
+      <div class="var-num">Variation 02 · Educational version: documentary style with narrator</div>
+      <div class="var-title">Documentário: A Vida Secreta dos Objetos</div>
+      <div class="var-hook">"📹 O que seus objetos diriam se pudessem falar?"</div>
+      <div class="var-hook en">"📹 What would your objects say if they could talk?"</div>
+      <p style="font-size:12px;color:var(--text);margin-top:6px">Narrador sério estilo Discovery Channel. Cada objeto é 'entrevistado' como em documentário. Tom educativo.</p>
+      <div style="margin-top:8px"><span class="tag tag-b">educational</span> <span class="tag tag-b">viral</span> <span class="tag tag-b">share-worthy</span></div>
+    </div>
+    <div class="var-card">
+      <div class="var-num">Variation 03 · Dramatic version: objects court trial</div>
+      <div class="var-title">Tribunal dos Objetos: Você é Culpado!</div>
+      <div class="var-hook">"⚖️ Seus objetos te processaram. O VEREDICTO vai te chocar."</div>
+      <div class="var-hook en">"⚖️ Your objects sued you. The VERDICT will shock you."</div>
+      <p style="font-size:12px;color:var(--text);margin-top:6px">Cenário de tribunal. Juiz (esponja) preside. Cada objeto é testemunha acusando o dono. Final com veredicto: CULPADO.</p>
+      <div style="margin-top:8px"><span class="tag tag-b">high-retention</span> <span class="tag tag-b">dramatic</span> <span class="tag tag-b">viral</span></div>
+    </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-stack">
+    <div class="card">
+      <div class="card-header"><span class="card-icon">🛠️</span><span class="card-title">Production Stack</span></div>
+      
+    <div class="tool-row">
+      <span class="step-num">1</span>
+      <span class="tool-name">Midjourney v6 / DALL-E 3</span>
+      <span class="tool-use">Gerar imagem 9:16 de cada objeto com rosto e expressão. Usar os prompts de cada character.</span>
+      <span class="tag tag-g">essential</span>
+    </div>
+    <div class="tool-row">
+      <span class="step-num">2</span>
+      <span class="tool-name">ElevenLabs</span>
+      <span class="tool-use">Gerar voz em PT-BR para cada personagem com tom distinto. Usar voice_script_pt.</span>
+      <span class="tag tag-g">essential</span>
+    </div>
+    <div class="tool-row">
+      <span class="step-num">3</span>
+      <span class="tool-name">HeyGen / Hedra</span>
+      <span class="tool-use">Aplicar lip sync na imagem estática usando o áudio gerado. Talking Photo mode.</span>
+      <span class="tag tag-g">essential</span>
+    </div>
+    <div class="tool-row">
+      <span class="step-num">4</span>
+      <span class="tool-name">CapCut</span>
+      <span class="tool-use">Montar timeline: 3 clips de ~10s cada. Adicionar legendas do captions_full_script, transições, e música de fundo.</span>
+      <span class="tag tag-g">essential</span>
+    </div>
+    <div class="tool-row">
+      <span class="step-num">5</span>
+      <span class="tool-name">Canva (opcional)</span>
+      <span class="tool-use">Criar thumbnail/capa do reel com os 3 personagens e título provocativo.</span>
+      <span class="tag tag-b">optional</span>
+    </div>
+    </div>
+  </div>
+</div>
+<script>
+function st(id,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+function showLang(lang,btn){
+  document.getElementById('post-pt').style.display=lang==='pt'?'block':'none';
+  document.getElementById('post-en').style.display=lang==='en'?'block':'none';
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+const postData={
+  pt:"%F0%9F%9A%A8%203%20OBJETOS%20DA%20SUA%20CASA%20est%C3%A3o%20REVOLTADOS%20com%20voc%C3%AA!%0A%0A%F0%9F%A7%B4%20A%20%C3%A1gua%20sanit%C3%A1ria%20t%C3%A1%20CANSADA%20de%20ser%20misturada%20com%20vinagre%20(isso%20gera%20G%C3%81S%20T%C3%93XICO!)%0A%0A%F0%9F%93%B1%20Seu%20celular%20tem%20MAIS%20bact%C3%A9ria%20que%20o%20vaso%20sanit%C3%A1rio...%20e%20voc%C3%AA%20encosta%20ele%20na%20cara%0A%0A%F0%9F%97%91%EF%B8%8F%20A%20lixeira%20transbordando%20sem%20saco%3F%20Ela%20quer%20te%20dizer%20umas%20verdades%0A%0A%E2%9A%A0%EF%B8%8F%20Erros%20de%20higiene%20que%20TODO%20MUNDO%20comete%20sem%20saber%0A%0A%F0%9F%92%A1%20Compartilha%20com%20quem%20precisa%20ouvir%20isso!%0A%0A%F0%9F%92%AC%20Qual%20desses%20erros%20VOC%C3%8A%20comete%3F%20Comenta%20aqui!%20%F0%9F%91%87%0A%F0%9F%93%8C%20Salva%20pra%20lembrar!%0A%F0%9F%94%84%20Manda%20pro%20grupo%20da%20fam%C3%ADlia!%0A%0A%23limpeza%20%23higiene%20%23casalimpa%20%23dicasdelimpeza%20%23limpezadecasa%20%23organiza%C3%A7%C3%A3o%20%23donadecasa%20%23dicas%20%23viral%20%23reels%20%23talkingobject%20%23objetofalante%20%23viralobj%20%23dicasdecasa%20%23higienedomestica%20%23limpezaprofunda%20%23rotinadelimpeza%20%23casa%20%23lar%20%23limpezaresidencial%20%23produtosdelimpeza%20%23aguasanitaria%20%23cozinhalimpa%20%23banheirolimpo%20%23organiza%C3%A7%C3%A3odomestica",
+  en:"%F0%9F%9A%A8%203%20OBJECTS%20in%20your%20house%20are%20FURIOUS%20with%20you!%0A%0A%F0%9F%A7%B4%20Your%20bleach%20is%20TIRED%20of%20being%20mixed%20with%20vinegar%20(that%20creates%20TOXIC%20GAS!)%0A%0A%F0%9F%93%B1%20Your%20phone%20has%20MORE%20bacteria%20than%20a%20toilet%20seat...%20and%20you%20press%20it%20against%20your%20face%0A%0A%F0%9F%97%91%EF%B8%8F%20That%20overflowing%20trash%20can%20with%20no%20bag%3F%20She%20has%20some%20truths%20for%20you%0A%0A%E2%9A%A0%EF%B8%8F%20Hygiene%20mistakes%20EVERYONE%20makes%20without%20knowing%0A%0A%F0%9F%92%A1%20Share%20with%20someone%20who%20needs%20to%20hear%20this!%0A%0A%F0%9F%92%AC%20Which%20of%20these%20mistakes%20do%20YOU%20make%3F%20Comment%20below!%20%F0%9F%91%87%0A%F0%9F%93%8C%20Save%20for%20later!%0A%F0%9F%94%84%20Send%20to%20your%20family%20group%20chat!%0A%0A%23cleaning%20%23hygiene%20%23cleanhome%20%23cleaningtips%20%23homecleaning%20%23organization%20%23homemaker%20%23tips%20%23viral%20%23reels%20%23talkingobject%20%23viralobj%20%23hometips%20%23householdhygiene%20%23deepcleaning%20%23cleaningroutine%20%23home%20%23cleaningproducts%20%23bleach%20%23kitchencleaning"
+};
+function cp(lang){
+  navigator.clipboard.writeText(decodeURIComponent(postData[lang]||'')).then(()=>{
+    const b=document.querySelector('.copy-btn');
+    const o=b.innerHTML;b.innerHTML='✅ Copied!';setTimeout(()=>b.innerHTML=o,2000);
+  });
+}
+</script>
+</body>
+</html>

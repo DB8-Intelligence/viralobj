@@ -1,0 +1,433 @@
+{
+  "meta": {
+    "niche": "casa",
+    "topic_pt": "Erros de higiene doméstica",
+    "topic_en": "Domestic hygiene mistakes",
+    "tone": "angry",
+    "duration": 30,
+    "objects_count": 3,
+    "generated_at": "2026-04-09T22:43:31.545Z"
+  },
+  "characters": [
+    {
+      "id": 1,
+      "name_pt": "Água Sanitária",
+      "name_en": "Bleach",
+      "emoji": "🧴",
+      "timestamp_start": "0s",
+      "timestamp_end": "10s",
+      "environment_pt": "Banheiro brasileiro iluminado com azulejos brancos, prateleira de produtos de limpeza ao fundo, luz fria e clínica",
+      "environment_en": "Bright Brazilian bathroom with white tiles, cleaning product shelf in background, cold clinical lighting",
+      "expression_arc": [
+        "indignada com sobrancelhas franzidas",
+        "furiosa com bocão aberto",
+        "ressentida com olhar de desprezo"
+      ],
+      "error_denounced_pt": "Pessoa usa água sanitária diluída de forma errada — mistura com produtos incompatíveis como vinagre ou álcool, anulando o efeito desinfetante",
+      "error_denounced_en": "Person incorrectly dilutes bleach — mixes it with incompatible products like vinegar or alcohol, canceling its disinfecting effect",
+      "human_background_pt": "Mulher de costas no banheiro misturando água sanitária com vinagre numa balde laranja, alheia ao perigo",
+      "human_background_en": "Woman with her back turned in the bathroom mixing bleach with vinegar in an orange bucket, unaware of the danger",
+      "captions": [
+        {
+          "time": "0s",
+          "text_pt": "EU SOU A ÁGUA SANITÁRIA...",
+          "text_en": "I AM THE BLEACH...",
+          "style": "bold"
+        },
+        {
+          "time": "2s",
+          "text_pt": "e você me trata como suco!",
+          "text_en": "and you treat me like juice!",
+          "style": "regular"
+        },
+        {
+          "time": "5s",
+          "text_pt": "MISTURA COM VINAGRE?!",
+          "text_en": "MIXING WITH VINEGAR?!",
+          "style": "bold"
+        },
+        {
+          "time": "8s",
+          "text_pt": "Você acabou com meu poder desinfetante!",
+          "text_en": "You just killed my disinfecting power!",
+          "style": "regular"
+        }
+      ],
+      "voice_script_pt": "Eu sou a água sanitária! [pausa] A DEFENSORA da sua casa contra bactérias! [ÊNFASE] E o que você faz?! Me mistura com vinagre?! [pausa] Isso é sabotagem! Você me transforma em água suja inútil! [pausa longa] Para de me desperdiçar assim, pelo amor de Deus!",
+      "voice_script_en": "I am the bleach! [pause] The DEFENDER of your home against bacteria! [EMPHASIS] And what do you do?! You mix me with vinegar?! [pause] That is sabotage! You turn me into useless dirty water! [long pause] Stop wasting me like this, for the love of God!",
+      "ai_prompt_midjourney": "Angry anthropomorphic bleach bottle character, Pixar 3D Disney style, white bottle with bright blue label, huge expressive furious eyes, furrowed brows, wide open mouth yelling, tiny fists clenched, standing on bathroom shelf in Brazilian bathroom with white tiles, warm yellow ambient light hitting cold clinical scene, woman blurred in background mixing cleaning products, 9:16 vertical portrait, photorealistic Pixar render, cinematic lighting, ultra detailed, trending on ArtStation",
+      "ai_prompt_kling": "Angry bleach bottle character starts with arms crossed and frowning expression, then suddenly throws arms wide open in fury, body trembles with rage, leans forward aggressively toward camera, fists shake in air, face turns slightly red, ends with disgusted head shake and arms dropped in defeat, smooth Pixar-style animation, exaggerated cartoon physics, 10 seconds"
+    },
+    {
+      "id": 2,
+      "name_pt": "Celular",
+      "name_en": "Smartphone",
+      "emoji": "📱",
+      "timestamp_start": "10s",
+      "timestamp_end": "20s",
+      "environment_pt": "Banheiro com vaso sanitário visível ao fundo, iluminação quente e amarelada, ambiente úmido com azulejos",
+      "environment_en": "Bathroom with visible toilet in background, warm yellow lighting, humid tiled environment",
+      "expression_arc": [
+        "nojo intenso com língua para fora",
+        "raiva com olhos vermelhos pulsando",
+        "desespero com lágrimas de nojo"
+      ],
+      "error_denounced_pt": "Pessoa leva o celular ao banheiro constantemente, acumulando bactérias fecais na tela que depois são levadas à boca e rosto",
+      "error_denounced_en": "Person constantly brings smartphone to the bathroom, accumulating fecal bacteria on the screen which then gets transferred to their mouth and face",
+      "human_background_pt": "Homem sentado no vaso sanitário mexendo no celular com sorriso alheio, ao fundo desfocado",
+      "human_background_en": "Man sitting on the toilet scrolling through the phone with an oblivious smile, blurred in background",
+      "captions": [
+        {
+          "time": "10s",
+          "text_pt": "EU TENHO MAIS BACTÉRIA...",
+          "text_en": "I HAVE MORE BACTERIA...",
+          "style": "bold"
+        },
+        {
+          "time": "12s",
+          "text_pt": "que o seu vaso sanitário!",
+          "text_en": "than your toilet seat!",
+          "style": "bold"
+        },
+        {
+          "time": "15s",
+          "text_pt": "E você me bota no rosto??",
+          "text_en": "And you put me on your face??",
+          "style": "regular"
+        },
+        {
+          "time": "18s",
+          "text_pt": "Que NOJO de você...",
+          "text_en": "You disgust me...",
+          "style": "bold"
+        }
+      ],
+      "voice_script_pt": "Você sabe que eu tenho mais bactéria do que o seu vaso sanitário?! [pausa] E você me traz pro banheiro TODO DIA! [ÊNFASE] Me segura com aquela mão... e depois me bota no seu rosto! [pausa] Que nojo! Que NOJO! [pausa longa] Me higieniza agora. COM URGÊNCIA.",
+      "voice_script_en": "Do you know I carry more bacteria than your toilet seat?! [pause] And you bring me into the bathroom EVERY SINGLE DAY! [EMPHASIS] You hold me with that hand... and then press me against your face! [pause] Disgusting! SO disgusting! [long pause] Clean me right now. URGENTLY.",
+      "ai_prompt_midjourney": "Angry disgusted anthropomorphic smartphone character, Pixar 3D Disney style, sleek black phone with cracked expression lines, huge bloodshot furious eyes, tongue sticking out in extreme disgust, tiny arms pushing away from viewer, standing upright on bathroom floor with toilet visible and blurred in background, humid foggy bathroom atmosphere, warm yellow-orange lighting with green bacterial glow around body, 9:16 vertical portrait, photorealistic Pixar render, ultra detailed cinematic lighting",
+      "ai_prompt_kling": "Disgusted smartphone character recoils backward in horror then snaps forward in anger, face flushes red, eyes bulge and pulse, tiny arms flail wildly, body shivers with full-body disgust shudder, tongue flicks out repeatedly, stamps tiny foot, leans into camera with furious yelling expression, ends pointing finger accusingly, smooth Pixar-style animation, 10 seconds"
+    },
+    {
+      "id": 3,
+      "name_pt": "Lixeira",
+      "name_en": "Trash Can",
+      "emoji": "🗑️",
+      "timestamp_start": "20s",
+      "timestamp_end": "30s",
+      "environment_pt": "Cozinha brasileira colorida com bancada de granito, janela ao fundo com luz natural intensa, moscas visíveis ao redor",
+      "environment_en": "Colorful Brazilian kitchen with granite countertop, window with intense natural light in background, flies visibly buzzing around",
+      "expression_arc": [
+        "furiosa com vapor saindo da cabeça",
+        "explosiva com boca escancarada",
+        "indignada com expressão de exaustão total"
+      ],
+      "error_denounced_pt": "Pessoa não esvazia a lixeira da cozinha regularmente e não usa saco plástico, deixando resíduos orgânicos acumularem e gerarem moscas e bactérias",
+      "error_denounced_en": "Person does not empty the kitchen trash can regularly and doesn't use a plastic bag, letting organic waste accumulate and generate flies and bacteria",
+      "human_background_pt": "Mulher jogando resto de comida direto na lixeira sem saco e sem sequer olhar, ao fundo desfocado",
+      "human_background_en": "Woman throwing food scraps directly into the trash can without a bag and without even looking, blurred in background",
+      "captions": [
+        {
+          "time": "20s",
+          "text_pt": "HÁ QUANTOS DIAS...",
+          "text_en": "HOW MANY DAYS...",
+          "style": "bold"
+        },
+        {
+          "time": "22s",
+          "text_pt": "você não me esvazia?!",
+          "text_en": "have you not emptied me?!",
+          "style": "regular"
+        },
+        {
+          "time": "25s",
+          "text_pt": "SEM SACO PLÁSTICO?!",
+          "text_en": "WITHOUT A TRASH BAG?!",
+          "style": "bold"
+        },
+        {
+          "time": "27s",
+          "text_pt": "Você criou uma fábrica de moscas na sua cozinha!",
+          "text_en": "You turned your kitchen into a fly factory!",
+          "style": "regular"
+        }
+      ],
+      "voice_script_pt": "HÁ QUANTOS DIAS você não me esvazia?! [ÊNFASE] Eu tô FERMENTANDO aqui dentro! [pausa] E sem saco plástico?! Você joga comida direto em mim?! [ÊNFASE] Você criou uma fábrica de MOSCAS na sua própria cozinha! [pausa longa] Me esvazia. Me lava. Me respeita. AGORA!",
+      "voice_script_en": "HOW MANY DAYS have you not emptied me?! [EMPHASIS] I am FERMENTING in here! [pause] And without a trash bag?! You throw food scraps directly into me?! [EMPHASIS] You turned your own kitchen into a FLY FACTORY! [long pause] Empty me. Wash me. Respect me. RIGHT NOW!",
+      "ai_prompt_midjourney": "Furious anthropomorphic trash can character, Pixar 3D Disney style, green metal bin with dented sides, enormous bulging enraged eyes with steam shooting from head, wide screaming mouth with garbage visible inside, tiny arms raised in explosive fury, flies buzzing around glowing green halo, standing in vibrant Brazilian kitchen with granite countertop, bright warm natural light from window, woman blurred in background throwing food scraps, 9:16 vertical portrait, photorealistic Pixar cinematic render, ultra detailed dramatic lighting",
+      "ai_prompt_kling": "Furious trash can character starts shaking violently from side to side, lid flips open and closed like a yelling mouth, steam jets erupt from top, body inflates with rage then deflates, jumps slightly off ground in fury, tiny fists pound air, flies circle head in exaggerated loop, face turns deep red, ends with full body explosion of anger then slumps in exhausted defeat with smoke rising, smooth Pixar-style animation, exaggerated cartoon physics, 10 seconds"
+    }
+  ],
+  "post_copy": {
+    "hook_pt": "Seus objetos de casa estão FURIOSOS com você 😤🏠",
+    "hook_en": "Your household objects are FURIOUS at you 😤🏠",
+    "body_pt": "Você acha que tá limpando sua casa... mas seus próprios objetos discordam!\n\n🧴 A ÁGUA SANITÁRIA tá indignada: você mistura ela com vinagre e destrói o poder desinfetante dela. Para com isso!\n\n📱 O CELULAR tá com nojo: ele carrega mais bactéria que o vaso sanitário e você bota ele no seu rosto todo dia!\n\n🗑️ A LIXEIRA tá explodindo de raiva: sem saco plástico, cheia de resto de comida fermentando, criando uma fábrica de moscas na sua cozinha!\n\nVocê comete algum desses erros? Fala nos comentários 👇",
+    "body_en": "You think you're cleaning your home... but your own objects disagree!\n\n🧴 The BLEACH is outraged: you mix it with vinegar and destroy its disinfecting power. Stop that!\n\n📱 The SMARTPHONE is disgusted: it carries more bacteria than the toilet seat and you press it against your face every day!\n\n🗑️ The TRASH CAN is exploding with rage: no plastic bag, full of fermenting food scraps, creating a fly factory in your kitchen!\n\nDo you make any of these mistakes? Tell us in the comments 👇",
+    "cta_pt": "Salva esse vídeo pra não esquecer! E marca aquela pessoa que comete esses erros em casa 😂👇",
+    "cta_en": "Save this video so you don't forget! And tag that person who makes these mistakes at home 😂👇",
+    "hashtags_pt": [
+      "#limpezacaseira",
+      "#higienecasa",
+      "#dicasdelimpeza",
+      "#casalimpa",
+      "#erroshigiene",
+      "#aguasanitaria",
+      "#limpezadomestica",
+      "#dicasparacasa",
+      "#organizacaodomestica",
+      "#limpezacorreta",
+      "#casaorganizada",
+      "#objetosfuriosos",
+      "#reelscasa",
+      "#reelslimpeza",
+      "#viralobj",
+      "#bactérias",
+      "#higienização",
+      "#dicasviraisbr",
+      "#reelsbrasil",
+      "#casaehigiene",
+      "#limpezainteligente",
+      "#truquesdelimpeza",
+      "#celularsujo",
+      "#lixeiralimpa",
+      "#casasaudavel"
+    ],
+    "hashtags_en": [
+      "#homecleaning",
+      "#hygienemistakes",
+      "#cleanhome",
+      "#homecare",
+      "#cleaningtips",
+      "#bleachtips",
+      "#talkingobjects",
+      "#pixarstyle",
+      "#homehygiene",
+      "#cleaninghacks",
+      "#viralreels",
+      "#funnyreels",
+      "#homemistakes",
+      "#cleanliving",
+      "#viralobj",
+      "#animatedreels",
+      "#3danimation",
+      "#reelsviral",
+      "#homesafety",
+      "#cleaningmotivation"
+    ]
+  },
+  "captions_full_script": [
+    {
+      "time": "0s",
+      "text_pt": "EU SOU A ÁGUA SANITÁRIA...",
+      "text_en": "I AM THE BLEACH...",
+      "character": "Água Sanitária",
+      "style": "bold",
+      "color": "white"
+    },
+    {
+      "time": "2s",
+      "text_pt": "e você me trata como suco!",
+      "text_en": "and you treat me like juice!",
+      "character": "Água Sanitária",
+      "style": "regular",
+      "color": "white"
+    },
+    {
+      "time": "5s",
+      "text_pt": "MISTURA COM VINAGRE?!",
+      "text_en": "MIXING WITH VINEGAR?!",
+      "character": "Água Sanitária",
+      "style": "bold",
+      "color": "red"
+    },
+    {
+      "time": "8s",
+      "text_pt": "Você acabou com meu poder desinfetante!",
+      "text_en": "You just killed my disinfecting power!",
+      "character": "Água Sanitária",
+      "style": "regular",
+      "color": "white"
+    },
+    {
+      "time": "10s",
+      "text_pt": "EU TENHO MAIS BACTÉRIA...",
+      "text_en": "I HAVE MORE BACTERIA...",
+      "character": "Celular",
+      "style": "bold",
+      "color": "red"
+    },
+    {
+      "time": "12s",
+      "text_pt": "que o seu vaso sanitário!",
+      "text_en": "than your toilet seat!",
+      "character": "Celular",
+      "style": "bold",
+      "color": "red"
+    },
+    {
+      "time": "15s",
+      "text_pt": "E você me bota no rosto??",
+      "text_en": "And you put me on your face??",
+      "character": "Celular",
+      "style": "regular",
+      "color": "white"
+    },
+    {
+      "time": "18s",
+      "text_pt": "Que NOJO de você...",
+      "text_en": "You disgust me...",
+      "character": "Celular",
+      "style": "bold",
+      "color": "green"
+    },
+    {
+      "time": "20s",
+      "text_pt": "HÁ QUANTOS DIAS...",
+      "text_en": "HOW MANY DAYS...",
+      "character": "Lixeira",
+      "style": "bold",
+      "color": "red"
+    },
+    {
+      "time": "22s",
+      "text_pt": "você não me esvazia?!",
+      "text_en": "have you not emptied me?!",
+      "character": "Lixeira",
+      "style": "regular",
+      "color": "white"
+    },
+    {
+      "time": "25s",
+      "text_pt": "SEM SACO PLÁSTICO?!",
+      "text_en": "WITHOUT A TRASH BAG?!",
+      "character": "Lixeira",
+      "style": "bold",
+      "color": "red"
+    },
+    {
+      "time": "27s",
+      "text_pt": "Você criou uma fábrica de moscas na sua cozinha!",
+      "text_en": "You turned your kitchen into a fly factory!",
+      "character": "Lixeira",
+      "style": "regular",
+      "color": "white"
+    },
+    {
+      "time": "29s",
+      "text_pt": "Me respeita. AGORA! 🗑️🔥",
+      "text_en": "Respect me. RIGHT NOW! 🗑️🔥",
+      "character": "Lixeira",
+      "style": "bold",
+      "color": "red"
+    }
+  ],
+  "variations": [
+    {
+      "id": 1,
+      "angle_pt": "Versão educativa — os objetos ensinam o jeito CERTO de usá-los",
+      "angle_en": "Educational version — the objects teach the RIGHT way to use them",
+      "title_pt": "Seus objetos de limpeza finalmente ensinam como usá-los do jeito certo!",
+      "title_en": "Your cleaning objects finally teach you how to use them the right way!",
+      "hook_pt": "E se seus objetos de limpeza pudessem te ensinar a usá-los corretamente? 🧴✨",
+      "hook_en": "What if your cleaning objects could teach you how to use them correctly? 🧴✨",
+      "objects": [
+        "água sanitária",
+        "esponja de pia",
+        "pano de prato"
+      ],
+      "format_note_pt": "Manter tom raivoso mas adicionar dica prática ao final de cada fala — transição de raiva para orgulho quando a dica é revelada",
+      "format_note_en": "Keep angry tone but add a practical tip at the end of each speech — transition from anger to pride when the tip is revealed",
+      "tags": [
+        "educational",
+        "high-retention",
+        "viral"
+      ]
+    },
+    {
+      "id": 2,
+      "angle_pt": "Versão exagerada — os objetos ameaçam ir embora de casa",
+      "angle_en": "Exaggerated version — the objects threaten to leave the house",
+      "title_pt": "Seus objetos de limpeza estão fazendo as malas para ir embora!",
+      "title_en": "Your cleaning objects are packing their bags to leave!",
+      "hook_pt": "Seus objetos de casa estão CANSADOS e vão embora se você não mudar! 🧳😤",
+      "hook_en": "Your household objects are DONE and leaving if you don't change! 🧳😤",
+      "objects": [
+        "lixeira",
+        "água sanitária",
+        "celular"
+      ],
+      "format_note_pt": "Adicionar cena final com todos os 3 objetos caminhando em fila com malinhas — gancho emocional de comédia para aumentar compartilhamentos",
+      "format_note_en": "Add final scene with all 3 objects walking in a line with tiny suitcases — emotional comedy hook to boost shares",
+      "tags": [
+        "viral",
+        "comedy",
+        "high-retention"
+      ]
+    },
+    {
+      "id": 3,
+      "angle_pt": "Versão ranking — os objetos disputam quem sofre mais",
+      "angle_en": "Ranking version — the objects compete over who suffers the most",
+      "title_pt": "Qual objeto da sua casa sofre mais com seus erros de higiene?",
+      "title_en": "Which household object suffers the most from your hygiene mistakes?",
+      "hook_pt": "Top 3 objetos que mais SOFREM na sua casa por falta de higiene 😭🏆",
+      "hook_en": "Top 3 objects that SUFFER the most in your home from lack of hygiene 😭🏆",
+      "objects": [
+        "celular",
+        "lixeira",
+        "esponja de pia"
+      ],
+      "format_note_pt": "Formato de contagem regressiva 3-2-1 com placa de ranking animada, cada objeto reage ao ver sua posição no ranking — aumenta retenção por curiosidade",
+      "format_note_en": "Countdown format 3-2-1 with animated ranking board, each object reacts to seeing their ranking position — boosts retention through curiosity",
+      "tags": [
+        "ranking",
+        "viral",
+        "educational",
+        "high-retention"
+      ]
+    }
+  ],
+  "production_stack": [
+    {
+      "step": 1,
+      "tool": "Midjourney v6",
+      "purpose_pt": "Gerar imagens base dos 3 personagens em estilo Pixar 3D com expressões raivosas e ambientes domésticos brasileiros — formato 9:16 vertical",
+      "purpose_en": "Generate base images of all 3 characters in Pixar 3D style with angry expressions and Brazilian domestic environments — 9:16 vertical format",
+      "priority": "essential"
+    },
+    {
+      "step": 2,
+      "tool": "ElevenLabs",
+      "purpose_pt": "Gerar vozes em português e inglês com entonação raivosa e indignada para cada personagem — usar vozes expressivas com variação emocional intensa",
+      "purpose_en": "Generate voices in Portuguese and English with angry and indignant intonation for each character — use expressive voices with intense emotional variation",
+      "priority": "essential"
+    },
+    {
+      "step": 3,
+      "tool": "Kling AI / Runway Gen-3",
+      "purpose_pt": "Animar os personagens com movimentos corporais expressivos baseados nos prompts de animação — garantir física de cartoon estilo Pixar com exagero emocional",
+      "purpose_en": "Animate characters with expressive body movements based on animation prompts — ensure Pixar-style cartoon physics with emotional exaggeration",
+      "priority": "essential"
+    },
+    {
+      "step": 4,
+      "tool": "CapCut",
+      "purpose_pt": "Montar o reel final com cortes de 10s por personagem, adicionar legendas bilíngues estilizadas, efeitos de som de raiva, trilha sonora tensa e transições dinâmicas",
+      "purpose_en": "Assemble the final reel with 10s cuts per character, add stylized bilingual captions, anger sound effects, tense soundtrack and dynamic transitions",
+      "priority": "essential"
+    },
+    {
+      "step": 5,
+      "tool": "Adobe After Effects",
+      "purpose_pt": "Adicionar efeitos visuais extras como vapor de raiva, moscas animadas ao redor da lixeira, brilho bacteriano no celular e respingos de água sanitária",
+      "purpose_en": "Add extra visual effects like anger steam, animated flies around the trash can, bacterial glow on the smartphone and bleach splashes",
+      "priority": "optional"
+    },
+    {
+      "step": 6,
+      "tool": "HeyGen",
+      "purpose_pt": "Alternativa para sincronização labial dos personagens caso a animação do Kling não capture com precisão os movimentos de boca durante as falas",
+      "purpose_en": "Alternative for lip-sync of characters if Kling animation does not accurately capture mouth movements during speech",
+      "priority": "optional"
+    }
+  ]
+}

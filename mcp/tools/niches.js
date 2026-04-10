@@ -167,7 +167,7 @@ export const NICHES = {
     prompts_base: "Modern bedroom or office, Pixar 3D render, stressed person in background, mindfulness context",
   },
 
-  // ─── NEW NICHES — Added from video analysis ────────────────────────────
+  // ─── NEW NICHES — Added from video analysis ──────────────────────────────
 
   "saude-receitas": {
     name_pt: "Saúde & Receitas Naturais",
@@ -184,9 +184,13 @@ export const NICHES = {
       { pt: "cúrcuma", en: "turmeric", emoji: "🟡", personality: "anti-inflamatória, orgulhosa, científica", format: "F" },
       { pt: "chá verde", en: "green tea", emoji: "🍵", personality: "refinada, zen, poderosa", format: "B" },
       { pt: "mel", en: "honey", emoji: "🍯", personality: "doce mas firme, protetora", format: "E" },
-      { pt: "vinagre de maçã", en: "apple cider vinegar", emoji: "🍏", personality: "azeda, incompreendida, eficaz", format: "A" },
+      { pt: "vinagre de maçã", en: "apple cider vinegar", emoji: "🍎", personality: "azeda, incompreendida, eficaz", format: "A" },
       { pt: "chia", en: "chia seeds", emoji: "⚫", personality: "pequena mas poderosa, surpresa", format: "A" },
       { pt: "erva-cidreira", en: "lemon balm", emoji: "🌿", personality: "calmante, suave, acolhedora", format: "E" },
+      { pt: "maçã nutricionista", en: "apple nutritionist", emoji: "🍎", personality: "confiante, científica, positiva", format: "G", costume: "jaleco branco nutricionista, segura copo de vitamina + colher" },
+      { pt: "aveia", en: "oat flakes", emoji: "🥣", personality: "modesta, poderosa, subestimada", format: "A" },
+      { pt: "banana cardiologista", en: "banana cardiologist", emoji: "🍌", personality: "energética, expert em coração", format: "G", costume: "jaleco branco + estetoscópio" },
+      { pt: "morango dermatologista", en: "strawberry dermatologist", emoji: "🍓", personality: "delicada, especialista em pele", format: "G", costume: "jaleco branco + prancheta" },
     ],
     prompts_base: "Brazilian kitchen, marble counter, glass pot boiling on gas stove, natural ingredients around, warm golden lighting, Pixar 3D render, no human in background (ingredient is the star)",
     caption_style: "gamma",
@@ -200,7 +204,10 @@ export const NICHES = {
       "ELA QUEIMA GORDURA DORMINDO",
       "A RECEITA QUE MÉDICO NÃO QUER QUE VOCÊ SAIBA",
       "ESSE CHÁ SIMPLES MUDOU MINHA VIDA",
-      "TOMA EM JEJUM E VÊ O QUE ACONTECE"
+      "TOMA EM JEJUM E VÊ O QUE ACONTECE",
+      "VITAMINA QUE EMAGRECE E DÁ ENERGIA",
+      "DERMATOLOGISTA REVELOU O SEGREDO DA PELE PERFEITA",
+      "CARDIOLOGISTA FICOU CHOCADO COM ESSE RESULTADO"
     ],
   },
 
@@ -224,35 +231,123 @@ export const NICHES = {
   },
 };
 
-// ─── ANALYSIS OUTPUT PROMPT TEMPLATE ──────────────────────────────────────
+// ─── ANALYSIS OUTPUT PROMPT TEMPLATE ────────────────────────────────────────
+// Used after every video analysis to generate ViralObj implementation prompt
 
 export function generateImplementationPrompt(analysis) {
   const {
-    video_file, account, niche_detected, niche_key, is_new_niche,
-    format_type, is_new_format, character, objects_to_add,
-    caption_style, hooks_detected, prompts_validated,
+    video_file,
+    account,
+    niche_detected,
+    niche_key,
+    is_new_niche,
+    format_type,
+    is_new_format,
+    character,
+    objects_to_add,
+    caption_style,
+    hooks_detected,
+    prompts_validated,
   } = analysis;
 
-  return `# ViralObj Implementation Prompt
+  return `
+# ViralObj Implementation Prompt
 ## Video: ${video_file} | Account: ${account}
 ## Generated: ${new Date().toISOString()}
 
-## 1. NICHE ACTION
-${is_new_niche
-  ? `### CREATE NEW NICHE: \`${niche_key}\`\nAdd to niches.js with ${objects_to_add.length} objects.`
-  : `### ADD TO EXISTING NICHE: \`${niche_key}\`\n${objects_to_add.length} new objects.`}
+---
 
-## 2. FORMAT: ${format_type} ${is_new_format ? "(NEW)" : "(exists)"}
+## 1. NICHE ACTION
+
+${is_new_niche
+  ? `### ✅ CREATE NEW NICHE: \`${niche_key}\`
+Add to \`~/viralobj/mcp/tools/niches.js\` in the NICHES object:
+
+\`\`\`javascript
+"${niche_key}": {
+  name_pt: "${niche_detected.name_pt}",
+  name_en: "${niche_detected.name_en}",
+  emoji: "${niche_detected.emoji}",
+  tone_default: "${niche_detected.tone_default}",
+  format_default: "${format_type}",
+  source_reference: "${account} — video analyzed ${new Date().toISOString().split("T")[0]}",
+  objects: ${JSON.stringify(objects_to_add, null, 4)},
+  prompts_base: "${niche_detected.prompts_base}",
+},
+\`\`\``
+  : `### ✅ ADD TO EXISTING NICHE: \`${niche_key}\`
+Add these objects to \`NICHES["${niche_key}"].objects\` in \`niches.js\`:
+
+\`\`\`javascript
+${objects_to_add.map(o => JSON.stringify(o)).join(",\n")}
+\`\`\``
+}
+
+---
+
+## 2. FORMAT ACTION
+
+${is_new_format
+  ? `### ✅ REGISTER NEW FORMAT TYPE: \`${format_type}\`
+Add to \`dataset.json\` → \`validated_patterns.format_types\`:
+
+\`\`\`json
+"${format_type}": {
+  "name": "${niche_detected.format_name}",
+  "body": "${niche_detected.format_body}",
+  "pipeline": "${niche_detected.pipeline}",
+  "example": "${account}",
+  "best_for": ${JSON.stringify(niche_detected.best_for)},
+  "new": true,
+  "caption_style": "${caption_style}",
+  "signature": "${niche_detected.format_signature}"
+}
+\`\`\``
+  : `### ✅ FORMAT \`${format_type}\` ALREADY EXISTS — no action needed`
+}
+
+---
 
 ## 3. DATASET UPDATE
-- Increment videos_analyzed
-- Add "${account}" to source_accounts
-- Add ${prompts_validated?.length || 0} validated prompts
 
-## 4. COMMIT
+Add to \`dataset.json\` → \`validated_prompts\`:
+
+\`\`\`json
+${JSON.stringify(prompts_validated, null, 2)}
 \`\`\`
-feat(niches): add ${is_new_niche ? niche_key : objects_to_add.length + " objects to " + niche_key}
-Source: ${account} | Format: ${format_type} | Caption: ${caption_style}
+
+Add hooks to \`post_formulas\`:
+\`\`\`json
+${JSON.stringify(hooks_detected, null, 2)}
+\`\`\`
+
+Increment \`videos_analyzed\` by 1.
+Add \`"${account}"\` to \`source_accounts\` if not present.
+
+---
+
+## 4. QUICK TEST
+
+After applying, test in Claude Code:
+\`\`\`
+Generate a talking object reel for ${niche_key}
+with ${objects_to_add[0]?.pt || character}
+about [TOPIC]
+format: ${format_type}
+duration: 30 seconds
+\`\`\`
+
+---
+
+## 5. COMMIT MESSAGE
+
+\`\`\`
+feat(niches): add ${is_new_niche ? niche_key + " niche" : objects_to_add.length + " objects to " + niche_key}
+
+- Source: ${account} (${new Date().toISOString().split("T")[0]})
+- Format: Type ${format_type}${is_new_format ? " (NEW)" : ""}
+- Objects: ${objects_to_add.map(o => o.pt).join(", ")}
+- Caption style: ${caption_style}
 \`\`\`
 `;
 }
@@ -279,11 +374,11 @@ export async function listNiches({ lang = "pt" } = {}) {
   const text = lang === "en"
     ? `🎭 ViralObj — Available Niches (${list.length} total)\n\n` +
       list.map(n =>
-        `${n.emoji} ${n.key.padEnd(16)} | ${n.name.padEnd(27)} | ${n.objects_count} objects | tone: ${n.tone_default}\n   Objects: ${n.sample_objects.join(", ")}...`
+        `${n.emoji} ${n.key.padEnd(14)} | ${n.name.padEnd(25)} | ${n.objects_count} objects | tone: ${n.tone_default}\n   Objects: ${n.sample_objects.join(", ")}...`
       ).join("\n\n")
     : `🎭 ViralObj — Nichos Disponíveis (${list.length} total)\n\n` +
       list.map(n =>
-        `${n.emoji} ${n.key.padEnd(16)} | ${n.name.padEnd(27)} | ${n.objects_count} objetos | tom: ${n.tone_default}\n   Objetos: ${n.sample_objects.join(", ")}...`
+        `${n.emoji} ${n.key.padEnd(14)} | ${n.name.padEnd(25)} | ${n.objects_count} objetos | tom: ${n.tone_default}\n   Objetos: ${n.sample_objects.join(", ")}...`
       ).join("\n\n");
 
   return {
