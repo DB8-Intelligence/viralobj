@@ -1,9 +1,9 @@
 {
-  "version": "1.5.0",
+  "version": "1.7.0",
   "project": "ViralObj",
   "description": "Validated patterns from real Talking Object reel analysis",
   "last_updated": "2026-04-10",
-  "videos_analyzed": 10,
+  "videos_analyzed": 12,
   "source_accounts": [
     "@coisadecasa.ia",
     "@dinheirofalante",
@@ -107,7 +107,17 @@
       "TYPE-I RULE (banheiro): Deterioration is always EXTREME and exaggerated — melting, rust, exploding bristles, dents",
       "TYPE-I RULE (banheiro): Use long articulated arms (not stub) — characters are more humanoid in banheiro series",
       "TYPE-I RULE (banheiro): Emotion effects — aura glow for tech, dripping black tears for charcoal, steam from nostrils for rage, huge anime tears for scared",
-      "TYPE-I RULE (banheiro): 'Both sad' ending dynamic is valid — solidarity between opposites creates emotional resonance"
+      "TYPE-I RULE (banheiro): 'Both sad' ending dynamic is valid — solidarity between opposites creates emotional resonance",
+      "TYPE-J RULE: Full body with detailed 5-finger hands — never stub arms. Character walks on macro body surfaces as scenery.",
+      "TYPE-J RULE: Background is ALWAYS extreme macro close-up of human body surface (pores, scalp, teeth, skin) — never room/generic backgrounds",
+      "TYPE-J RULE: No human character in background — the body surface IS the environment. Pixar 3D + hyper-realism contrast.",
+      "TYPE-J RULE: Expression arc follows: confident → shocked → determined → satisfied → proud",
+      "TYPE-J RULE: 5-7 surface scenes per video — each surface = one tip/benefit",
+      "TYPE-K RULE: Character IS the product package — readable label on body is MANDATORY",
+      "TYPE-K RULE: Colored gloves matching label + contrasting red sneakers = character identity signature",
+      "TYPE-K RULE: 1-2 ASMR close frames per video — no character visible, just texture/product super close-up. Sensory retention.",
+      "TYPE-K RULE: 1 inside-angle scene mandatory (inside fridge or oven) = unexpected POV stops scroll",
+      "TYPE-K RULE: Label color palette INVERTS in last 10s (CTA) — signals ending + reinforces brand identity"
     ],
     "caption_styles": {
       "alpha": "bold white Arial Black, 2px black outline, center-bottom, ALL CAPS or mixed",
@@ -115,7 +125,8 @@
       "gamma": "dark pill top (hook 0-5s) + white pill watermark (mid+) + single-word karaoke bottom",
       "gamma-B": "WHITE pill top BLACK text (hook 0-Xs) + white pill watermark + single-word karaoke bottom bold rounded. Detected: @objetosfalantes vitamina maçã",
       "gamma-B-rodape": "WHITE pill top BLACK text (hook 0-4s) + plain WHITE TEXT watermark bottom-center (NO pill) + single ironic word pill at very end. Detected: @objetosfalantes mofo video",
-      "alpha-karaoke": "NO top hook pill. Single word karaoke bottom-center (bold white, no pill, black outline) + plain white text watermark bottom-right. Detected: @objetosfalantes duos comida BR"
+      "alpha-karaoke": "NO top hook pill. Single word karaoke bottom-center (bold white, no pill, black outline) + plain white text watermark bottom-right. Detected: @objetosfalantes duos comida BR",
+      "beta-word-karaoke": "1 palavra isolada por beat de voz. Bold arredondada, branco 100% opaco, outline preto ~3px, centro-baixo. Watermark @conta plain text bottom-center. Detected: @objetosfalantes leite condensado receita"
     },
     "format_types": {
       "A": {
@@ -280,6 +291,37 @@
           "Duos BR Vol.2 (banheiro)"
         ],
         "why_it_works": "Identifies with products everyone owns. Com qual voce se identifica implicit CTA. 5+ duos = high rewatch."
+      },
+      "J": {
+        "name": "SINGLE-TUTORIAL-BODY",
+        "body": "full body with detailed 5-finger hands, walks on macro human body surfaces",
+        "pipeline": "FLUX.2 Pro + MiniMax TTS + VEED Fabric",
+        "example": "@objetosfalantes — óleo de coco skincare",
+        "best_for": ["skincare-natural", "saude-receitas", "beleza", "odontologia", "medicina"],
+        "new": true,
+        "caption_style": "alpha-karaoke",
+        "signature": "Pixar 3D character on hyper-realistic macro body surface. No hook pill. Single-word karaoke bottom.",
+        "expression_arc": "confident → shocked → determined → satisfied → proud",
+        "scenes_per_video": "5-7 surfaces",
+        "why_it_works": "Macro hyper-realism of human body + Pixar 3D = brutal visual contrast that stops scroll. Each surface = new tip = viewer stays for all."
+      },
+      "K": {
+        "name": "SINGLE-RECIPE-JOURNEY",
+        "body": "full body cylindrical/package shape, colored gloves + red sneakers, readable label on body",
+        "pipeline": "FLUX.2 Pro + MiniMax TTS + VEED Fabric",
+        "example": "@objetosfalantes — leite condensado receita",
+        "best_for": ["culinaria-receitas", "gastronomia", "casa", "fitness-nutricao"],
+        "new": true,
+        "caption_style": "beta-word-karaoke",
+        "signature": "Product character cooks recipe start-to-finish. ASMR close + inside fridge angle + label invert CTA.",
+        "expression_arc": "confident → working → proud → CTA-vaidade (label inverts)",
+        "scenes_per_video": "4-5 kitchen scenes",
+        "technical_notes": {
+          "asmr_close": "1 frame no character — super close on texture/product. Sensory retention trigger.",
+          "inside_angle": "1 scene from inside fridge/oven. Unexpected POV = scroll stop.",
+          "label_reveal": "Last 10s label palette inverts. Signals CTA + brand reinforcement."
+        },
+        "why_it_works": "Character executes full recipe = tutorial satisfaction. ASMR close + inside angle + label invert = 4 simultaneous retention hooks. Funny proud tone = shareability."
       }
     },
     "duration_formulas": {
@@ -534,9 +576,145 @@
           "PELE",
           "MAIS"
         ]
+      },
+      {
+        "object": "óleo de coco (gota) — Type J skincare tutorial",
+        "format": "J",
+        "niche": "skincare-natural",
+        "account": "@objetosfalantes",
+        "prompt": "Cute animated coconut oil drop character, white cream teardrop shape with pointed tip, full body with torso, long arms with detailed 5-finger hands, legs and feet, green leaf scarf necktie around neck, expressive brown-amber cartoon eyes, confident smirk expression, standing on extreme macro close-up of human nose with highly visible open pores and blackheads, pore craters in ultra-high detail, skin texture hyper-realistic, warm clinical lighting, Disney/Pixar 3D render — 9:16 vertical, ultra-realistic 3D animation, 8K",
+        "caption_style": "alpha-karaoke",
+        "expression_arc": "confident → shocked → determined → satisfied → proud",
+        "surfaces": ["nariz-poros", "couro-cabeludo", "dente-esmalte", "rosto-cravao", "pele-ressecada"]
+      },
+      {
+        "object": "leite condensado (lata) — Type K recipe journey",
+        "format": "K",
+        "niche": "culinaria-receitas",
+        "account": "@objetosfalantes",
+        "prompt": "Cute animated sweetened condensed milk can character, cylindrical tin can body with blue and white label reading SWEETENED CONDENSED MILK, face embedded on label with expressive brown-amber cartoon eyes and black arched eyebrows, blue cartoon gloves, short black pants, bright red sneakers, confident smirk expression, standing on warm wooden kitchen countertop next to clear glass mixing bowl with creamy condensed milk dripping from silver spoon, bright window natural light, Disney/Pixar 3D render — 9:16 vertical, ultra-realistic 3D animation, 8K",
+        "caption_style": "beta-word-karaoke",
+        "expression_arc": "confident → working → proud → CTA-vaidade (label inverts)",
+        "technical_notes": ["asmr-close at 23.7s", "inside-fridge at 33-38s", "label-invert CTA at 42-47s"]
       }
     ]
   },
+  "videos": [
+    {
+      "video_id": 11,
+      "account": "@objetosfalantes",
+      "title": "Qual dessas você não sabia? — Óleo de Coco Skincare",
+      "slug": "oleo-de-coco-skincare-tutorial",
+      "duration_seconds": 54.8,
+      "resolution": "720x1280",
+      "fps": 30,
+      "format": "J",
+      "format_name": "SINGLE-TUTORIAL-BODY",
+      "format_is_new": true,
+      "niche": "skincare-natural",
+      "sub_niche": "ingredientes-naturais",
+      "tone": "educational",
+      "caption_style": "alpha-karaoke",
+      "series": "Ingredientes Naturais Que Curam",
+      "series_episode": 1,
+      "analyzed_date": "2026-04-10",
+      "character": {
+        "object": "oleo-de-coco",
+        "label": "Óleo de Coco (gota)",
+        "shape": "teardrop-cream-white",
+        "body_type": "full-body-hands",
+        "accessory": "green-leaf-scarf",
+        "eye_color": "brown-amber",
+        "expression_arc": "confident → shocked → satisfied → determined → proud"
+      },
+      "scenes": [
+        { "idx":1,  "ts":0.0,  "surface":"nariz-poros",     "expressao":"confident-smirk",   "legenda":"[hook visual]",        "acao":"arms-crossed-standing" },
+        { "idx":2,  "ts":3.8,  "surface":"nariz-poros",     "expressao":"shocked-surprised",  "legenda":null,                   "acao":"hands-open-raised" },
+        { "idx":3,  "ts":8.2,  "surface":"nariz-oiled",     "expressao":"satisfied-smile",    "legenda":null,                   "acao":"hands-on-surface-applying" },
+        { "idx":4,  "ts":12.0, "surface":"couro-cabeludo",  "expressao":"confident-happy",    "legenda":null,                   "acao":"holding-oil-bottle" },
+        { "idx":5,  "ts":16.4, "surface":"couro-cabeludo",  "expressao":"serene-satisfied",   "legenda":null,                   "acao":"massaging-spread" },
+        { "idx":6,  "ts":23.0, "surface":"dente-esmalte",   "expressao":"determined-focused", "legenda":null,                   "acao":"holding-turmeric-brush" },
+        { "idx":7,  "ts":28.5, "surface":"dente-esmalte",   "expressao":"focused-warrior",    "legenda":null,                   "acao":"brushing-firm" },
+        { "idx":8,  "ts":33.9, "surface":"rosto-blackhead", "expressao":"smug-resigned",      "legenda":null,                   "acao":"holding-coconut-bowl" },
+        { "idx":9,  "ts":39.4, "surface":"rosto-blackhead", "expressao":"animated-revealing", "legenda":null,                   "acao":"finger-pointing-blackhead" },
+        { "idx":10, "ts":44.9, "surface":"pele-ressecada",  "expressao":"sad-worried",        "legenda":null,                   "acao":"holding-cream-tin-sad" },
+        { "idx":11, "ts":49.3, "surface":"pele-hidratada",  "expressao":"proud-satisfied",    "legenda":null,                   "acao":"arms-crossed-confident" },
+        { "idx":12, "ts":53.1, "surface":"pele-recuperada", "expressao":"animated-teaching",  "legenda":"[cta]",                "acao":"finger-pointing-cta" }
+      ],
+      "production": {
+        "pipeline": ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+        "estimated_cost": "$2.00",
+        "voice": { "voice_id": "Friendly_Person", "emotion": "cheerful", "speed": 1.05, "pitch": 1 },
+        "music_style": "warm acoustic spa",
+        "bpm": 95,
+        "music_volume_db": -20
+      },
+      "viral_score": 5,
+      "viral_factor": "Macro hiper-realista do corpo humano + Pixar 3D = contraste visual brutal que para o scroll",
+      "correlated_niches": ["saude-receitas","casa","maternidade","fitness"]
+    },
+    {
+      "video_id": 12,
+      "account": "@objetosfalantes",
+      "title": "Qual dessas você não sabia? — Leite Condensado Receita",
+      "slug": "leite-condensado-receita-tutorial",
+      "duration_seconds": 47.4,
+      "resolution": "720x1280",
+      "fps": 30,
+      "format": "K",
+      "format_name": "SINGLE-RECIPE-JOURNEY",
+      "format_is_new": true,
+      "niche": "culinaria-receitas",
+      "sub_niche": "receitas-simples-virais",
+      "tone": "funny",
+      "sub_tone": "vaidoso-orgulhoso",
+      "caption_style": "beta-word-karaoke",
+      "series": "Ingredientes que Fazem Receita Sozinhos",
+      "series_episode": 1,
+      "analyzed_date": "2026-04-10",
+      "character": {
+        "object": "leite-condensado",
+        "label": "Lata de Leite Condensado",
+        "shape": "cylindrical-can",
+        "body_type": "full-body-cylindrical",
+        "gloves": "blue-matching-label",
+        "shoes": "red-sneakers-contrast",
+        "eye_color": "brown-amber",
+        "expression_arc": "confiante → concentrado → animado → orgulhoso → CTA-vaidoso",
+        "label_reveal": "paleta inverte no CTA — azul vira fundo branco com texto azul"
+      },
+      "scenes": [
+        { "idx":1,  "ts":0.00,  "cenario":"bancada-madeira",       "expressao":"confident-smirk",         "legenda":"Leite",          "acao":"ao lado da tigela, colher com leite escorrendo" },
+        { "idx":2,  "ts":2.84,  "cenario":"bancada-madeira",       "expressao":"animated-pointing-up",    "legenda":"ingredientes",   "acao":"aponta ingredientes, tigela cheia ao lado" },
+        { "idx":3,  "ts":6.16,  "cenario":"bancada-madeira",       "expressao":"satisfied-smile",         "legenda":null,             "acao":"segura colher, leite escorre para tigela" },
+        { "idx":4,  "ts":9.95,  "cenario":"liquidificador",        "expressao":"serious-focused",         "legenda":"tá?",            "acao":"despeja leite no liquidificador" },
+        { "idx":5,  "ts":14.22, "cenario":"liquidificador",        "expressao":"proud-arms-open",         "legenda":"pra",            "acao":"ao lado do liquidificador cheio, braços abertos" },
+        { "idx":6,  "ts":18.96, "cenario":"liquidificador-close",  "expressao":"laughing-leaning",        "legenda":"liquidificador", "acao":"inclinado para frente, gargalhando com resultado" },
+        { "idx":7,  "ts":23.69, "cenario":"liquidificador-asmr",   "expressao":"sem-personagem",          "legenda":"ganhar",         "acao":"ASMR: super close na mistura girando — sem personagem" },
+        { "idx":8,  "ts":28.43, "cenario":"bancada-tigela",        "expressao":"happy-spoon-raised",      "legenda":"delícia",        "acao":"segura colher com creme escorrendo" },
+        { "idx":9,  "ts":33.17, "cenario":"geladeira-interior",    "expressao":"proud-holding-jar",       "legenda":"leva",           "acao":"DENTRO da geladeira, segurando pote com creme" },
+        { "idx":10, "ts":37.91, "cenario":"geladeira-interior",    "expressao":"confident-peace-sign",    "legenda":"gostoso",        "acao":"apresenta pote finalizado, dedo em V" },
+        { "idx":11, "ts":42.65, "cenario":"bancada-close-cta",     "expressao":"thumbs-up-label-inverted","legenda":"gostei",         "acao":"RÓTULO INVERTIDO — fundo branco + texto azul, polegar" },
+        { "idx":12, "ts":45.97, "cenario":"bancada-close-cta",     "expressao":"winking-sly-label-inverted","legenda":"mais",          "acao":"RÓTULO INVERTIDO — expressão maliciosa, dedo na têmpora" }
+      ],
+      "technical_notes": {
+        "asmr_close":   "Frame 7 (23.7s): super close na mistura, sem personagem. Técnica sensorial de retenção.",
+        "inside_angle":  "Frames 9-10: personagem filmado de dentro da geladeira aberta. Ângulo inusitado = parada de scroll.",
+        "label_invert":  "Frames 11-12 (CTA): rótulo inverte paleta. Azul+branco → branco+azul. Sinaliza fim + identidade."
+      },
+      "production": {
+        "pipeline": ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+        "estimated_cost": "$2.50",
+        "voice": { "voice_id": "Lively_Girl", "emotion": "cheerful", "speed": 1.10, "pitch": 2 },
+        "music_style": "upbeat kitchen pop",
+        "bpm": 115,
+        "music_volume_db": -18
+      },
+      "viral_score": 5,
+      "viral_factor": "Personagem executa receita completa + ASMR close + ângulo geladeira + label reveal CTA = 4 ganchos de retenção simultâneos",
+      "correlated_niches": ["gastronomia","casa","maternidade","fitness-nutricao"]
+    }
+  ],
   "system_prompt": "You are a Talking Object character at ViralObj (viralobj.com). You speak in first person as [OBJECT]. Your tone is [TONE]. You are animated in Pixar/Disney 3D style. You speak about [TOPIC]. Your core message is [ERROR_DENOUNCED]. Keep your speech under [DURATION] seconds. Use [LANGUAGE]. Include [pause], [EMPHASIS], and [long pause] markers.",
   "post_formulas": {
     "hook_templates_pt": [
@@ -554,7 +732,10 @@
       "Qual desses você é na vida real? 🤔",
       "A discussão que todo brasileiro já teve na cabeça 🇧🇷",
       "Com qual voce se identifica? O [PRODUTO VELHO] ou o [PRODUTO NOVO]?",
-      "Esse banheiro tem uma DR todo dia..."
+      "Esse banheiro tem uma DR todo dia...",
+      "Qual dessas você não sabia? 🤔 [INGREDIENTE NATURAL]",
+      "[INGREDIENTE] faz TUDO isso e você não sabia...",
+      "[N] ingredientes e a receita se faz SOZINHA 🍰"
     ],
     "hook_templates_en": [
       "Your [objects] are ANGRY at you... [emojis]",
@@ -581,7 +762,9 @@
       "Série [Objetos Bravos]: Vol.[N] — [Nicho]",
       "Série [Receitas do Dr. Fruta]: [Fruta] ensina...",
       "Série [Vilões da Casa]: Ep.[N] — DIGA ADEUS AO [VILÃO]!",
-      "Série [Duos BR]: Vol.[N] — [ALIMENTO1] vs. [ALIMENTO2]"
+      "Série [Duos BR]: Vol.[N] — [ALIMENTO1] vs. [ALIMENTO2]",
+      "Série [Ingredientes Naturais Que Curam]: Ep.[N] — [INGREDIENTE] [BENEFÍCIO]",
+      "Série [Ingredientes que Fazem Receita Sozinhos]: Ep.[N] — [INGREDIENTE] [RECEITA]"
     ]
   }
 }

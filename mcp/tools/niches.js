@@ -1,7 +1,154 @@
 /**
  * ViralObj — niches.js
- * 10-niche library with object lists, personalities, validated prompts
+ * 15-niche library with object lists, personalities, validated prompts
+ * Formats A–K | 87+ objects | 15 niches
  */
+
+// ─── FORMAT DEFINITIONS (J + K are new in v1.7.0) ──────────────────────────
+
+export const FORMATS = {
+  J: {
+    id: "J",
+    name: "SINGLE-TUTORIAL-BODY",
+    description: "1 personagem full-body percorre superfícies macro do corpo humano como cenários por dica. Sem humano inteiro ao fundo — apenas macrofotografia hiper-realista da pele/cabelo/dentes como palco. Contraste brutal: Pixar 3D + hiper-realismo orgânico.",
+    body: "full-body-hands",
+    legs: true,
+    hands_detailed: true,
+    human_background: false,
+    body_surface_macro: true,
+    pipeline: ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+    camera: "zoom-in-surface",
+    expression_arc: "confident → shocked → determined → satisfied → proud",
+    best_for: ["skincare-natural", "saude-receitas", "beleza", "odontologia", "medicina"],
+    tone: "educational",
+    scenes_per_video: "5-7",
+    flux_template: {
+      character_base: "[EMOÇÃO] animated [OBJETO] character, [FORMA] shape, full body with torso, long arms with detailed 5-finger hands, legs and feet, [ACESSÓRIO], [COR OLHOS] expressive cartoon eyes, [COR] smooth skin texture, Disney/Pixar 3D render, ultra-realistic 3D animation, 8K",
+      scene_variant: "[BASE_CHAR] [EXPRESSÃO] expression, [AÇÃO], on extreme macro close-up of [SUPERFÍCIE CORPORAL] with [DETALHE HIPER-REALISTA], [PRODUTO/INGREDIENTE] visible, [ILUMINAÇÃO], 9:16 vertical, 8K"
+    },
+    caption_style: "alpha-karaoke",
+    reference_account: "@objetosfalantes",
+    reference_video: "oleo-de-coco-skincare-54s",
+    cataloged_date: "2026-04-10",
+    examples: [
+      { object: "coconut-oil-drop", surfaces: ["nariz-poros", "couro-cabeludo", "dente-esmalte", "rosto-cravao", "pele-ressecada"] }
+    ]
+  },
+  K: {
+    id: "K",
+    name: "SINGLE-RECIPE-JOURNEY",
+    description: "1 personagem full-body executa uma receita completa passo a passo, mudando de cenário de cozinha a cada etapa. O objeto É o protagonista que cozinha — pega ingredientes, usa eletrodomésticos, refrigera, apresenta resultado. Sem humano ao fundo. Props fotorrealísticos de cozinha.",
+    body: "full-body-cylindrical",
+    legs: true,
+    hands: "gloves-colored",
+    shoes: "sneakers-contrast",
+    human_background: false,
+    props_realistic: true,
+    scene_changes: "recipe-step",
+    pipeline: ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+    camera: "cut-based",
+    expression_arc: "confident → working → proud → CTA-vaidade",
+    label_reveal: true,
+    best_for: ["culinaria-receitas", "gastronomia", "casa", "fitness-nutricao"],
+    tone: "funny",
+    sub_tone: "vaidoso-orgulhoso",
+    scenes_per_video: "4-5",
+    flux_template: {
+      character_base: "[OBJETO EMBALAGEM] animated character, [FORMA CILÍNDRICA/EMBALAGEM] body shape, [RÓTULO ORIGINAL] label design visible on body, face embedded on label area with [COR] expressive eyes, colored [MATERIAL] gloves matching label color, short legs with contrasting red sneakers, Disney/Pixar 3D render, ultra-realistic 3D animation, 8K",
+      scene_variant: "[BASE_CHAR] [EXPRESSÃO], [AÇÃO COM PROP], in realistic Brazilian kitchen scene with [CENÁRIO ESPECÍFICO], [PROP FOTORREALÍSTICO] visible in detail, [ILUMINAÇÃO COZINHA], 9:16 vertical, 8K"
+    },
+    caption_style: "beta-word-karaoke",
+    cta_label_invert: true,
+    reference_account: "@objetosfalantes",
+    reference_video: "leite-condensado-receita-47s",
+    cataloged_date: "2026-04-10",
+    technical_notes: {
+      asmr_close: "1 frame sem personagem — super close no produto/textura. Ativa resposta sensorial. Usar em 1-2 frames por vídeo.",
+      inside_angle: "1 cena em local inusitado (dentro geladeira, dentro forno). Para o scroll por ser visualmente inesperado.",
+      label_reveal: "Nos últimos 10s o rótulo do personagem INVERTE paleta de cores. Sinaliza encerramento + reforça identidade."
+    }
+  }
+};
+
+// ─── FORMAT REGISTRY (all 11 formats A–K) ───────────────────────────────────
+
+export const FORMAT_REGISTRY = [
+  { id: "A", name: "MULTI-STUB",                    niches: ["casa", "plantas", "financeiro"],                              tone: "angry" },
+  { id: "B", name: "SINGLE-FULL",                   niches: ["culinaria", "natureza", "saude"],                             tone: "educational" },
+  { id: "C", name: "DRESSED-CHAR",                  niches: ["imoveis", "juridico", "empreendedorismo"],                    tone: "dramatic" },
+  { id: "D", name: "MAP-DOC",                       niches: ["viagem", "imoveis", "educacao"],                              tone: "educational" },
+  { id: "E", name: "RECIPE-MAGIC",                  niches: ["culinaria", "casa", "saude"],                                 tone: "educational" },
+  { id: "F", name: "SINGLE-MULTI-COSTUME",          niches: ["saude-receitas", "culinaria", "beleza"],                      tone: "educational" },
+  { id: "G", name: "DRESSED-CHAR+RECIPE-SPLIT",     niches: ["saude-receitas", "culinaria", "beleza"],                      tone: "educational" },
+  { id: "H", name: "VILLAIN-HERO NARRATIVE",         niches: ["casa", "saude", "natureza"],                                  tone: "dramatic" },
+  { id: "I", name: "DUO-SCENE",                     niches: ["gastronomia", "casa", "culinaria", "fitness", "beleza"],       tone: "funny" },
+  { id: "J", name: "SINGLE-TUTORIAL-BODY",          niches: ["skincare-natural", "saude-receitas", "beleza", "odontologia"], tone: "educational" },
+  { id: "K", name: "SINGLE-RECIPE-JOURNEY",         niches: ["culinaria-receitas", "gastronomia", "casa"],                  tone: "funny" },
+];
+
+// ─── CAPTION STYLES ─────────────────────────────────────────────────────────
+
+export const CAPTION_STYLES = {
+  "alpha": {
+    id: "alpha",
+    description: "bold white Arial Black, 2px black outline, center-bottom, ALL CAPS or mixed",
+    font: "Arial Black",
+    color: "#FFFFFF",
+    outline: "2px solid #000000",
+    position: "center-bottom",
+    pill: false,
+  },
+  "beta": {
+    id: "beta",
+    description: "white pill, 2 colors (normal + highlight), 12px border-radius",
+    font: "bold rounded",
+    color: "#FFFFFF",
+    pill: true,
+    border_radius: "12px",
+  },
+  "gamma": {
+    id: "gamma",
+    description: "dark pill top (hook 0-5s) + white pill watermark (mid+) + single-word karaoke bottom",
+    pill: true,
+    position: "top+bottom",
+  },
+  "gamma-B": {
+    id: "gamma-B",
+    description: "WHITE pill top BLACK text (hook 0-Xs) + white pill watermark + single-word karaoke bottom bold rounded",
+    pill: true,
+    position: "top+bottom",
+  },
+  "gamma-B-rodape": {
+    id: "gamma-B-rodape",
+    description: "WHITE pill top BLACK text (hook 0-4s) + plain WHITE TEXT watermark bottom-center (NO pill) + single ironic word pill at very end",
+    pill: true,
+    position: "top+bottom",
+  },
+  "alpha-karaoke": {
+    id: "alpha-karaoke",
+    description: "NO top hook pill. Single word karaoke bottom-center (bold white, no pill, black outline) + plain white text watermark bottom-right",
+    font: "bold rounded",
+    color: "#FFFFFF",
+    outline: "2px solid #000000",
+    position: "center-bottom",
+    pill: false,
+    watermark: "plain text bottom-right white",
+  },
+  "beta-word-karaoke": {
+    id: "beta-word-karaoke",
+    description: "1 palavra isolada por beat de voz. Bold arredondada, branco 100% opaco, outline preto ~3px, posição centro-baixo. Watermark @conta plain text bottom-center cor branca.",
+    font: "bold rounded",
+    color: "#FFFFFF",
+    outline: "3px solid #000000",
+    position: "center-bottom",
+    words_per_frame: 1,
+    pill: false,
+    watermark: "plain text bottom-center white",
+    examples: ["Leite", "ingredientes", "tá?", "pra", "liquidificador", "ganhar", "delícia", "leva", "gostoso"]
+  },
+};
+
+// ─── NICHES ─────────────────────────────────────────────────────────────────
 
 export const NICHES = {
   casa: {
@@ -269,10 +416,162 @@ export const NICHES = {
     prompts_base: "Brazilian social scenario — BBQ, party, apartment, office, Pixar 3D render, DRESSED-CHAR style (fruit as head on human body), expressive faces, dramatic lighting",
     content_warning: "Use only educational/positive storylines — avoid toxic relationship portrayal",
   },
+
+  // ─── skincare-natural — Type J SINGLE-TUTORIAL-BODY (v1.7.0) ─────────────
+  "skincare-natural": {
+    name_pt: "Skincare Natural",
+    name_en: "Natural Skincare",
+    emoji: "🧴",
+    tone_default: "educational",
+    format_default: "J",
+    alt_formats: ["B", "F", "G"],
+    source_reference: "@objetosfalantes — oleo-de-coco-skincare 2026-04-10",
+    expression: "confident-teacher",
+    bpm_range: [88, 105],
+    music_style: "warm acoustic spa",
+    caption_style: "alpha-karaoke",
+    series: {
+      name: "Ingredientes Naturais Que Curam",
+      format: "J",
+      episodes: [
+        { ep: 1, object: "oleo-de-coco",    status: "catalogado",     surfaces: ["nariz-poros","couro-cabeludo","dente-esmalte","cravao","pele-ressecada"] },
+        { ep: 2, object: "mel",             status: "pronto-produzir", surfaces: ["ferida","acne","garganta","cabelo","queimadura-solar"] },
+        { ep: 3, object: "aloe-vera",       status: "pronto-produzir", surfaces: ["queimadura-solar","pele-oleosa","couro-cabeludo","olheiras","cicatriz"] },
+        { ep: 4, object: "bicarbonato",     status: "planejado",       surfaces: ["dente","axila","pes","fungo-unha"] },
+        { ep: 5, object: "vinagre-de-maca", status: "planejado",       surfaces: ["cabelo","estomago","pele-oleosa","caspa"] },
+        { ep: 6, object: "curcuma",         status: "planejado",       surfaces: ["inflamacao","dente","pele","articulacao"] },
+        { ep: 7, object: "gengibre",        status: "planejado",       surfaces: ["garganta","estomago","couro-cabeludo","articulacao"] }
+      ]
+    },
+    objects: [
+      {
+        id: "oleo-de-coco",
+        pt: "óleo de coco",
+        en: "coconut oil",
+        emoji: "🥥",
+        label: "Óleo de Coco",
+        shape: "teardrop-cream-white",
+        accessory: "green-leaf-scarf",
+        eye_color: "brown-amber",
+        body_type: "full-body-hands",
+        personality: "confiante, educativa, carinhosa",
+        format: "J",
+        flux_base: "Cute animated coconut oil drop character, white cream teardrop shape with pointed tip, full body with torso, long arms with detailed 5-finger hands, legs and feet, green leaf scarf necktie around neck, expressive brown-amber cartoon eyes, brown arched eyebrows, smooth white cream skin texture, Disney/Pixar 3D render, ultra-realistic 3D animation, 8K",
+        voice: { voice_id: "Friendly_Person", emotion: "cheerful", speed: 1.05, pitch: 1 },
+        surfaces_catalog: {
+          "nariz-poros":    "extreme macro close-up of human nose with highly visible open pores and blackheads, pore craters in ultra-high detail, skin texture hiper-realistic",
+          "couro-cabeludo": "macro close-up of dark hair scalp with oily golden honey-colored liquid spreading between hair roots and follicles, ultra-detailed hair strands",
+          "dente-esmalte":  "macro close-up of white tooth enamel surface with gum pink tissue, turmeric yellow paste dripping, dental texture ultra-realistic",
+          "cravao":         "extreme macro close-up of human nose skin with massive blackhead visible, enlarged pore dark opening, skin texture ultra-realistic hiper-macro",
+          "pele-ressecada": "extreme macro close-up of severely dry cracked skin heel or elbow, deep skin fissures and cracks ultra-detailed, flaky dead skin texture"
+        }
+      },
+      {
+        id: "mel",
+        pt: "mel",
+        en: "honey",
+        emoji: "🍯",
+        label: "Mel",
+        shape: "round-oval-golden-amber",
+        accessory: "tiny-bee-antennae",
+        eye_color: "dark-brown",
+        personality: "doce, protetora, sábia",
+        format: "J",
+        flux_base: "Cute animated honey drop character, round golden amber teardrop shape, full body with arms hands and legs, tiny bee antenna on top, warm golden glow skin texture, sticky honey drip effect on body edges, big expressive dark cartoon eyes, Disney/Pixar 3D render, ultra-realistic 3D animation, 8K",
+        voice: { voice_id: "Friendly_Person", emotion: "cheerful", speed: 1.00, pitch: 1 }
+      },
+      {
+        id: "aloe-vera",
+        pt: "aloe vera / babosa",
+        en: "aloe vera",
+        emoji: "🌿",
+        label: "Aloe Vera / Babosa",
+        shape: "succulent-leaf-green",
+        accessory: "transparent-gel-drip",
+        eye_color: "green-lime",
+        personality: "calma, refrescante, curadora",
+        format: "J",
+        flux_base: "Cute animated aloe vera character, green succulent leaf shape with pointed tip, full body with torso arms hands and legs, transparent cooling gel dripping from body, calming green eyes, white gloves, Disney/Pixar 3D render, ultra-realistic 3D animation, 8K",
+        voice: { voice_id: "Calm_Woman", emotion: "cheerful", speed: 0.95, pitch: 1 }
+      }
+    ],
+    body_surfaces: [
+      "nariz-poros","couro-cabeludo","dente-esmalte","cravao-blackhead",
+      "pele-ressecada","olheiras","acne","cicatriz","axila","pes-calcanhares",
+      "labios-ressecados","couro-cabeludo-caspa","unha-fungo","queimadura-solar"
+    ],
+    correlated_niches: ["saude-receitas","casa","maternidade","fitness","saude"],
+    prompts_base: "Extreme macro close-up of human body surface as background, Pixar 3D character walking on/interacting with surface, hyper-realistic organic texture + Disney/Pixar 3D render contrast, warm clinical lighting, 9:16 vertical, 8K",
+  },
+
+  // ─── culinaria-receitas — Type K SINGLE-RECIPE-JOURNEY (v1.7.0) ──────────
+  "culinaria-receitas": {
+    name_pt: "Culinária & Receitas Virais",
+    name_en: "Cooking & Viral Recipes",
+    emoji: "🍰",
+    tone_default: "funny",
+    format_default: "K",
+    alt_formats: ["B", "E", "F"],
+    source_reference: "@objetosfalantes — leite-condensado-receita 2026-04-10",
+    caption_style: "beta-word-karaoke",
+    series_K: {
+      name: "Ingredientes que Fazem Receita Sozinhos",
+      format: "K",
+      episodes: [
+        { ep: 1, object: "leite-condensado", status: "catalogado",     receita: "sorvete caseiro 3 ingredientes" },
+        { ep: 2, object: "nutella",          status: "pronto-produzir", receita: "crepe de nutella" },
+        { ep: 3, object: "ovos",             status: "pronto-produzir", receita: "omelete de microondas" },
+        { ep: 4, object: "farinha-de-trigo", status: "planejado",       receita: "bolo de caneca" },
+        { ep: 5, object: "manteiga",         status: "planejado",       receita: "biscoito amanteigado simples" },
+        { ep: 6, object: "banana",           status: "planejado",       receita: "sorvete de banana 1 ingrediente" },
+        { ep: 7, object: "iogurte",          status: "planejado",       receita: "panqueca de iogurte" }
+      ]
+    },
+    objects: [
+      {
+        id: "leite-condensado",
+        pt: "leite condensado",
+        en: "sweetened condensed milk",
+        emoji: "🥫",
+        label: "Leite Condensado",
+        shape: "cylindrical-can",
+        label_color_primary: "#1E6FBF",
+        label_color_secondary: "#FFFFFF",
+        glove_color: "#1E6FBF",
+        shoe_color: "#FF3333",
+        pants_color: "#2C2C2C",
+        eye_color: "brown-amber",
+        expression_dominant: "proud-confident",
+        label_invert_cta: true,
+        personality: "vaidosa, orgulhosa, sabe que é indispensável",
+        format: "K",
+        flux_base: "Cute animated sweetened condensed milk can character, cylindrical tin can body with blue and white label reading SWEETENED CONDENSED MILK, face embedded on label with expressive brown-amber cartoon eyes and black arched eyebrows, blue cartoon gloves, short black pants, bright red sneakers, rosy cheeks, Disney/Pixar 3D render, ultra-realistic 3D animation, 8K",
+        flux_cta_variant: "Same character with INVERTED LABEL color scheme — white background with blue text, confident winking expression, thumbs up gesture, Disney/Pixar 3D render, 8K",
+        voice: { voice_id: "Lively_Girl", emotion: "cheerful", speed: 1.10, pitch: 2 },
+        props_catalog: {
+          "bancada-madeira":    "warm wooden kitchen countertop, bright window with natural light bokeh, colorful ceramic bowls on shelves, Brazilian home kitchen atmosphere",
+          "liquidificador":     "clear glass blender with thick creamy white mixture inside, modern electric blender base, kitchen countertop",
+          "geladeira-interior": "open refrigerator interior, white LED lit shelves, fresh fruits and vegetables visible, glass jars and containers, cold temperature effect",
+          "tigela-vidro":       "large clear glass mixing bowl with creamy condensed milk dripping from silver spoon, smooth cream texture"
+        }
+      }
+    ],
+    kitchen_scenes: [
+      "bancada-madeira-clara","liquidificador-vidro","batedeira-stand",
+      "forno-aberto","geladeira-interior","mesa-posta-apresentacao",
+      "fogao-panela-fervendo","microondas-aberto"
+    ],
+    camera_techniques: {
+      "asmr-close":      "Super close no produto final sem personagem. 1-2 frames por vídeo. Ativa resposta sensorial.",
+      "personagem-prop": "Plano médio com personagem + prop fotorrealístico. Proporção Pixar:real = diferencial do formato.",
+      "inside-angle":    "Personagem dentro de geladeira ou forno abertos. Ângulo inusitado = parada de scroll garantida."
+    },
+    correlated_niches: ["gastronomia","casa","maternidade","fitness-nutricao"],
+    prompts_base: "Realistic Brazilian kitchen scene with photorealistic props, Pixar 3D character interacting with real kitchen items, warm kitchen lighting, 9:16 vertical, 8K",
+  },
 };
 
 // ─── ANALYSIS OUTPUT PROMPT TEMPLATE ────────────────────────────────────────
-// Used after every video analysis to generate ViralObj implementation prompt
 
 export function generateImplementationPrompt(analysis) {
   const {
@@ -290,6 +589,51 @@ export function generateImplementationPrompt(analysis) {
     prompts_validated,
   } = analysis;
 
+  // ─── Special case: skincare-natural (Format J) ────────────────────────────
+  if (niche_key === "skincare-natural") {
+    return `
+# ViralObj Implementation — Skincare Natural (Format J)
+## Video: ${video_file} | Account: ${account}
+## Generated: ${new Date().toISOString()}
+
+### Format: J (SINGLE-TUTORIAL-BODY) — OBRIGATÓRIO
+### Série: Ingredientes Naturais Que Curam (7 eps)
+
+Técnica: personagem percorre superfícies macro do corpo humano
+Voz: Friendly_Person | cheerful | 1.05x | +1
+Legenda: alpha-karaoke
+Nichos correlacionados: saude-receitas, casa, maternidade, fitness
+
+### Objects: ${objects_to_add.map(o => o.pt || o.id).join(", ")}
+### Caption style: ${caption_style || "alpha-karaoke"}
+
+${JSON.stringify(prompts_validated, null, 2)}
+`;
+  }
+
+  // ─── Special case: culinaria-receitas (Format K) ──────────────────────────
+  if (niche_key === "culinaria-receitas" || (niche_key === "culinaria-receitas-K")) {
+    return `
+# ViralObj Implementation — Culinária Receitas (Format K)
+## Video: ${video_file} | Account: ${account}
+## Generated: ${new Date().toISOString()}
+
+### Format: K (SINGLE-RECIPE-JOURNEY) — OBRIGATÓRIO
+### Série: Ingredientes que Fazem Receita Sozinhos (7 eps)
+
+3 técnicas obrigatórias: ASMR close + inside angle + label reveal
+Voz: Lively_Girl | cheerful | 1.10x | +2
+Legenda: beta-word-karaoke
+Nichos correlacionados: gastronomia, casa, maternidade, fitness-nutricao
+
+### Objects: ${objects_to_add.map(o => o.pt || o.id).join(", ")}
+### Caption style: ${caption_style || "beta-word-karaoke"}
+
+${JSON.stringify(prompts_validated, null, 2)}
+`;
+  }
+
+  // ─── Default template ─────────────────────────────────────────────────────
   return `
 # ViralObj Implementation Prompt
 ## Video: ${video_file} | Account: ${account}
@@ -301,7 +645,7 @@ export function generateImplementationPrompt(analysis) {
 
 ${is_new_niche
   ? `### ✅ CREATE NEW NICHE: \`${niche_key}\`
-Add to \`~/viralobj/mcp/tools/niches.js\` in the NICHES object:
+Add to \`~/viralobj/mcp/tools/niches.js\`:
 
 \`\`\`javascript
 "${niche_key}": {
@@ -310,84 +654,25 @@ Add to \`~/viralobj/mcp/tools/niches.js\` in the NICHES object:
   emoji: "${niche_detected.emoji}",
   tone_default: "${niche_detected.tone_default}",
   format_default: "${format_type}",
-  source_reference: "${account} — video analyzed ${new Date().toISOString().split("T")[0]}",
+  source_reference: "${account} — ${new Date().toISOString().split("T")[0]}",
   objects: ${JSON.stringify(objects_to_add, null, 4)},
   prompts_base: "${niche_detected.prompts_base}",
 },
 \`\`\``
   : `### ✅ ADD TO EXISTING NICHE: \`${niche_key}\`
-Add these objects to \`NICHES["${niche_key}"].objects\` in \`niches.js\`:
-
 \`\`\`javascript
 ${objects_to_add.map(o => JSON.stringify(o)).join(",\n")}
 \`\`\``
 }
 
----
+## 2. FORMAT: ${format_type} ${is_new_format ? "(NEW)" : "(exists)"}
 
-## 2. FORMAT ACTION
+## 3. DATASET: +1 video, +${prompts_validated?.length || 0} prompts, add "${account}"
 
-${is_new_format
-  ? `### ✅ REGISTER NEW FORMAT TYPE: \`${format_type}\`
-Add to \`dataset.json\` → \`validated_patterns.format_types\`:
-
-\`\`\`json
-"${format_type}": {
-  "name": "${niche_detected.format_name}",
-  "body": "${niche_detected.format_body}",
-  "pipeline": "${niche_detected.pipeline}",
-  "example": "${account}",
-  "best_for": ${JSON.stringify(niche_detected.best_for)},
-  "new": true,
-  "caption_style": "${caption_style}",
-  "signature": "${niche_detected.format_signature}"
-}
-\`\`\``
-  : `### ✅ FORMAT \`${format_type}\` ALREADY EXISTS — no action needed`
-}
-
----
-
-## 3. DATASET UPDATE
-
-Add to \`dataset.json\` → \`validated_prompts\`:
-
-\`\`\`json
-${JSON.stringify(prompts_validated, null, 2)}
+## 4. COMMIT
 \`\`\`
-
-Add hooks to \`post_formulas\`:
-\`\`\`json
-${JSON.stringify(hooks_detected, null, 2)}
-\`\`\`
-
-Increment \`videos_analyzed\` by 1.
-Add \`"${account}"\` to \`source_accounts\` if not present.
-
----
-
-## 4. QUICK TEST
-
-After applying, test in Claude Code:
-\`\`\`
-Generate a talking object reel for ${niche_key}
-with ${objects_to_add[0]?.pt || character}
-about [TOPIC]
-format: ${format_type}
-duration: 30 seconds
-\`\`\`
-
----
-
-## 5. COMMIT MESSAGE
-
-\`\`\`
-feat(niches): add ${is_new_niche ? niche_key + " niche" : objects_to_add.length + " objects to " + niche_key}
-
-- Source: ${account} (${new Date().toISOString().split("T")[0]})
-- Format: Type ${format_type}${is_new_format ? " (NEW)" : ""}
-- Objects: ${objects_to_add.map(o => o.pt).join(", ")}
-- Caption style: ${caption_style}
+feat(niches): add ${is_new_niche ? niche_key : objects_to_add.length + " objects to " + niche_key}
+Source: ${account} | Format: ${format_type} | Caption: ${caption_style}
 \`\`\`
 `;
 }
@@ -408,17 +693,17 @@ export async function listNiches({ lang = "pt" } = {}) {
     emoji: n.emoji,
     objects_count: n.objects.length,
     tone_default: n.tone_default,
-    sample_objects: n.objects.slice(0, 3).map(o => lang === "en" ? o.en : o.pt),
+    sample_objects: n.objects.slice(0, 3).map(o => lang === "en" ? (o.en || o.id) : (o.pt || o.id)),
   }));
 
   const text = lang === "en"
     ? `🎭 ViralObj — Available Niches (${list.length} total)\n\n` +
       list.map(n =>
-        `${n.emoji} ${n.key.padEnd(14)} | ${n.name.padEnd(25)} | ${n.objects_count} objects | tone: ${n.tone_default}\n   Objects: ${n.sample_objects.join(", ")}...`
+        `${n.emoji} ${n.key.padEnd(18)} | ${n.name.padEnd(28)} | ${n.objects_count} objects | tone: ${n.tone_default}\n   Objects: ${n.sample_objects.join(", ")}...`
       ).join("\n\n")
     : `🎭 ViralObj — Nichos Disponíveis (${list.length} total)\n\n` +
       list.map(n =>
-        `${n.emoji} ${n.key.padEnd(14)} | ${n.name.padEnd(25)} | ${n.objects_count} objetos | tom: ${n.tone_default}\n   Objetos: ${n.sample_objects.join(", ")}...`
+        `${n.emoji} ${n.key.padEnd(18)} | ${n.name.padEnd(28)} | ${n.objects_count} objetos | tom: ${n.tone_default}\n   Objetos: ${n.sample_objects.join(", ")}...`
       ).join("\n\n");
 
   return {
