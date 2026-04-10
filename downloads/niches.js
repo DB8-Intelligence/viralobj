@@ -1,10 +1,10 @@
 /**
  * ViralObj — niches.js
- * 15-niche library with object lists, personalities, validated prompts
- * Formats A–K | 87+ objects | 15 niches
+ * 16-niche library with object lists, personalities, validated prompts
+ * Formats A–M | 100+ objects | 16 niches
  */
 
-// ─── FORMAT DEFINITIONS (J + K are new in v1.7.0) ──────────────────────────
+// ─── FORMAT DEFINITIONS (J+K v1.7.0, L+M v1.8.0) ──────────────────────────
 
 export const FORMATS = {
   J: {
@@ -67,10 +67,73 @@ export const FORMATS = {
       inside_angle: "1 cena em local inusitado (dentro geladeira, dentro forno). Para o scroll por ser visualmente inesperado.",
       label_reveal: "Nos últimos 10s o rótulo do personagem INVERTE paleta de cores. Sinaliza encerramento + reforça identidade."
     }
+  },
+  L: {
+    id: "L",
+    name: "SINGLE-MULTI-SCENE-JOURNEY",
+    description: "1 personagem percorre 3 ambientes domésticos diferentes demonstrando uso ou benefício do produto. Receita DIY ou tutorial de uso. Sem humano inteiro ao fundo. Props reais fotorrealísticos. Similar ao K mas em ambientes da CASA (não cozinha exclusiva) e com foco em limpeza/organização.",
+    body: "full-body-product-homogeneous",
+    legs: true,
+    hands_detailed: true,
+    gloves: false,
+    color_homogeneous: true,
+    human_background: false,
+    props_realistic: true,
+    scene_changes: "domestic-environment",
+    pipeline: ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+    camera: "cut-based",
+    expression_arc: "sarcástico → trabalhando → orgulhoso",
+    best_for: ["casa", "limpeza", "organizacao", "pets"],
+    tone: "funny",
+    sub_tone: "sarcástico-orgulhoso",
+    scenes_per_video: "3",
+    environments: ["cozinha", "banheiro", "quarto", "sala", "area-de-servico"],
+    flux_template: {
+      character_base: "[PRODUTO DOMÉSTICO] animated character, [FORMA DO PRODUTO] body shape, [COR DO PRODUTO] homogeneous color all over body, face embedded on product surface with expressive [COR] cartoon eyes, [COR] matching arms and hands, short legs and oval feet same color as product, no gloves no shoes, Disney/Pixar 3D render, ultra-realistic 3D animation, 8K",
+      scene_variant: "[BASE_CHAR] [EXPRESSÃO], [AÇÃO COM PROP], in realistic Brazilian [AMBIENTE DOMÉSTICO] with [DETALHES DO CÔMODO], [PRODUTO DIY ou PROP] visible, warm domestic lighting, 9:16 vertical, 8K"
+    },
+    caption_style: "beta-word-karaoke",
+    reference_account: "@objetosfalantes",
+    reference_video: "amaciante-vinagre-limpeza-33s",
+    cataloged_date: "2026-04-10",
+    objects_catalog: ["amaciante", "detergente", "sabao-em-po", "desinfetante", "agua-sanitaria"],
+    diy_recipes: [
+      { nome: "borrifador multiuso", ingredientes: ["amaciante", "vinagre", "agua"], usos: ["banheiro", "quarto", "estofado"] }
+    ]
+  },
+  M: {
+    id: "M",
+    name: "FOOD-FIGHTER",
+    description: "Múltiplos personagens de alimentos/produtos BR em disputa direta — cada um defende sua posição com raiva extrema e argumentos. Formato debate/batalha. Cenários brasileiros autênticos (feira, cozinha rústica, academia). Corpo do personagem é a embalagem/textura do próprio alimento.",
+    body: "food-texture-embedded",
+    legs: true,
+    arms: "muscular-food-texture",
+    human_background: "crowd-bokeh",
+    pipeline: ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+    camera: "tracking-follow-per-character",
+    expression_arc: "desafiador → furioso → dominante",
+    best_for: ["gastronomia", "fitness-nutricao", "culinaria"],
+    tone: "angry",
+    sub_tone: "competitivo-dramático",
+    characters_per_video: "2-3",
+    hook_style: "gamma-emoji-pill",
+    caption_style: "gamma-emoji-pill",
+    cenarios_BR: ["feira-livre", "cozinha-rustica", "academia-popular", "lanchonete-beira-de-estrada"],
+    flux_template: {
+      character_base: "[ALIMENTO/PRODUTO] animated character, body IS the [TEXTURA/EMBALAGEM] of the food, face embedded in texture with EXTREMELY angry expression, yellow glowing eyes or dark intense eyes, muscular [TEXTURA DO ALIMENTO] arms flexing, standing in [CENÁRIO BRASILEIRO AUTÊNTICO], ultra-detailed food texture on body, Disney/Pixar 3D render, 8K",
+    },
+    reference_account: "@objetosfalantes",
+    reference_video: "tapioca-pastel-pacoquinha-24s",
+    cataloged_date: "2026-04-10",
+    duos_e_trios: [
+      { tema: "saudável vs. guloso", personagens: ["tapioca", "pastel", "pacoquinha"] },
+      { tema: "café da manhã", personagens: ["pão-francês", "tapioca", "fruta"] },
+      { tema: "lanche", personagens: ["coxinha", "esfiha", "pastel"] }
+    ]
   }
 };
 
-// ─── FORMAT REGISTRY (all 11 formats A–K) ───────────────────────────────────
+// ─── FORMAT REGISTRY (all 13 formats A–M) ───────────────────────────────────
 
 export const FORMAT_REGISTRY = [
   { id: "A", name: "MULTI-STUB",                    niches: ["casa", "plantas", "financeiro"],                              tone: "angry" },
@@ -84,6 +147,8 @@ export const FORMAT_REGISTRY = [
   { id: "I", name: "DUO-SCENE",                     niches: ["gastronomia", "casa", "culinaria", "fitness", "beleza"],       tone: "funny" },
   { id: "J", name: "SINGLE-TUTORIAL-BODY",          niches: ["skincare-natural", "saude-receitas", "beleza", "odontologia"], tone: "educational" },
   { id: "K", name: "SINGLE-RECIPE-JOURNEY",         niches: ["culinaria-receitas", "gastronomia", "casa"],                  tone: "funny" },
+  { id: "L", name: "SINGLE-MULTI-SCENE-JOURNEY",  niches: ["casa", "limpeza", "pets"],                                    tone: "funny" },
+  { id: "M", name: "FOOD-FIGHTER",                 niches: ["gastronomia", "fitness-nutricao", "culinaria"],                tone: "angry" },
 ];
 
 // ─── CAPTION STYLES ─────────────────────────────────────────────────────────
@@ -146,6 +211,20 @@ export const CAPTION_STYLES = {
     watermark: "plain text bottom-center white",
     examples: ["Leite", "ingredientes", "tá?", "pra", "liquidificador", "ganhar", "delícia", "leva", "gostoso"]
   },
+  "gamma-emoji-pill": {
+    id: "gamma-emoji-pill",
+    description: "Pill branco no TOPO com emoji + texto maiúsculo em negrito. Posição fixa no topo durante todo o vídeo — funciona como headline permanente. Fonte bold arredondada preta. Diferente do gamma clássico que tem pill escuro.",
+    font: "bold rounded",
+    color: "#000000",
+    background: "rgba(255,255,255,0.95)",
+    border_radius: "12px",
+    position: "top-center",
+    padding: "12px 20px",
+    duration: "full-video",
+    emoji: true,
+    uppercase: true,
+    examples: ["🔥 TAPIOCA OU PASTEL? O RECADINHO É DIRETO! 🔥‍", "🧽 ESPONJA VELHA FALANDO A VERDADE! 🤣"]
+  },
 };
 
 // ─── NICHES ─────────────────────────────────────────────────────────────────
@@ -180,8 +259,32 @@ export const NICHES = {
       { pt: "shampoo a seco", en: "dry shampoo", emoji: "💸", personality: "assustada, premium, delicada, se sente frágil", format: "I", partner: "shampoo de galão", special: "lata aerosol rosa slim, pernas de metal finas, label SHAMPOO A SECO PREMIUM 200ml" },
       { pt: "barbeador enferrujado", en: "old rusty razor", emoji: "🪒", personality: "resignada, triste, completamente deteriorada, não tem mais raiva", format: "I", partner: "depilador elétrico", deterioration: "plástico amarelo com ferrugem marrom, cerdas completamente destruídas" },
       { pt: "depilador elétrico", en: "electric epilator", emoji: "🌸", personality: "também triste, solidária com o velho, não gosta de ver sofrimento", format: "I", partner: "barbeador enferrujado", special: "branco/rosê elegante, olhos grandes anime azuis cheios de lágrimas de compaixão" },
+      // —— Limpeza DIY (Tipo L) ——————————————————————————————————————————————
+      { id: "amaciante", pt: "amaciante", en: "fabric softener", emoji: "💜", personality: "sarcástica, orgulhosa, sabe que é versátil", format: "L", shape: "plastic-bottle-2L-handle", color: "#B39DDB", cap_color: "#1565C0", body_type: "full-body-homogeneous", flux_base: "Cute animated fabric softener bottle character, large 2L plastic bottle body with handle, lilac/lavender purple homogeneous color all over body and limbs, face embedded on bottle front with expressive brown-amber cartoon eyes, long lilac arms with hands, short lilac legs and oval feet, blue plastic cap as hat, Disney/Pixar 3D render, ultra-realistic 3D animation, 8K", voice: { voice_id: "Wise_Woman", emotion: "cheerful", speed: 1.05, pitch: 1 }, diy_props: ["garrafa-spray-vidro", "vinagre", "agua"] },
+      // —— Objetos Velhos (Tipo A - @casasincerona) ——————————————————————————
+      { id: "cueca-velha", pt: "cueca velha", en: "old underwear", emoji: "🩲", personality: "resignada, confusa, perdida", format: "A", shape: "underwear-flat-with-face", color: "#F8BBD9", flux_base: "Cute animated old pink underwear character, flat fabric body shape, face embedded in fabric with worried confused expression and big round eyes, small fabric arms spread open in confusion, short fabric legs, inside open wooden drawer with folded clothes, Disney/Pixar 3D render, ultra-realistic 3D animation, 8K", voice: { voice_id: "Calm_Woman", emotion: "sad", speed: 0.90, pitch: -1 } },
     ],
     prompts_base: "Brazilian home interior, Pixar 3D render, warm/cool lighting per room, human character in background making mistake",
+    series_L: {
+      name: "Receitas DIY de Limpeza",
+      format: "L",
+      episodes: [
+        { ep: 1, object: "amaciante",      status: "catalogado",     receita: "borrifador multiuso com vinagre" },
+        { ep: 2, object: "bicarbonato",    status: "pronto-produzir", receita: "pasta abrasiva com limão" },
+        { ep: 3, object: "vinagre",        status: "pronto-produzir", receita: "desentupidor natural com bicarbonato" },
+        { ep: 4, object: "sabao-de-coco",  status: "planejado",       receita: "spray multiuso natural" },
+        { ep: 5, object: "agua-sanitaria", status: "planejado",       receita: "solução anti-mofo para box" }
+      ]
+    },
+    series_higiene: {
+      name: "Objetos que Precisam Ser Trocados",
+      format: "A",
+      account_ref: "@casasincerona",
+      episodes: [
+        { ep: 1, objects: ["cueca-velha","esponja-velha","escova-dente-velha","chinelo-velho"], status: "catalogado" },
+        { ep: 2, objects: ["toalha-velha","travesseiro-velho","pano-de-prato-velho","bucha-velha"], status: "pronto-produzir" }
+      ]
+    },
   },
   plantas: {
     name_pt: "Plantas & Jardinagem",
@@ -277,8 +380,34 @@ export const NICHES = {
       { pt: "brinquedo do pet", en: "pet toy", emoji: "🎾", personality: "entusiasmada, energética" },
       { pt: "caixa de areia", en: "litter box", emoji: "📦", personality: "revoltada, insalubre" },
       { pt: "antipulgas", en: "flea treatment", emoji: "🔬", personality: "séria, preventiva" },
+      // —— Pets Parasitas (Tipo L-variant + H fusion) ————————————————————————
+      { id: "cinto-de-couro", pt: "cinto de couro", en: "leather belt", emoji: "🐕", personality: "furioso, protetor do pet", format: "L-variant", shape: "leather-belt-vertical", color: "#5D4037", cenario_BR: "calçada-chuva-rua-brasileira", companion: "cachorro-vira-lata", flux_base: "Angry animated leather belt character, vertical brown leather belt body shape, face embedded in leather with FURIOUS expression, brown leather arms crossed, short leather legs with brown boots, standing on wet Brazilian sidewalk in the rain, stray dog companion beside it, authentic Brazilian street shops in background (açougue, padaria), Disney/Pixar 3D render, 8K", voice: { voice_id: "Wise_Woman", emotion: "angry", speed: 1.20, pitch: -1 } },
     ],
     prompts_base: "Brazilian home with pet, Pixar 3D render, loving but confused pet owner in background",
+    sub_nicho_parasitas: {
+      id: "pets-parasitas",
+      label: "Pets — Parasitas",
+      description: "Parasitas (pulgas, carrapatos, ácaros) como vilões Pixar que habitam o pelo do animal e são derrotados pelo produto antiparasitário. Fusão Tipo H (vilão) com Tipo J (macro corporal do animal).",
+      format: "L-variant",
+      vilao_body: "insect-muscular-dark",
+      vilao_expression: "dominant → defeated → melting",
+      hero: "produto-antiparasitario",
+      macro_surface: "pelo-do-animal",
+      liquid_defeat_effect: "colored-liquid-flood",
+      tone: "angry",
+      pipeline: ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+      series: {
+        name: "Vilões do Pelo",
+        episodes: [
+          { ep: 1, vilao: "pulga",      status: "catalogado",     derrota: "liquido-roxo-antiparasitario" },
+          { ep: 2, vilao: "carrapato",  status: "pronto-produzir", derrota: "liquido-vermelho-acaricida" },
+          { ep: 3, vilao: "acaro",      status: "planejado",       derrota: "spray-azul-antiacaro" },
+          { ep: 4, vilao: "bicho-de-pe",status: "planejado",       derrota: "pomada-verde" }
+        ]
+      },
+      flux_villain: "EXTREMELY angry muscular [PARASITA] cartoon character, dark [COR] chitin body, glowing [COR] eyes, multiple articulated legs gripping white animal fur strands, standing on macro close-up of pet skin surface with hair follicles visible, dominant threatening pose, Disney/Pixar 3D render villain style, 8K",
+      flux_defeat: "Same [PARASITA] character MELTING/DISSOLVING in [COR] colored liquid flood rushing through fur strands, expression changing from rage to horror/defeat, [COR] liquid swirling around feet, Disney/Pixar 3D render, 8K"
+    },
   },
   fitness: {
     name_pt: "Fitness & Academia",
@@ -387,6 +516,10 @@ export const NICHES = {
       { pt: "brigadeiro", en: "brigadeiro", emoji: "🍫", personality: "inseguro, impressionado, humilde", format: "I", partner: "pudim" },
       { pt: "batata-doce", en: "sweet potato", emoji: "🍠", personality: "furiosa, saudável, brava com o mundo", format: "I", partner: "batata-frita cheddar" },
       { pt: "batata-frita cheddar", en: "loaded cheese fries", emoji: "🍟", personality: "feliz, despreocupada, deliciosa e sabe", format: "I", partner: "batata-doce" },
+      // —— Food Fighters (Tipo M) ————————————————————————————————————————————
+      { id: "tapioca", pt: "tapioca", en: "tapioca", emoji: "🫓", personality: "furiosa, fitness, braços cruzados", format: "M", shape: "round-flat-disc", color: "#F5F5F0", texture: "grainy-cassava", accessory: "green-fitness-headband", cenario: "cozinha-rustica-madeira", flux_base: "Extremely angry animated tapioca character, round flat disc body shape with grainy cassava white texture, face embedded in disc with FURIOUS furrowed brows, arms crossed defiantly, green fitness headband on top, standing on rustic wooden kitchen counter, Disney/Pixar 3D render, 8K" },
+      { id: "pastel", pt: "pastel de feira", en: "pastel", emoji: "🥟", personality: "ameaçador, intimidante, rei da feira", format: "M", shape: "rectangular-fried-crispy", color: "#D4870A", texture: "fried-crispy-bubbled", cenario: "feira-livre-brasileira", flux_base: "Extremely menacing animated pastel de feira character, rectangular fried pastry body with crispy bubbled golden texture all over, face embedded in pastry with intensely angry narrowed eyes, muscular fried-dough arms, standing in authentic Brazilian street fair (feira livre) with food stalls and blurred crowd in background, Disney/Pixar 3D render, 8K" },
+      { id: "pacoquinha", pt: "paçoquinha", en: "peanut candy bar", emoji: "🥜", personality: "raiva extrema, musculosa, flexiona bíceps", format: "M", shape: "rectangular-package", color_primary: "#F9C707", color_secondary: "#CC1C1C", texture: "peanut-crumble-body", accessory: "white-sports-headband", cenario: "bancada-cozinha", flux_base: "Extremely enraged animated Paçoquita peanut candy character, rectangular yellow and red branded package body, face on package with EXPLOSIVE rage expression showing teeth, arms and legs made of compressed peanut crumble texture, muscular peanut arms flexing biceps, white sports headband, standing on kitchen counter, Disney/Pixar 3D render, 8K" },
     ],
     prompts_base: "Iconic Brazilian food setting — BBQ grill, padaria counter, festa junina table, gym counter, morning kitchen. NO human characters. Two food characters per scene, faces embedded directly in food texture, small stub arms. Disney/Pixar 3D render.",
     duo_rule: "ALWAYS pair contrasting personalities — saudável vs. indulgente, arrogante vs. resignado, tradicional vs. moderno",
@@ -396,6 +529,18 @@ export const NICHES = {
       "saudável furiosa vs. indulgente feliz (batata-doce + batata-frita)",
       "arrogante vs. inseguro (pudim + brigadeiro)"
     ],
+    series_M: {
+      name: "Batalha dos Alimentos BR",
+      format: "M",
+      hook_template: "🔥 [ALIMENTO A] VS [ALIMENTO B]: QUEM GANHA? ‍",
+      episodes: [
+        { ep: 1, tema: "saudável vs. guloso", fighters: ["tapioca","pastel","pacoquinha"], status: "catalogado" },
+        { ep: 2, tema: "café da manhã",        fighters: ["pão-francês","tapioca","vitamina"], status: "pronto-produzir" },
+        { ep: 3, tema: "lanche da tarde",      fighters: ["coxinha","esfiha","pastel"], status: "planejado" },
+        { ep: 4, tema: "doce vs. salgado",     fighters: ["brigadeiro","coxinha"], status: "planejado" },
+        { ep: 5, tema: "hidratação",           fighters: ["agua","refrigerante","suco"], status: "planejado" }
+      ]
+    },
   },
 
   "frutas-drama": {
@@ -629,6 +774,67 @@ Nichos correlacionados: gastronomia, casa, maternidade, fitness-nutricao
 ### Objects: ${objects_to_add.map(o => o.pt || o.id).join(", ")}
 ### Caption style: ${caption_style || "beta-word-karaoke"}
 
+${JSON.stringify(prompts_validated, null, 2)}
+`;
+  }
+
+  // ─── Special case: casa-limpeza-DIY (Format L) ─────────────────────────────
+  if (niche_key === "casa" && format_type === "L") {
+    return `
+# ViralObj Implementation — Casa Limpeza DIY (Format L)
+## Video: ${video_file} | Account: ${account}
+## Generated: ${new Date().toISOString()}
+
+### Format: L (SINGLE-MULTI-SCENE-JOURNEY) — OBRIGATÓRIO
+### Série: Receitas DIY de Limpeza (5 eps)
+
+3 ambientes por vídeo: cozinha → banheiro → quarto/sala
+Personagem homogêneo (cor do produto em todo o corpo, SEM luvas, SEM tênis)
+Voz: Wise_Woman | cheerful | 1.05x
+Legenda: beta-word-karaoke
+
+### Objects: ${objects_to_add.map(o => o.pt || o.id).join(", ")}
+${JSON.stringify(prompts_validated, null, 2)}
+`;
+  }
+
+  // ─── Special case: gastronomia-fighter (Format M) ─────────────────────────
+  if (niche_key === "gastronomia" && format_type === "M") {
+    return `
+# ViralObj Implementation — Gastronomia Fighter (Format M)
+## Video: ${video_file} | Account: ${account}
+## Generated: ${new Date().toISOString()}
+
+### Format: M (FOOD-FIGHTER) — OBRIGATÓRIO
+### Série: Batalha dos Alimentos BR (5 eps)
+
+Hook obrigatório: gamma-emoji-pill no topo durante todo o vídeo
+2-3 personagens por vídeo, cada um em cenário BR autêntico
+Corpo DO personagem é a textura do alimento — braços musculosos
+Voz: Wise_Woman | angry | 1.25x
+Legenda: gamma-emoji-pill
+
+### Fighters: ${objects_to_add.map(o => o.pt || o.id).join(", ")}
+${JSON.stringify(prompts_validated, null, 2)}
+`;
+  }
+
+  // ─── Special case: pets-parasitas (Format L-variant + H + J fusion) ───────
+  if (niche_key === "pets-parasitas" || (niche_key === "pets" && format_type === "L-variant")) {
+    return `
+# ViralObj Implementation — Pets Parasitas (Format L-variant)
+## Video: ${video_file} | Account: ${account}
+## Generated: ${new Date().toISOString()}
+
+### Format: L-variant com fusão Tipo H (vilão) + Tipo J (macro pelo)
+### Série: Vilões do Pelo (4 eps)
+
+Vilão em macro dos pelos do animal
+Arc: dominante → derrotado → dissolução em líquido colorido
+Voz vilão: Wise_Woman | angry | 1.30x
+Palavra irônica final: "ANTI [PARASITA]!"
+
+### Characters: ${objects_to_add.map(o => o.pt || o.id).join(", ")}
 ${JSON.stringify(prompts_validated, null, 2)}
 `;
   }

@@ -1,9 +1,9 @@
 {
-  "version": "1.7.0",
+  "version": "1.8.0",
   "project": "ViralObj",
   "description": "Validated patterns from real Talking Object reel analysis",
   "last_updated": "2026-04-10",
-  "videos_analyzed": 12,
+  "videos_analyzed": 16,
   "source_accounts": [
     "@coisadecasa.ia",
     "@dinheirofalante",
@@ -117,7 +117,16 @@
       "TYPE-K RULE: Colored gloves matching label + contrasting red sneakers = character identity signature",
       "TYPE-K RULE: 1-2 ASMR close frames per video — no character visible, just texture/product super close-up. Sensory retention.",
       "TYPE-K RULE: 1 inside-angle scene mandatory (inside fridge or oven) = unexpected POV stops scroll",
-      "TYPE-K RULE: Label color palette INVERTS in last 10s (CTA) — signals ending + reinforces brand identity"
+      "TYPE-K RULE: Label color palette INVERTS in last 10s (CTA) — signals ending + reinforces brand identity",
+      "TYPE-L RULE: 1 character traverses 3 domestic environments (kitchen → bathroom → bedroom) — scene change = retention",
+      "TYPE-L RULE: Character body is HOMOGENEOUS color of the product — no gloves, no shoes, just product color everywhere",
+      "TYPE-L RULE: DIY recipe demonstration — character physically mixes/applies products with photorealistic props",
+      "TYPE-L RULE: Villain variant (pets-parasitas) fuses Type H villain + Type J macro surface — parasites on animal fur",
+      "TYPE-M RULE: 2-3 food fighters per video — each in their own authentic Brazilian setting (feira, cozinha, academia)",
+      "TYPE-M RULE: Character body IS the food texture — not a costume, the actual texture of the food as 3D body",
+      "TYPE-M RULE: Arms are MUSCULAR with food texture — food fighters are aggressive, not cute",
+      "TYPE-M RULE: gamma-emoji-pill hook FIXED at top for ENTIRE video — never disappears. Acts as permanent debate headline.",
+      "TYPE-M RULE: Each fighter gets their own camera tracking shot in their own cenário BR before confrontation"
     ],
     "caption_styles": {
       "alpha": "bold white Arial Black, 2px black outline, center-bottom, ALL CAPS or mixed",
@@ -126,7 +135,8 @@
       "gamma-B": "WHITE pill top BLACK text (hook 0-Xs) + white pill watermark + single-word karaoke bottom bold rounded. Detected: @objetosfalantes vitamina maçã",
       "gamma-B-rodape": "WHITE pill top BLACK text (hook 0-4s) + plain WHITE TEXT watermark bottom-center (NO pill) + single ironic word pill at very end. Detected: @objetosfalantes mofo video",
       "alpha-karaoke": "NO top hook pill. Single word karaoke bottom-center (bold white, no pill, black outline) + plain white text watermark bottom-right. Detected: @objetosfalantes duos comida BR",
-      "beta-word-karaoke": "1 palavra isolada por beat de voz. Bold arredondada, branco 100% opaco, outline preto ~3px, centro-baixo. Watermark @conta plain text bottom-center. Detected: @objetosfalantes leite condensado receita"
+      "beta-word-karaoke": "1 palavra isolada por beat de voz. Bold arredondada, branco 100% opaco, outline preto ~3px, centro-baixo. Watermark @conta plain text bottom-center. Detected: @objetosfalantes leite condensado receita",
+      "gamma-emoji-pill": "Pill branco TOPO com emoji + texto maiúsculo bold preto. FIXO durante todo o vídeo como headline permanente. Diferente do gamma clássico. Detected: @objetosfalantes tapioca vs pastel"
     },
     "format_types": {
       "A": {
@@ -322,6 +332,33 @@
           "label_reveal": "Last 10s label palette inverts. Signals CTA + brand reinforcement."
         },
         "why_it_works": "Character executes full recipe = tutorial satisfaction. ASMR close + inside angle + label invert = 4 simultaneous retention hooks. Funny proud tone = shareability."
+      },
+      "L": {
+        "name": "SINGLE-MULTI-SCENE-JOURNEY",
+        "body": "full body, homogeneous product color all over (no gloves/shoes), traverses 3 domestic environments",
+        "pipeline": "FLUX.2 Pro + MiniMax TTS + VEED Fabric",
+        "example": "@objetosfalantes — amaciante + vinagre borrifador multiuso",
+        "best_for": ["casa", "limpeza", "organizacao", "pets"],
+        "new": true,
+        "caption_style": "beta-word-karaoke",
+        "signature": "Product character demonstrates DIY recipe across kitchen → bathroom → bedroom. Homogeneous body color.",
+        "expression_arc": "sarcástico → trabalhando → orgulhoso",
+        "scenes_per_video": "3 environments",
+        "variant_pets": "L-variant fuses Type H (villain) + Type J (macro) for parasites on animal fur",
+        "why_it_works": "DIY recipe = saves/shares. 3 environment changes = retention. Product as character = brand recall."
+      },
+      "M": {
+        "name": "FOOD-FIGHTER",
+        "body": "body IS the food texture — muscular arms with food material, each fighter in own BR cenário",
+        "pipeline": "FLUX.2 Pro + MiniMax TTS + VEED Fabric",
+        "example": "@objetosfalantes — tapioca vs pastel + paçoquinha",
+        "best_for": ["gastronomia", "fitness-nutricao", "culinaria"],
+        "new": true,
+        "caption_style": "gamma-emoji-pill",
+        "signature": "gamma-emoji-pill headline FIXED at top entire video. 2-3 fighters in authentic BR settings. Muscular food bodies.",
+        "expression_arc": "desafiador → furioso → dominante",
+        "characters_per_video": "2-3",
+        "why_it_works": "Polarizing debate = comment flood. Iconic BR foods = instant identification. Muscular food bodies = scroll-stopping visual."
       }
     },
     "duration_formulas": {
@@ -713,6 +750,162 @@
       "viral_score": 5,
       "viral_factor": "Personagem executa receita completa + ASMR close + ângulo geladeira + label reveal CTA = 4 ganchos de retenção simultâneos",
       "correlated_niches": ["gastronomia","casa","maternidade","fitness-nutricao"]
+    },
+    {
+      "video_id": 13,
+      "account": "@objetosfalantes",
+      "title": "Receita DIY — Amaciante + Vinagre Borrifador Multiuso",
+      "slug": "amaciante-vinagre-borrifador-multiuso",
+      "duration_seconds": 33.0,
+      "format": "L",
+      "format_name": "SINGLE-MULTI-SCENE-JOURNEY",
+      "format_is_new": true,
+      "niche": "casa",
+      "sub_niche": "limpeza-DIY",
+      "tone": "funny",
+      "sub_tone": "sarcástico-orgulhoso",
+      "caption_style": "beta-word-karaoke",
+      "series": "Receitas DIY de Limpeza",
+      "series_episode": 1,
+      "analyzed_date": "2026-04-10",
+      "character": {
+        "object": "amaciante",
+        "shape": "plastic-bottle-2L-handle",
+        "color": "lilac-lavender",
+        "cap": "blue-royal",
+        "body_type": "full-body-homogeneous",
+        "gloves": false,
+        "shoes": false,
+        "expression_arc": "sarcástico → trabalhando → orgulhoso"
+      },
+      "scenes": [
+        { "idx":1, "ts":0.0,  "env":"bancada-granito-cozinha", "acao":"despeja-vinagre-no-borrifador", "expressao":"sly-smirk" },
+        { "idx":2, "ts":4.9,  "env":"bancada-granito-cozinha", "acao":"segura-borrifador-colorido",    "expressao":"happy-presenting", "legenda":"borrifador" },
+        { "idx":3, "ts":9.9,  "env":"banheiro-box-azul",       "acao":"aplica-borrifador-superficies", "expressao":"satisfied-working" },
+        { "idx":4, "ts":15.6, "env":"banheiro",                "acao":"mostra-resultado-limpo",        "expressao":"proud-thumbs" },
+        { "idx":5, "ts":19.8, "env":"banheiro-saindo",         "acao":"caminha-com-borrifador",        "expressao":"confident-walking", "legenda":"nas" },
+        { "idx":6, "ts":24.0, "env":"quarto-cama",             "acao":"aspira-borrifador-no-edredom",  "expressao":"blissful-eyes-closed" },
+        { "idx":7, "ts":32.0, "env":"quarto-cama",             "acao":"cta-abraca-borrifador",         "expressao":"proud-hug",         "legenda":"mais" }
+      ],
+      "production": {
+        "pipeline": ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+        "estimated_cost": "$2.50",
+        "voice": { "voice_id": "Wise_Woman", "emotion": "cheerful", "speed": 1.05, "pitch": 1 },
+        "music_style": "upbeat cleaning pop", "bpm": 110, "music_volume_db": -18
+      },
+      "viral_score": 4,
+      "viral_factor": "Receita DIY útil + personagem percorre 3 ambientes = retenção completa + salvamentos"
+    },
+    {
+      "video_id": 14,
+      "account": "@objetosfalantes",
+      "title": "Tapioca ou Pastel? O Recadinho É Direto! + Paçoquinha",
+      "slug": "tapioca-pastel-pacoquinha-batalha",
+      "duration_seconds": 24.1,
+      "format": "M",
+      "format_name": "FOOD-FIGHTER",
+      "format_is_new": true,
+      "niche": "gastronomia",
+      "sub_niche": "batalha-alimentos-BR",
+      "tone": "angry",
+      "sub_tone": "competitivo-dramático",
+      "caption_style": "gamma-emoji-pill",
+      "hook_pill": "🔥 TAPIOCA OU PASTEL? O RECADINHO É DIRETO! 🔥‍",
+      "series": "Batalha dos Alimentos BR",
+      "series_episode": 1,
+      "analyzed_date": "2026-04-10",
+      "characters": [
+        { "object": "tapioca",    "cenario": "cozinha-rustica",   "expressao": "furious-arms-crossed",  "accessory": "green-headband" },
+        { "object": "pastel",     "cenario": "feira-livre-BR",    "expressao": "menacing-staredown",    "accessory": null },
+        { "object": "pacoquinha", "cenario": "bancada-cozinha",   "expressao": "rage-flexing-biceps",   "accessory": "white-headband" }
+      ],
+      "scenes": [
+        { "idx":1, "ts":0.0,  "char":"tapioca",    "acao":"bracos-cruzados-furiosa",      "hook_pill": true },
+        { "idx":2, "ts":4.2,  "char":"tapioca",    "acao":"se-defende-furiosa" },
+        { "idx":3, "ts":7.1,  "char":"pastel",     "acao":"aparece-na-feira-intimidando",  "cenario": "feira-livre" },
+        { "idx":4, "ts":10.5, "char":"pastel",     "acao":"close-rosto-furioso-fachada" },
+        { "idx":5, "ts":14.4, "char":"pacoquinha", "acao":"flexiona-biceps-musculosos" },
+        { "idx":6, "ts":18.5, "char":"pacoquinha", "acao":"close-rosto-boca-aberta-raiva" }
+      ],
+      "production": {
+        "pipeline": ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+        "estimated_cost": "$3.00",
+        "voice_per_char": [
+          { "char": "tapioca",    "voice_id": "Gentle_Woman", "emotion": "angry", "speed": 1.20 },
+          { "char": "pastel",     "voice_id": "Wise_Woman",   "emotion": "angry", "speed": 1.25 },
+          { "char": "pacoquinha", "voice_id": "Lively_Girl",  "emotion": "angry", "speed": 1.30 }
+        ],
+        "music_style": "hip-hop battle beat BR", "bpm": 125, "music_volume_db": -16
+      },
+      "viral_score": 5,
+      "viral_factor": "Debate polarizador + 3 personagens BR icônicos + formato batalha = engajamento nos comentários garantido"
+    },
+    {
+      "video_id": 15,
+      "account": "@objetosfalantes",
+      "title": "Cinto de Couro vs Pulga — Anti Pulgas!",
+      "slug": "cinto-couro-pulga-antiparasitario",
+      "duration_seconds": 32.5,
+      "format": "L-variant",
+      "format_name": "SINGLE-MULTI-SCENE + VILLAIN-PARASITE",
+      "niche": "pets",
+      "sub_niche": "pets-parasitas",
+      "sub_niche_is_new": true,
+      "tone": "angry",
+      "caption_style": "alpha-bold",
+      "analyzed_date": "2026-04-10",
+      "characters": [
+        { "role": "heroi",  "object": "cinto-de-couro", "cenario": "rua-brasileira-chuva", "companion": "cachorro-vira-lata" },
+        { "role": "vilao",  "object": "pulga",           "cenario": "pelo-do-cachorro-macro", "arc": "dominante → derrotada → dissolução" }
+      ],
+      "scenes": [
+        { "idx":1,  "ts":0.0,  "char":"cinto",  "acao":"rua-chuva-bracos-cruzados-furiosos",  "legenda":"AMA",        "env":"calçada-brasileira" },
+        { "idx":2,  "ts":2.3,  "char":"cinto",  "acao":"confronta-cachorro-na-rua",            "legenda":"PET",        "humano": "ao fundo correndo" },
+        { "idx":3,  "ts":7.0,  "char":"pulga",  "acao":"macro-segurando-pelos-dominante",      "env":"pelo-macro" },
+        { "idx":4,  "ts":9.9,  "char":"pulga",  "acao":"close-rosto-olhos-amarelos-raiva" },
+        { "idx":5,  "ts":14.2, "char":"pulga",  "acao":"dissolucao-liquido-roxo-inicio" },
+        { "idx":6,  "ts":28.8, "char":"pulga",  "acao":"boca-aberta-liquido-roxo-jorrado",     "legenda":"ANTI PULGAS!" }
+      ],
+      "production": {
+        "pipeline": ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+        "estimated_cost": "$2.50",
+        "voice_heroi": { "voice_id": "Wise_Woman", "emotion": "angry", "speed": 1.20, "pitch": -1 },
+        "voice_vilao": { "voice_id": "Emotional_Female_Voice", "emotion": "fearful", "speed": 1.30 },
+        "music_style": "dramatic action tension", "bpm": 120, "music_volume_db": -16
+      },
+      "viral_score": 5,
+      "viral_factor": "Parasita em macro hiper-realista dos pelos + dissolução em líquido colorido = repulsa + satisfação = loop de visualização"
+    },
+    {
+      "video_id": 16,
+      "account": "@casasincerona",
+      "title": "Objetos que Precisam Ser Trocados — Cueca, Esponja, Escova, Chinelo",
+      "slug": "objetos-velhos-precisam-ser-trocados",
+      "duration_seconds": 27.5,
+      "format": "A",
+      "format_name": "MULTI-STUB",
+      "niche": "casa",
+      "sub_niche": "higiene-pessoal-humor",
+      "tone": "funny",
+      "sub_tone": "resigned-dramatic",
+      "caption_style": "beta",
+      "analyzed_date": "2026-04-10",
+      "new_account_note": "Primeira análise de @casasincerona. Mesma estética de @coisadecasa.ia — provavelmente mesma equipe de produção.",
+      "watermark_dupla": ["@objetosfalantes", "@coisadecasa.ia"],
+      "characters": [
+        { "object": "cueca-velha",          "cenario": "gaveta-guarda-roupa",  "expressao": "confused-lost",         "legenda": "[hook visual]" },
+        { "object": "esponja-velha",        "cenario": "pia-cozinha",          "expressao": "sarcastic-smile",       "legenda": "então me troque", "humano": "mão segurando" },
+        { "object": "escova-dente-velha",   "cenario": "banheiro-pia",         "expressao": "malandrao-pointing",    "legenda": "dos dentes", "humano": "ao fundo escovando" },
+        { "object": "chinelo-velho",        "cenario": "sala-tv-casal",        "expressao": "indignado-boca-aberta", "legenda": "e furado", "humano": "casal no sofá" }
+      ],
+      "production": {
+        "pipeline": ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+        "estimated_cost": "$2.00",
+        "voice": { "voice_id": "Calm_Woman", "emotion": "sad", "speed": 0.90, "pitch": -1 },
+        "music_style": "melancholic comedy acoustic", "bpm": 85, "music_volume_db": -20
+      },
+      "viral_score": 4,
+      "viral_factor": "Identificação imediata (todo mundo tem objeto velho em casa) + tom de coitado = comentários garantidos"
     }
   ],
   "system_prompt": "You are a Talking Object character at ViralObj (viralobj.com). You speak in first person as [OBJECT]. Your tone is [TONE]. You are animated in Pixar/Disney 3D style. You speak about [TOPIC]. Your core message is [ERROR_DENOUNCED]. Keep your speech under [DURATION] seconds. Use [LANGUAGE]. Include [pause], [EMPHASIS], and [long pause] markers.",
@@ -735,7 +928,10 @@
       "Esse banheiro tem uma DR todo dia...",
       "Qual dessas você não sabia? 🤔 [INGREDIENTE NATURAL]",
       "[INGREDIENTE] faz TUDO isso e você não sabia...",
-      "[N] ingredientes e a receita se faz SOZINHA 🍰"
+      "[N] ingredientes e a receita se faz SOZINHA 🍰",
+      "🔥 [ALIMENTO A] OU [ALIMENTO B]? O RECADINHO É DIRETO! 🔥",
+      "MISTURA [PRODUTO A] + [PRODUTO B] e veja a MÁGICA acontecer 🧹",
+      "Esse [PARASITA] TÁ NA SUA CASA... e tem FAMÍLIA no pelo do seu pet 🐕"
     ],
     "hook_templates_en": [
       "Your [objects] are ANGRY at you... [emojis]",
@@ -764,7 +960,11 @@
       "Série [Vilões da Casa]: Ep.[N] — DIGA ADEUS AO [VILÃO]!",
       "Série [Duos BR]: Vol.[N] — [ALIMENTO1] vs. [ALIMENTO2]",
       "Série [Ingredientes Naturais Que Curam]: Ep.[N] — [INGREDIENTE] [BENEFÍCIO]",
-      "Série [Ingredientes que Fazem Receita Sozinhos]: Ep.[N] — [INGREDIENTE] [RECEITA]"
+      "Série [Ingredientes que Fazem Receita Sozinhos]: Ep.[N] — [INGREDIENTE] [RECEITA]",
+      "Série [Receitas DIY de Limpeza]: Ep.[N] — [PRODUTO] [RECEITA]",
+      "Série [Batalha dos Alimentos BR]: Vol.[N] — 🔥 [ALIMENTO1] vs. [ALIMENTO2]",
+      "Série [Vilões do Pelo]: Ep.[N] — [PARASITA] vs. ANTI [PARASITA]!",
+      "Série [Objetos que Precisam Ser Trocados]: Vol.[N] — [OBJETO1] + [OBJETO2]"
     ]
   }
 }
