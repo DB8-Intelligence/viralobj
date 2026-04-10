@@ -15,6 +15,7 @@ import { analyzeVideo } from "./tools/analyze.js";
 import { generatePackage } from "./tools/generate.js";
 import { generateVideo } from "./tools/generate_video.js";
 import { exportArtifacts } from "./tools/export.js";
+import { postToInstagram } from "./tools/post_instagram.js";
 import { listNiches } from "./tools/niches.js";
 
 const server = new Server(
@@ -171,6 +172,54 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       },
     },
     {
+      name: "post_to_instagram",
+      description:
+        "Publishes a reel video to Instagram via Graph API. Supports immediate posting and scheduling. Optionally shares to Stories. Requires INSTAGRAM_ACCESS_TOKEN and INSTAGRAM_ACCOUNT_ID env vars. / Publica reel no Instagram via Graph API. Suporta publicação imediata e agendamento.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          video_url: {
+            type: "string",
+            description: "Public URL of the video to post (from generate_video clip_url)",
+          },
+          caption_pt: {
+            type: "string",
+            description: "Post caption in Portuguese",
+          },
+          caption_en: {
+            type: "string",
+            description: "Post caption in English (optional, appended after separator)",
+          },
+          hashtags_pt: {
+            type: "array",
+            items: { type: "string" },
+            description: "Portuguese hashtags (25 recommended)",
+          },
+          hashtags_en: {
+            type: "array",
+            items: { type: "string" },
+            description: "English hashtags (20 recommended)",
+          },
+          schedule_time: {
+            type: "string",
+            description: "ISO datetime for scheduled posting (null = immediate). E.g. '2026-04-10T18:00:00-03:00'",
+          },
+          share_to_stories: {
+            type: "boolean",
+            default: false,
+            description: "Also share the reel to Instagram Stories",
+          },
+          lang: {
+            type: "string",
+            enum: ["pt", "en", "both"],
+            default: "pt",
+            description: "Caption language mode",
+          },
+        },
+        required: ["video_url", "caption_pt"],
+      },
+    },
+    {
       name: "list_niches",
       description:
         "Lists all available niches with their pre-loaded object libraries and validated AI prompts. / Lista todos os nichos disponíveis com bibliotecas de objetos e prompts AI validados.",
@@ -203,6 +252,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return await generateVideo(args);
       case "export_artifacts":
         return await exportArtifacts(args);
+      case "post_to_instagram":
+        return await postToInstagram(args);
       case "list_niches":
         return await listNiches(args);
       default:

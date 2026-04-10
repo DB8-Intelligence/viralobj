@@ -531,7 +531,9 @@ function estimateCost(clips, quality) {
 
 function parseTimeToSeconds(timeStr) {
   if (!timeStr) return 0;
-  const match = timeStr.match(/^(\d+(?:\.\d+)?)s?$/);
+  if (typeof timeStr === "number") return timeStr;
+  const str = String(timeStr);
+  const match = str.match(/^(\d+(?:\.\d+)?)s?$/);
   return match ? parseFloat(match[1]) : 0;
 }
 
