@@ -1,6 +1,6 @@
 /**
  * ViralObj — niches.js
- * 12-niche library with object lists, personalities, validated prompts
+ * 13-niche library with object lists, personalities, validated prompts
  */
 
 export const NICHES = {
@@ -207,6 +207,36 @@ export const NICHES = {
       "A RECEITA QUE MÉDICO NÃO QUER QUE VOCÊ SAIBA",
       "ESSE CHÁ SIMPLES MUDOU MINHA VIDA",
       "TOMA EM JEJUM E VÊ O QUE ACONTECE"
+    ],
+  },
+
+  // ─── gastronomia — Type I DUO-SCENE ─────────────────────────────────────────
+  "gastronomia": {
+    name_pt: "Gastronomia & Comida Brasileira",
+    name_en: "Brazilian Food & Gastronomy",
+    emoji: "🍽️",
+    tone_default: "funny",
+    format_default: "I",
+    source_reference: "@objetosfalantes — duos comida BR 2026-04-09",
+    objects: [
+      { pt: "picanha", en: "picanha steak", emoji: "🥩", personality: "arrogante, rainha do churrasco", format: "I", partner: "linguiça" },
+      { pt: "linguiça", en: "sausage", emoji: "🌭", personality: "resignada, raivosa, sempre no segundo lugar", format: "I", partner: "picanha" },
+      { pt: "pão de alho", en: "garlic bread", emoji: "🍞", personality: "confiante, essencial, sabe disso", format: "I", partner: "espetinho" },
+      { pt: "pão de queijo", en: "cheese bread", emoji: "🧀", personality: "sarcástico, orgulho mineiro/BR", format: "I" },
+      { pt: "pastel", en: "pastel", emoji: "🫔", personality: "rei da feira, popular, briguento", format: "I", partner: "hamburguer" },
+      { pt: "coxinha", en: "coxinha", emoji: "🍗", personality: "malandreira, sedutora, irresistível", format: "I", partner: "empadinha" },
+      { pt: "pudim", en: "flan pudding", emoji: "🍮", personality: "arrogante, rei das festas, status", format: "I", partner: "brigadeiro" },
+      { pt: "brigadeiro", en: "brigadeiro", emoji: "🍫", personality: "inseguro, impressionado, humilde", format: "I", partner: "pudim" },
+      { pt: "batata-doce", en: "sweet potato", emoji: "🍠", personality: "furiosa, saudável, brava com o mundo", format: "I", partner: "batata-frita cheddar" },
+      { pt: "batata-frita cheddar", en: "loaded cheese fries", emoji: "🍟", personality: "feliz, despreocupada, deliciosa e sabe", format: "I", partner: "batata-doce" },
+    ],
+    prompts_base: "Iconic Brazilian food setting — BBQ grill, padaria counter, festa junina table, gym counter, morning kitchen. NO human characters. Two food characters per scene, faces embedded directly in food texture, small stub arms. Disney/Pixar 3D render.",
+    duo_rule: "ALWAYS pair contrasting personalities — saudável vs. indulgente, arrogante vs. resignado, tradicional vs. moderno",
+    duo_dynamics: [
+      "arrogante vs. resignada (picanha + linguiça)",
+      "confiante vs. raivoso (pão de alho + espetinho)",
+      "saudável furiosa vs. indulgente feliz (batata-doce + batata-frita)",
+      "arrogante vs. inseguro (pudim + brigadeiro)"
     ],
   },
 

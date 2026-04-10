@@ -1,9 +1,9 @@
 {
-  "version": "1.3.0",
+  "version": "1.4.0",
   "project": "ViralObj",
   "description": "Validated patterns from real Talking Object reel analysis",
   "last_updated": "2026-04-09",
-  "videos_analyzed": 8,
+  "videos_analyzed": 9,
   "source_accounts": ["@coisadecasa.ia", "@dinheirofalante", "@objetosfalantes", "@casasincerona"],
 
   "validated_patterns": {
@@ -14,38 +14,44 @@
       "HPY-1": { "label": "Happy/Proud", "frequency": "25%", "best_for": ["culinaria", "plantas (flores)"] },
       "SCR-1": { "label": "Sarcastic/Smug", "frequency": "20%", "best_for": ["financeiro", "fitness"] },
       "ALA-2": { "label": "Alarmed/Urgent", "frequency": "35%", "best_for": ["saude", "natureza", "garrafa-pet"] },
-      "MIX-1": { "label": "Multi-Expression Arc", "frequency": "NEW", "best_for": ["saude-receitas", "culinaria", "casa"], "note": "Same character changes expression per recipe step." }
+      "MIX-1": { "label": "Multi-Expression Arc", "frequency": "NEW", "best_for": ["saude-receitas", "culinaria", "casa"], "note": "Same character changes expression per recipe step: happy→confident→angry→furious. Detected in @objetosfalantes canela video." }
     },
     "golden_rules": [
-      "Each object gets exactly 1 exclusive Brazilian scenario",
+      "Each object gets exactly 1 exclusive Brazilian scenario — never generic backgrounds",
       "Human character ALWAYS visible in background doing something wrong",
-      "Expression arc: starts negative/angry - ends with solution/relief",
+      "Expression arc: starts negative/angry — ends with solution/relief",
       "Caption: max 5-6 words per frame, bold white with black outline",
-      "Direct cuts only between characters",
-      "First person speech - object always says eu sou, eu preciso, sem mim",
-      "Error denounced must be SPECIFIC",
-      "Pixar 3D render ONLY",
-      "Face embedded in object natural surface",
-      "Stub arms for expression - never full humanoid arms",
-      "TYPE-F RULE: Single character with costume changes keeps viewer watching",
-      "TYPE-F RULE: Hook caption FIXED at top for first 5s",
-      "TYPE-F RULE: Each step = new expression intensity",
-      "TYPE-G RULE: First 50% = Pixar 3D character presents RESULT. Second 50% = real video split-screen shows HOW",
-      "TYPE-G RULE: Split-screen 3 faixas",
-      "TYPE-G RULE: Character wears professional costume = instant authority",
-      "TYPE-H RULE: Villain is embedded IN the surface (wall, floor, sink)",
-      "TYPE-H RULE: 3 acts mandatory - Act1 villain confident (0-13s), Act2 hero confronts (1s), Act3 battle+colony destruction (30s+)",
-      "TYPE-H RULE: Mini-colony children around villain = CleanTok trigger",
-      "TYPE-H RULE: Villain expression arc: confident-angry-terrified-ironic resignation",
-      "TYPE-H RULE: Hero product enters from right side of frame",
-      "TYPE-H RULE: End with ironic single word (GOSTEI, ADOREI, QUE PENA)"
+      "Direct cuts only between characters — no transitions/fades",
+      "First person speech — object always says 'eu sou', 'eu preciso', 'sem mim'",
+      "Error denounced must be SPECIFIC — never vague",
+      "Pixar 3D render ONLY — never flat design or 2D cartoon",
+      "Face embedded in object's natural surface (front of bottle, center of flower)",
+      "Stub arms for expression — never full humanoid arms",
+      "TYPE-F RULE: Single character with costume changes keeps viewer watching through the whole recipe",
+      "TYPE-F RULE: Hook caption FIXED at top for first 5s forces viewer to read + stay",
+      "TYPE-F RULE: Each step = new expression intensity (happy → confident → angry → furious = keeps escalating)",
+      "TYPE-G RULE: First 50% = Pixar 3D character presents RESULT (credibility + identity). Second 50% = real video split-screen shows HOW (tutorial proof)",
+      "TYPE-G RULE: Split-screen 3 faixas — top: cut ingredient, middle: add to blender, bottom: result + karaoke word",
+      "TYPE-G RULE: Character wears professional costume (doctor, nutritionist, chef) = instant authority",
+      "TYPE-H RULE: Villain is embedded IN the surface (wall, floor, sink) — never a standalone character",
+      "TYPE-H RULE: 3 acts mandatory — Act1 villain confident (0-13s), Act2 hero confronts (1s), Act3 battle+colony destruction (30s+)",
+      "TYPE-H RULE: Mini-colony children around villain = satisfação visual de limpeza (CleanTok trigger)",
+      "TYPE-H RULE: Villain expression arc: confident→angry→terrified→ironic resignation at end",
+      "TYPE-H RULE: Hero product enters from right side of frame — never from left",
+      "TYPE-H RULE: End with ironic single word (GOSTEI, ADOREI, QUE PENA) = humor negro que gera comentários",
+      "TYPE-I RULE: Always 2 characters per scene — NEVER solo. Personality contrast is mandatory (arrogante vs. resignado etc.)",
+      "TYPE-I RULE: NO human characters in background — food duo IS the story",
+      "TYPE-I RULE: Faces embedded DIRECTLY in food texture — not floating on top",
+      "TYPE-I RULE: Each duo has its own iconic BR setting (churrasco, padaria, festa junina, academia)",
+      "TYPE-I RULE: Implicit CTA — 'Com qual você se identifica?' — never needs to be said"
     ],
     "caption_styles": {
-      "alpha": "bold white Arial Black, 2px black outline, center-bottom",
+      "alpha": "bold white Arial Black, 2px black outline, center-bottom, ALL CAPS or mixed",
       "beta": "white pill, 2 colors (normal + highlight), 12px border-radius",
       "gamma": "dark pill top (hook 0-5s) + white pill watermark (mid+) + single-word karaoke bottom",
-      "gamma-B": "WHITE pill top BLACK text (hook 0-Xs) + white pill watermark + single-word karaoke bottom bold rounded",
-      "gamma-B-rodape": "WHITE pill top BLACK text (hook 0-4s) + plain WHITE TEXT watermark bottom-center (NO pill) + single ironic word pill at very end"
+      "gamma-B": "WHITE pill top BLACK text (hook 0-Xs) + white pill watermark + single-word karaoke bottom bold rounded. Detected: @objetosfalantes vitamina maçã",
+      "gamma-B-rodape": "WHITE pill top BLACK text (hook 0-4s) + plain WHITE TEXT watermark bottom-center (NO pill) + single ironic word pill at very end. Detected: @objetosfalantes mofo video",
+      "alpha-karaoke": "NO top hook pill. Single word karaoke bottom-center (bold white, no pill, black outline) + plain white text watermark bottom-right. Detected: @objetosfalantes duos comida BR"
     },
     "format_types": {
       "A": { "name": "MULTI-STUB", "body": "stub arms, no legs", "pipeline": "FLUX.2 + Fabric", "example": "@coisadecasa.ia casa/plantas", "best_for": ["casa", "plantas", "financeiro"] },
@@ -54,8 +60,9 @@
       "D": { "name": "MAP-DOC", "body": "document/map with legs, walks + camera tracking", "pipeline": "FLUX.2 + Kling(walk) + Fabric", "example": "Mapa da Florida Orlando", "best_for": ["viagem", "imoveis", "educacao"] },
       "E": { "name": "RECIPE-MAGIC", "body": "full body + golden particles", "pipeline": "FLUX.2 + Kling(particles) + Fabric", "example": "Cravo aromatizante @coisadecasa.ia", "best_for": ["culinaria", "casa", "saude"] },
       "F": { "name": "SINGLE-MULTI-COSTUME", "body": "full body, same character, multiple costume+expression changes per step", "pipeline": "FLUX.2(multi-prompt per scene) + Kling + Fabric", "example": "@objetosfalantes canela", "best_for": ["saude-receitas", "culinaria", "beleza"], "caption_style": "gamma", "signature": "Fixed top hook pill + watermark pill + bottom single-word karaoke" },
-      "G": { "name": "DRESSED-CHAR + RECIPE-SPLIT-SCREEN", "body": "50% Pixar 3D DRESSED-CHAR presents result then 50% real video split-screen 3 panels shows prep", "pipeline": "FLUX.2 Pro(phase1) + CapCut split-screen(phase2) + Fabric(lipsync phase1)", "example": "@objetosfalantes maca vitamina", "best_for": ["saude-receitas", "culinaria", "beleza"], "caption_style": "gamma-B", "signature": "White pill black text top (0-9s) + watermark + karaoke on bottom split panel", "structure": "character_phase_seconds: 9, recipe_phase_seconds: 6, total: 15" },
-      "H": { "name": "VILLAIN-HERO NARRATIVE", "body": "Villain character embedded IN surface (wall/floor/sink) + Hero product confronts + Battle/colony destruction sequence", "pipeline": "FLUX.2 Pro(villain on wall) + Kling(animation + zoom) + Fabric(lipsync) + CapCut(spray hand real footage overlay)", "example": "@objetosfalantes mofo de parede", "best_for": ["casa", "saude", "natureza"], "new": true, "caption_style": "gamma-B-rodape", "signature": "Top pill hook (0-4s) + bottom plain text watermark (no pill) + single ironic word at end", "structure": { "act1_villain_seconds": 13, "act2_confrontation_seconds": 1, "act3_battle_seconds": 30, "total": 44 }, "expression_arc": "confident/smiling - angry/intimidating - terrified - desperate - ironic resignation", "villain_variants": ["mofo/fungo", "barata", "aranha", "traca", "mosquito", "acaro"], "why_it_works": "Villain POV creates empathy inversion. CleanTok satisfaction trigger. Mini-colony destruction = primal visual satisfaction. 3-act sustains 44s watch time." }
+      "G": { "name": "DRESSED-CHAR + RECIPE-SPLIT-SCREEN", "body": "50% Pixar 3D DRESSED-CHAR presents result — 50% real video split-screen 3 panels shows prep", "pipeline": "FLUX.2 Pro(phase1) + CapCut split-screen(phase2) + Fabric(lipsync phase1)", "example": "@objetosfalantes — maçã vitamina", "best_for": ["saude-receitas", "culinaria", "beleza"], "new": true, "caption_style": "gamma-B", "signature": "White pill black text top (0-9s) + watermark + karaoke on bottom split panel", "structure": "character_phase_seconds: 9, recipe_phase_seconds: 6, total: 15", "why_it_works": "3D creates character identity. Real video creates credibility/proof. Split-screen delivers tutorial satisfaction. 15s = max rewatch." },
+      "H": { "name": "VILLAIN-HERO NARRATIVE", "body": "Villain character embedded IN surface (wall/floor/sink) + Hero product confronts + Battle/colony destruction sequence", "pipeline": "FLUX.2 Pro(villain on wall) + Kling(animation + zoom) + Fabric(lipsync) + CapCut(spray hand real footage overlay)", "example": "@objetosfalantes — mofo de parede", "best_for": ["casa", "saude", "natureza"], "new": true, "caption_style": "gamma-B-rodape", "signature": "Top pill hook (0-4s) + bottom plain text watermark (no pill) + single ironic word at end", "structure": { "act1_villain_seconds": 13, "act2_confrontation_seconds": 1, "act3_battle_seconds": 30, "total": 44 }, "expression_arc": "confident/smiling — angry/intimidating — terrified — desperate — ironic resignation", "villain_variants": ["mofo/fungo", "barata", "aranha", "traça", "mosquito", "ácaro"], "why_it_works": "Villain POV creates empathy inversion. CleanTok satisfaction trigger. Mini-colony destruction = primal visual satisfaction. 3-act sustains 44s watch time." },
+      "I": { "name": "DUO-SCENE", "body": "2 food characters per scene, faces embedded in food texture, no human background, contrasting personalities in same iconic BR setting", "pipeline": "FLUX.2 Pro(duo prompt — both chars in same scene) + Kling(animation x2) + Fabric(lipsync x2)", "example": "@objetosfalantes — duos comida brasileira", "best_for": ["gastronomia", "culinaria", "fitness"], "new": true, "caption_style": "alpha-karaoke", "signature": "No top hook pill. Single-word karaoke bottom-center + plain text watermark bottom. NO human characters.", "duo_dynamics": ["arrogante vs. resignada", "confiante vs. raivoso", "saudável vs. indulgente", "arrogante vs. inseguro"], "duration_range": "10s per duo, 60-70s total for 6-7 duos", "why_it_works": "Every Brazilian identifies with a duo. Implicit comment bait. 7 duos x 10s = 7 distinct laugh moments = 62s full watch time. No human = food is the star." }
     },
     "duration_formulas": {
       "15s": { "objects": 2, "secs_each": 7 },
@@ -129,6 +136,31 @@
         "niche": "casa",
         "note": "Interior colony view reveals mold structure inside wall like a beehive",
         "prompt": "Cross-section view revealing interior of wall showing honeycomb/sponge-like structure, many small teal mold creature characters trapped inside individual cells/chambers, each with panicked wide-eyed expressions, some with arms raised in surrender, warm golden light emanating from inside chambers, white liquid from spray bottle flowing down from top pouring into chambers, main mold creature visible at top-left corner looking horrified and helpless, realistic wall material cross-section texture, Disney/Pixar 3D characters embedded in photorealistic environment - 9:16 vertical, 8K"
+      },
+      {
+        "object": "picanha + linguiça duo — Type I (DUO-SCENE)",
+        "format": "I",
+        "niche": "gastronomia",
+        "account": "@objetosfalantes",
+        "prompt": "Two animated Brazilian BBQ characters on wooden cutting board over glowing red charcoal grill: LEFT: Grilled picanha steak character — thick juicy cut with golden-brown seared crust, cartoon face embedded directly in meat texture — ARROGANT half-lidded eyes, smug slight smile with raised eyebrow, metal skewer running through it. RIGHT: Red linguiça sausage character — smooth plump pink sausage body, RESIGNED-ANGRY cartoon face — heavy furrowed brows, grumpy closed mouth. Both on seasoned wooden cutting board, farofa and vinagrete clay bowls in background, intense red-orange fire glow from below, smoke wisps visible, NO human figures, @objetosfalantes plain white text bottom, Disney/Pixar 3D render — 9:16 vertical, ultra-realistic 3D, 8K",
+        "caption_style": "alpha-karaoke",
+        "karaoke_words": ["CARNE", "PICANHA"]
+      },
+      {
+        "object": "batata-doce + batata-frita cheddar duo — Type I",
+        "format": "I",
+        "niche": "gastronomia",
+        "prompt": "Two animated potato characters side by side on gym/hospital stainless steel counter: LEFT: Purple sweet potato (batata-doce) character — rough irregular deep purple skin with earthy texture, FURIOUS expression with intense furrowed brows, teeth gritted in rage, small muscular purple stub arms crossed defiantly, protein shake bottle with PROTEIN label visible in background. RIGHT: Loaded cheese fries in paper bag — crinkle-cut yellow fries overflowing with bright orange cheddar sauce and bacon bits on top, paper bag with friendly cartoon face — BIG HAPPY SMILE and rosy cheeks, completely unbothered. Clean white institutional ceiling with fluorescent lighting, NO human characters, Disney/Pixar 3D render — 9:16 vertical, ultra-realistic 3D, 8K",
+        "caption_style": "alpha-karaoke",
+        "karaoke_words": ["CHEDDAR"]
+      },
+      {
+        "object": "pudim + brigadeiro duo — Type I (festa junina)",
+        "format": "I",
+        "niche": "gastronomia",
+        "prompt": "Two animated Brazilian party dessert characters on rustic colorful wooden table with scattered confetti: LEFT: Flan pudding (pudim) block character — golden yellow rectangular caramel flan with caramel sauce dripping down sides, cartoon face with ARROGANT raised eyebrow, confident smirk, small stub arms. RIGHT: Brigadeiro chocolate truffle character — round dark chocolate ball completely covered in chocolate sprinkles, in small paper cup, cartoon face with WIDE IMPRESSED EYES, slightly overwhelmed expression, small stub arms. Glass of caipirinha with lime slice in background, colorful confetti papel picado, warm party lighting, NO human characters, Disney/Pixar 3D render — 9:16 vertical, ultra-realistic 3D, 8K",
+        "caption_style": "alpha-karaoke",
+        "karaoke_words": ["REI"]
       }
     ]
   },
@@ -147,7 +179,9 @@
       "[BENEFICIO 1] E [BENEFICIO 2] ao mesmo tempo - com [N] ingredientes",
       "DIGA ADEUS AO [VILAO] NA SUA CASA!",
       "ELE ESTA NA SUA CASA AGORA... e voce nao sabe",
-      "[VILAO] tem familia na sua [LUGAR] - e voce nao sabia"
+      "[VILAO] tem familia na sua [LUGAR] - e voce nao sabia",
+      "Qual desses voce é na vida real? 🤔",
+      "A discussao que todo brasileiro ja teve na cabeça 🇧🇷"
     ],
     "hook_templates_en": [
       "Your [objects] are ANGRY at you... [emojis]",
@@ -173,7 +207,8 @@
       "Serie [Frutas Medicas]: Ep.[N] - [Fruta] [Especialidade]",
       "Serie [Objetos Bravos]: Vol.[N] - [Nicho]",
       "Serie [Receitas do Dr. Fruta]: [Fruta] ensina...",
-      "Serie [Viloes da Casa]: Ep.[N] - DIGA ADEUS AO [VILAO]!"
+      "Serie [Viloes da Casa]: Ep.[N] - DIGA ADEUS AO [VILAO]!",
+      "Serie [Duos BR]: Vol.[N] - [ALIMENTO1] vs. [ALIMENTO2]"
     ]
   }
 }
