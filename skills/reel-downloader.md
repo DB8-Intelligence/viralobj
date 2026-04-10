@@ -1,162 +1,244 @@
 ---
 name: reel-downloader
-version: 1.0
+version: 2.0
 description: >
-  Faz o download de vídeos do Instagram (Reels e posts), TikTok, YouTube Shorts
-  e outras redes sociais a partir de um link, converte para o formato correto e
-  prepara o arquivo para análise com o reel-content-generator.
+  Entry point do pipeline ViralObj. Baixa vídeos de redes sociais (Instagram, TikTok,
+  YouTube Shorts), faz engenharia reversa completa via viralobj-reverse-engineer,
+  gera o blueprint de reprodução, produz o vídeo via Fal.ai e opcionalmente posta
+  no Instagram automaticamente.
 
-  Use SEMPRE que o usuário fornecer um link de vídeo de rede social (instagram.com,
-  tiktok.com, youtube.com/shorts, facebook.com, twitter.com/x.com) e pedir para
-  analisar, baixar, extrair frames, transcrever ou recriar o conteúdo.
+  Use SEMPRE que o usuário: fornecer um link de vídeo, colar URL de reel/tiktok/shorts,
+  pedir para baixar/analisar/recriar um vídeo, enviar um .mp4 para análise,
+  dizer "baixe esse reel", "analise esse link", "recrie esse vídeo", "faça engenharia
+  reversa desse reel", "como reproduzir esse estilo".
 
-  Ativa para: "baixe esse reel", "analise esse link", "analise esse video",
-  "baixar esse tiktok", "extraia os frames desse reel", "transcreva esse video",
-  "quero recriar esse reel", "me dê o roteiro desse vídeo", "analise o conteúdo
-  desse link", qualquer URL de instagram.com/reel, instagram.com/p/,
-  tiktok.com/@, youtube.com/shorts/, fb.watch, vm.tiktok.com.
+  Pipeline completo:
+  download → analyze_video → reverse-engineer → generate_package → generate_video → post_to_instagram
 
-  Após o download, chama automaticamente o reel-content-generator para análise
-  e geração do pacote completo de produção.
+  Integra com: viralobj-reverse-engineer (blueprint), viralobj MCP (6 tools), dataset.json (treinamento)
 ---
 
-# Skill: Reel Downloader + Analyzer
+# Reel Downloader v2.0 — Pipeline Orchestrator
 
-Você é o sistema de download e pré-processamento de vídeos do NexoPro.
-Sua função é: receber um link → obter metadados e frames → analisar com
-Claude Vision → gerar o pacote completo de produção para recriar o conteúdo.
+Entry point do ecossistema ViralObj. Conecta download → análise → blueprint → produção → publicação.
 
----
-
-## Módulos desta Skill
-
-| Módulo | Arquivo | Função |
-|--------|---------|--------|
-| 1 | `references/08-download-tools.md` | Ferramentas por plataforma, comandos yt-dlp |
-| 2 | `references/09-frame-analysis.md` | Extração de frames, análise visual, ficha de cena |
-
----
-
-## Fluxo Principal (NexoPro Dashboard)
+## Arquitetura
 
 ```
-1. Usuário cola URL → Detectar plataforma
-2. Extrair metadados (título, duração, thumbnail) via APIs públicas
-3. Obter frames para análise:
-   - YouTube: thumbnails gratuitos (0.jpg, 1.jpg, 2.jpg, 3.jpg + maxresdefault)
-   - YouTube: transcript via timedtext API
-   - Instagram/TikTok/Facebook: oEmbed thumbnail + metadados
-   - Todos: fallback para upload manual do arquivo .mp4
-4. Claude Vision analisa frames + transcript → análise completa
-5. Gerar pacote de produção para recriar/melhorar o conteúdo
+reel-downloader v2.0
+  ↓
+  ├── viralobj-reverse-engineer   (análise + blueprint)
+  │     ├── 01-frame-analysis.md
+  │     ├── 02-character-blueprint.md
+  │     ├── 03-production-blueprint.md
+  │     ├── 04-full-prompt-output.md
+  │     └── 05-instagram-post.md
+  │
+  ├── MCP viralobj
+  │     ├── analyze_video         (análise com Claude Vision)
+  │     ├── generate_package      (pacote bilíngue PT+EN)
+  │     ├── generate_video        (pipeline Fal.ai)
+  │     ├── export_artifacts      (HTML dashboard + SKILL.md)
+  │     ├── post_to_instagram     (Graph API)
+  │     └── list_niches           (10 nichos, 72 objetos)
+  │
+  └── dataset.json               (alimenta o treinamento)
 ```
 
----
+## Fluxo Principal
 
-## Planos que têm acesso a esta feature
-
+### MODO 1 — URL de Rede Social
 ```
-trial:    ❌ sem acesso
-starter:  ❌ sem acesso
-pro:      ✅ análise por link + upload (50MB máx)
-pro_plus: ✅ tudo do Pro + análise multi-idioma
-pro_max:  ✅ tudo + auto-post do conteúdo recriado
-enterprise: ✅ tudo ilimitado
+1. DETECTAR PLATAFORMA
+   Input: URL
+   → instagram.com/reel/ | tiktok.com/@ | youtube.com/shorts/
+   → Extrair metadados via oEmbed/API
+
+2. DOWNLOAD
+   → yt-dlp com cookies (se necessário)
+   → Salvar em ./outputs/downloads/{slug}.mp4
+   → Extrair metadados: duração, resolução, codec
+
+3. ENGENHARIA REVERSA (viralobj-reverse-engineer)
+   → Extrair frames via ffmpeg (8-14 frames estratégicos)
+   → Análise frame a frame com Claude Vision
+   → Detectar: formato, personagens, tipo de corpo, cenário
+   → Gerar blueprint completo (04-full-prompt-output.md)
+
+4. GERAR PACOTE (generate_package)
+   → Usar blueprint como base + enriquecer com dataset.json
+   → Pacote bilíngue PT + EN completo
+
+5. GERAR VÍDEO (generate_video)
+   → FLUX.2 Pro → MiniMax TTS → VEED Fabric
+   → Pipeline Fal.ai automatizado
+
+6. PUBLICAR (post_to_instagram) [opcional]
+   → Graph API v21.0
+   → Caption + hashtags + Stories
+
+7. ATUALIZAR DATASET
+   → Adicionar análise ao dataset.json
+   → Novos prompts validados, expressões, combos
 ```
 
----
-
-## Estrutura da Análise Gerada
-
-### Output esperado do analyze-video:
-
+### MODO 2 — Arquivo .mp4 Local
 ```
-## 🔍 ANÁLISE DO REEL
+1. Input: path do arquivo .mp4
+2. Pular download → ir direto para ENGENHARIA REVERSA (passo 3)
+3. Resto do pipeline idêntico
+```
 
-### Dados Gerais
-- Plataforma: [Instagram/TikTok/YouTube/Facebook]
-- Tipo: [Reel/Post/Shorts/Video]
-- Duração estimada: [Xs]
-- Nicho identificado: [nicho]
-- Tom de voz: [estilo]
-
-### Hook (0-3s)
-- Tipo de gancho: [curiosidade/dado/controvérsia/POV/lista]
-- Texto do gancho: "[texto exato ou estimado]"
-- Efetividade (1-10): [nota]
-- Por que funciona: [análise breve]
-
-### Estrutura Cena a Cena
-[CENA 1] 0-2s — Hook
-Visual: [descrição]
-Texto em tela: "[texto]"
-Técnica: [o que torna eficaz]
-
-[CENA N] ...
-
-### Elementos Virais Identificados
-- [elemento 1]: [por que viraliza]
-- [elemento 2]: ...
-
-### CTA Utilizado
-- Tipo: [comentar/salvar/compartilhar/DM/link]
-- Texto: "[texto do CTA]"
-- Posição: [início/meio/fim]
-
-### Pontos Fortes
-1. [ponto]
-2. [ponto]
-
-### Oportunidades de Melhoria
-1. [melhoria]
-2. [melhoria]
-
----
-
-## 🎬 ROTEIRO RECRIADO — [NICHO DO USUÁRIO]
-
-[roteiro completo no formato padrão do reel-creator com todas as seções]
+### MODO 3 — Briefing Manual (sem vídeo)
+```
+1. Input: nicho + objetos + tópico + tom
+2. Pular download + engenharia reversa
+3. Ir direto para generate_package (passo 4)
+4. Resto do pipeline idêntico
 ```
 
 ---
 
-## Análise Visual por Frame
+## Download por Plataforma
 
-Ao receber os frames, analise cada um em sequência:
+### Instagram Reels
+```bash
+# Via yt-dlp (requer cookies para contas privadas)
+yt-dlp --cookies-from-browser chrome \
+  -o "./outputs/downloads/%(id)s.%(ext)s" \
+  --write-info-json \
+  --write-thumbnail \
+  "https://www.instagram.com/reel/XXXXX/"
 
+# Via oEmbed (metadados apenas — sem download)
+curl "https://graph.facebook.com/v21.0/instagram_oembed?url=URL&access_token=TOKEN"
 ```
-FRAME [N] @ [posição no vídeo]
-─────────────────────────────
-Cena: [número identificado]
-Visual: [o que aparece na tela]
-Texto em tela: "[texto exato]"
-Expressão/Gesto: [se houver personagem]
-Transição: [tipo de corte]
-Técnica de edição: [zoom/pan/cut rápido/etc.]
+
+### TikTok
+```bash
+yt-dlp --cookies-from-browser chrome \
+  -o "./outputs/downloads/%(id)s.%(ext)s" \
+  --write-info-json \
+  "https://www.tiktok.com/@user/video/XXXXX"
+```
+
+### YouTube Shorts
+```bash
+yt-dlp -f "bestvideo[height<=1080]+bestaudio/best" \
+  -o "./outputs/downloads/%(id)s.%(ext)s" \
+  --write-info-json \
+  --write-auto-sub --sub-lang pt,en \
+  "https://youtube.com/shorts/XXXXX"
+
+# Thumbnails gratuitas (sem download):
+# https://img.youtube.com/vi/{VIDEO_ID}/0.jpg       (default)
+# https://img.youtube.com/vi/{VIDEO_ID}/maxresdefault.jpg (HD)
+# https://img.youtube.com/vi/{VIDEO_ID}/1.jpg  2.jpg  3.jpg
+```
+
+### Fallback — Upload Manual
+```
+Se yt-dlp falhar ou URL não suportada:
+→ Pedir ao usuário: "Me envie o arquivo .mp4 diretamente"
+→ Ou: "Salve o vídeo em ~/viralobj/outputs/downloads/ e me diga o nome"
 ```
 
 ---
 
-## Identificação de Padrões Virais
+## Detecção de Plataforma
 
-Para cada vídeo analisado, verificar:
-
-- [ ] **Loop seamless** — o fim do vídeo conecta ao início?
-- [ ] **Texto on-screen** — palavra por palavra ou bloco?
-- [ ] **Pacing** — número de cortes por segundo (>1/s = energy cut)
-- [ ] **B-roll** — imagens de suporte além do personagem principal
-- [ ] **Música** — trending sound identificado?
-- [ ] **Emojis estratégicos** — quais e em que posição?
-- [ ] **Talking Object** — objeto animado com lip-sync?
-- [ ] **POV format** — câmera subjetiva?
+```javascript
+function detectPlatform(url) {
+  if (url.includes("instagram.com/reel") || url.includes("instagram.com/p/"))
+    return { platform: "instagram", type: "reel" };
+  if (url.includes("tiktok.com/") || url.includes("vm.tiktok.com"))
+    return { platform: "tiktok", type: "video" };
+  if (url.includes("youtube.com/shorts") || url.includes("youtu.be"))
+    return { platform: "youtube", type: "shorts" };
+  if (url.includes("fb.watch") || url.includes("facebook.com"))
+    return { platform: "facebook", type: "reel" };
+  if (url.includes("x.com") || url.includes("twitter.com"))
+    return { platform: "x", type: "video" };
+  return { platform: "unknown", type: "video" };
+}
+```
 
 ---
 
-## Integração com reel-content-generator
+## Pipeline de Engenharia Reversa (após download)
 
-Após a análise, pré-preencher automaticamente o reel-creator com:
-- Nicho detectado (ou o nicho do perfil do usuário)
-- Hook adaptado ao nicho do usuário
-- Estrutura de cenas baseada no vídeo original
-- Tom de voz e personalidade identificados
-- CTAs adaptados ao objetivo do usuário
+### Passo 1 — Metadados + Frames
+```bash
+# Metadados
+ffprobe -v error -show_entries format=duration,size \
+  -show_entries stream=width,height,codec_name \
+  -of json "$VIDEO"
+
+# Frames estratégicos (timestamps: 0%, 7%, 15%, 22%, 30%, 40%, 50%, 65%, 75%, 85%, 93%, 97%)
+ffmpeg -ss $TS -i "$VIDEO" -vframes 1 -q:v 2 "frame_$N.jpg"
+```
+
+### Passo 2 — Análise com Claude Vision
+Usar `analyze_video` MCP tool → retorna JSON estruturado com:
+- Formato detectado (MULTI-STUB, SINGLE-FULL, DRESSED-CHAR, MAP-DOC, RECIPE-MAGIC)
+- Personagens com tipo de corpo, expressões, cenários
+- Legendas transcritas
+- Estilo visual e tom
+
+### Passo 3 — Blueprint via viralobj-reverse-engineer
+Aplicar os 5 módulos em sequência:
+1. `01-frame-analysis.md` → ficha de análise preenchida
+2. `02-character-blueprint.md` → prompt FLUX.2 Pro + perfil de voz por personagem
+3. `03-production-blueprint.md` → câmera, SFX, música, legendas, capa
+4. `04-full-prompt-output.md` → JSON unificado para Fal.ai
+5. `05-instagram-post.md` → caption + hashtags + agendamento
+
+### Passo 4 — Produção via MCP
+```
+generate_package(blueprint)  → pacote bilíngue
+generate_video(package)      → clips .mp4 via Fal.ai
+export_artifacts(package)    → HTML dashboard + SKILL.md
+post_to_instagram(clips)     → publicação automática
+```
+
+---
+
+## Atualização do Dataset
+
+Após cada análise bem-sucedida, adicionar ao `training-data/dataset.json`:
+
+```javascript
+// Novos dados a incorporar:
+{
+  "validated_prompts": [/* prompts que geraram boas imagens */],
+  "new_expressions": [/* expressões detectadas não catalogadas */],
+  "new_combos": [/* combinações de objetos que funcionaram */],
+  "format_detected": "MULTI-STUB", // formato catalogado
+  "source_account": "@conta",
+  "views_estimated": null, // se disponível
+  "engagement_signals": ["high_retention", "many_comments"]
+}
+```
+
+---
+
+## Comandos Rápidos
+
+| Comando do usuário | Pipeline ativado |
+|-------------------|-----------------|
+| "Baixe esse reel: [URL]" | Download → Análise → Blueprint |
+| "Faça engenharia reversa desse vídeo" | Análise → Blueprint completo |
+| "Analise e recrie esse reel" | Download → Análise → Package → Video |
+| "Pipeline completo para esse reel" | Download → Análise → Package → Video → Instagram |
+| "Analise esse .mp4: [path]" | Análise → Blueprint (sem download) |
+| "Gere um reel de [nicho] com [objetos]" | Package → Video (sem análise) |
+
+---
+
+## Referências
+
+- `viralobj-reverse-engineer/SKILL.md` — Motor de engenharia reversa
+- `viralobj-reverse-engineer/references/01-05` — 5 módulos de análise
+- `training-data/dataset.json` — Padrões validados
+- `training-data/reel-references/GUIA-DE-ESTILOS.md` — Guia de estilos virais
+- `training-data/references/01-09` — 9 módulos de referência do NexoOmnix

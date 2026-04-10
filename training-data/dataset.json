@@ -1,10 +1,35 @@
 {
-  "version": "1.0.0",
+  "version": "2.0.0",
   "project": "ViralObj",
-  "description": "Validated patterns from real Talking Object reel analysis",
+  "description": "Validated patterns from real Talking Object reel analysis + pipeline config",
   "last_updated": "2026-04-09",
   "videos_analyzed": 5,
-  "source_accounts": ["@coisadecasa.ia", "@dinheirofalante"],
+  "source_accounts": ["@coisadecasa.ia", "@dinheirofalante", "@objetosdodia"],
+
+  "pipeline": {
+    "entry_point": "reel-downloader v2.0",
+    "flow": "download → analyze_video → reverse-engineer → generate_package → generate_video → post_to_instagram",
+    "tools": {
+      "analyze_video": { "engine": "Claude Vision", "input": ".mp4", "output": "analysis JSON" },
+      "generate_package": { "engine": "Claude API", "input": "niche+objects+topic", "output": "bilingual package JSON" },
+      "generate_video": { "engine": "Fal.ai", "pipeline": "FLUX.2 Pro → MiniMax TTS → VEED Fabric", "cost": "$2-4/reel" },
+      "export_artifacts": { "output": "HTML dashboard + SKILL.md" },
+      "post_to_instagram": { "engine": "Graph API v21.0", "supports": "immediate + scheduled + Stories" },
+      "list_niches": { "count": 10, "objects": 72 }
+    },
+    "skills": {
+      "reel-downloader": "v2.0 — orchestrator entry point",
+      "viralobj-reverse-engineer": "v1.0 — 5 modules (frame analysis → blueprint → production → output → instagram)"
+    }
+  },
+
+  "formats_cataloged": {
+    "MULTI-STUB": { "body": "stub arms, no legs", "pipeline": "FLUX → Fabric", "example": "@coisadecasa.ia" },
+    "SINGLE-FULL": { "body": "full body with legs", "pipeline": "FLUX → Kling → Fabric", "example": "cravo tutorial" },
+    "DRESSED-CHAR": { "body": "human body, object head", "pipeline": "FLUX → Kling → Fabric", "example": "financiamento" },
+    "MAP-DOC": { "body": "document with legs", "pipeline": "FLUX → Kling → Fabric", "example": "mapa florida" },
+    "RECIPE-MAGIC": { "body": "tutorial + particles", "pipeline": "FLUX → Kling → Fabric", "example": "cravo aromatizante" }
+  },
 
   "validated_patterns": {
     "expressions": {
@@ -25,10 +50,11 @@
       "Error denounced must be SPECIFIC — never vague",
       "Pixar 3D render ONLY — never flat design or 2D cartoon",
       "Face embedded in object's natural surface (front of bottle, center of flower)",
-      "Stub arms for expression — never full humanoid arms"
+      "Stub arms for expression — never full humanoid arms (unless FULL BODY type)"
     ],
     "duration_formulas": {
       "15s": { "objects": 2, "secs_each": 7 },
+      "17s": { "objects": 3, "secs_each": 5 },
       "30s": { "objects": 3, "secs_each": 10 },
       "45s": { "objects": 4, "secs_each": 11 },
       "60s": { "objects": 5, "secs_each": 12 }
@@ -36,13 +62,31 @@
     "strongest_combos": [
       { "objects": ["nota R$50", "moeda R$1"], "niche": "financeiro", "reason": "contrast rich/poor resonates" },
       { "objects": ["água sanitária", "celular"], "niche": "casa", "reason": "universal daily mistakes" },
-      { "objects": ["adenium", "jibóia", "rosa"], "niche": "plantas", "reason": "distinct care needs = distinct characters" }
-    ]
+      { "objects": ["adenium", "jibóia", "rosa"], "niche": "plantas", "reason": "distinct care needs = distinct characters" },
+      { "objects": ["lixeira", "esponja de pia"], "niche": "casa", "reason": "dirtiest kitchen objects — shock value" },
+      { "objects": ["nota R$50", "cartão de crédito", "boleto"], "niche": "financeiro", "reason": "daily financial mistakes trifecta" }
+    ],
+    "caption_styles": {
+      "alpha_bold": { "use_for": ["casa", "plantas", "pets", "fitness", "saude"], "font": "Arial Black", "color": "#FFFFFF", "outline": "#000000" },
+      "beta_pill": { "use_for": ["financeiro", "orlando", "premium"], "font": "Georgia/Montserrat", "bg": "rgba(255,255,255,0.92)", "highlight": "#C9A84C" }
+    },
+    "voice_profiles": {
+      "angry": { "voice_id": "Friendly_Person", "best_for": ["casa", "financeiro"] },
+      "furious": { "voice_id": "Wise_Woman", "best_for": ["lixeira", "impostos"] },
+      "alarmed": { "voice_id": "Gentle_Woman", "best_for": ["saude", "garrafa"] },
+      "resigned": { "voice_id": "Calm_Woman", "best_for": ["plantas", "pets"] },
+      "sarcastic": { "voice_id": "Lively_Girl", "best_for": ["financeiro", "fitness"] },
+      "educational": { "voice_id": "Friendly_Person", "best_for": ["saude", "culinaria"] },
+      "dramatic": { "voice_id": "Emotional_Female_Voice", "best_for": ["financeiro", "drama"] },
+      "funny": { "voice_id": "Lively_Girl", "best_for": ["fitness", "culinaria"] }
+    }
   },
 
   "prompt_library": {
     "base_style": "Pixar/Disney 3D render quality, warm cinematic lighting, ultra-realistic 3D animation, 9:16 vertical, 8K",
     "character_formula": "[object] with [expression adjective] cartoon face, [arm position], [distinctive visual detail], [environment], [human background action], Disney/Pixar 3D render — 9:16 vertical, ultra-realistic 3D animation, 8K",
+    "fal_model": "fal-ai/flux-pro/v1.1",
+    "fal_image_size": "portrait_16_9",
     "validated_prompts": [
       {
         "object": "bleach bottle (água sanitária)",
@@ -73,22 +117,32 @@
     "hook_templates_pt": [
       "Os [objetos] da sua [lugar] estão com RAIVA de você... [emojis]",
       "[N] [objetos] precisam urgentemente te dizer algo... [emojis]",
-      "Você está cometendo esses erros sem saber... [emoji]"
+      "Você está cometendo esses erros sem saber... [emoji]",
+      "🚨 [N] OBJETOS estão REVOLTADOS com você!"
     ],
     "hook_templates_en": [
       "Your [objects] are ANGRY at you... [emojis]",
       "[N] [objects] have an urgent message for you... [emojis]",
-      "You're making these mistakes without realizing... [emoji]"
+      "You're making these mistakes without realizing... [emoji]",
+      "🚨 [N] OBJECTS are FURIOUS with you!"
     ],
     "cta_templates_pt": [
       "Qual desses você tá fazendo errado? Comenta o número 👇",
       "Você sabia de todos? Comenta quantos 👇",
-      "Marca alguém que precisa ver isso 👇"
+      "Marca alguém que precisa ver isso 👇",
+      "Salva pra lembrar 📌"
     ],
     "cta_templates_en": [
       "Which one are you guilty of? Comment the number 👇",
       "Did you know all of these? Comment how many 👇",
-      "Tag someone who needs to see this 👇"
+      "Tag someone who needs to see this 👇",
+      "Save for later 📌"
     ]
+  },
+
+  "benchmark_accounts": {
+    "@objetosdodia": { "followers": "482K", "top_views": "1.7M", "style": "Pixar 3D Action + Real BG", "niche": "saude/natureza" },
+    "@dinheirofalante": { "followers": "795K", "top_views": "3M", "style": "Pixar Antagonist + Real BG", "niche": "financeiro" },
+    "@coisadecasa.ia": { "followers": "unknown", "style": "Multi-stub Pixar + Real BG", "niche": "casa/plantas" }
   }
 }
