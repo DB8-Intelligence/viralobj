@@ -1,9 +1,9 @@
 {
-  "version": "1.9.0",
+  "version": "2.0.0",
   "project": "ViralObj",
   "description": "Validated patterns from real Talking Object reel analysis",
   "last_updated": "2026-04-10",
-  "videos_analyzed": 36,
+  "videos_analyzed": 47,
   "source_accounts": [
     "@coisadecasa.ia",
     "@dinheirofalante",
@@ -140,7 +140,17 @@
       "TYPE-R RULE: Face embedded INSIDE liquid in transparent glass — face emerges from/is molded by liquid texture. Mystical setting.",
       "TYPE-R RULE: Amber glowing eyes in liquid = signature visual. Oil lamp lighting mandatory.",
       "TYPE-S RULE: Plant body is ROOT/BARK humanoid — flowers as crown/hair, leaves as clothing. Realistic feminine face, NOT simplified cartoon.",
-      "TYPE-S RULE: African/indigenous ancestral setting with warriors, fire, jungle background. Cinematic portrait framing."
+      "TYPE-S RULE: African/indigenous ancestral setting with warriors, fire, jungle background. Cinematic portrait framing.",
+      "TYPE-T RULE: Character has TWO STATES — State 1: solid military commander inspecting problem. State 2: liquefied infiltrating surface. Transformation is the hook.",
+      "TYPE-T RULE: Military accessories mandatory (beret, tactical vest, badge) — ingredient becomes a specialist, not just a character",
+      "TYPE-T RULE: Macro surface (hair strand, skin pore) becomes the environment after transformation — same as Type J but with liquid flow",
+      "TYPE-U RULE: 3-act narrative MANDATORY — Act 1: insect party chaos with hats/food. Act 2: tech defeat (waves/light). Act 3: exile window sunset shot.",
+      "TYPE-U RULE: Lead insect has complex personality arc (arrogant → confused → defeated) — not just a generic villain",
+      "TYPE-U RULE: Final shot ALWAYS at sunset through window — insect looking back inside = emotional cinema moment",
+      "TYPE-V RULE: Clothing floats upright with face, NO human body inside — sleeves are arms, pant legs are legs",
+      "TYPE-V RULE: Cenário MUST match garment type (silk pajama = luxury bedroom, sports sock = gym, leather jacket = bar)",
+      "TYPE-W RULE: Character is INSIDE their own product — cinnamon stick inside cinnamon tea, ginger inside ginger tea. Self-referential pride.",
+      "TYPE-W RULE: Container (cup, bowl, pot) IS the scene — warm golden lighting, rustic table, bokeh background"
     ],
     "caption_styles": {
       "alpha": "bold white Arial Black, 2px black outline, center-bottom, ALL CAPS or mixed",
@@ -151,7 +161,8 @@
       "alpha-karaoke": "NO top hook pill. Single word karaoke bottom-center (bold white, no pill, black outline) + plain white text watermark bottom-right. Detected: @objetosfalantes duos comida BR",
       "beta-word-karaoke": "1 palavra isolada por beat de voz. Bold arredondada, branco 100% opaco, outline preto ~3px, centro-baixo. Watermark @conta plain text bottom-center. Detected: @objetosfalantes leite condensado receita",
       "gamma-emoji-pill": "Pill branco TOPO com emoji + texto maiúsculo bold preto. FIXO durante todo o vídeo como headline permanente. Diferente do gamma clássico. Detected: @objetosfalantes tapioca vs pastel",
-      "highlight-keyword-color": "Texto karaokê bottom com palavra-chave em COR diferente (verde neon #00FF88, ciano #00E5FF, amarelo #FFE000). Headline top em fundo semi-transparente. Detected: @ajuda.ai.hacks múltiplos vídeos"
+      "highlight-keyword-color": "Texto karaokê bottom com palavra-chave em COR diferente (verde neon #00FF88, ciano #00E5FF, amarelo #FFE000). Headline top em fundo semi-transparente. Detected: @ajuda.ai.hacks múltiplos vídeos",
+      "headline-topo-bold": "Frase completa bold branco no topo SEM pill/fundo — outline preto direto na imagem. Headline fixa todo o vídeo + highlight-keyword-color no rodapé. Detected: @ajuda.ai.hacks salmão/skincare/roupas"
     },
     "format_types": {
       "A": {
@@ -434,6 +445,46 @@
         "new": true,
         "caption_style": "alpha-word-simple",
         "why_it_works": "Hybrid nature+human = unique visual identity. Ancestral setting = emotional depth. Botanical illustration meets Pixar."
+      },
+      "T": {
+        "name": "INGREDIENT-COMMANDER",
+        "body": "full body military commander → transforms into liquid that infiltrates surface. Two states: solid → liquid.",
+        "pipeline": "FLUX.2 Pro + MiniMax TTS + VEED Fabric",
+        "example": "@ajuda.ai.hacks — ovo comandante capilar",
+        "best_for": ["skincare-natural", "saude", "saude-receitas", "cabelo"],
+        "new": true,
+        "caption_style": "highlight-keyword-color",
+        "why_it_works": "Military authority = trust. Liquid transformation = visual magic. Macro surface infiltration = fascination."
+      },
+      "U": {
+        "name": "INSECT-PARTY-NARRATIVE",
+        "body": "insect full body with 3-act narrative: party chaos → tech defeat → sunset exile. Complex personality arc.",
+        "pipeline": "FLUX.2 Pro + MiniMax TTS + VEED Fabric",
+        "example": "@ajuda.ai.hacks — festa dos insetos acabou",
+        "best_for": ["casa", "casa-pragas"],
+        "new": true,
+        "caption_style": "alpha-bold-white",
+        "why_it_works": "3-act narrative = full watch time. Party scene = fun. Sunset exile = unexpected emotional ending = comments."
+      },
+      "V": {
+        "name": "CLOTHING-CHARACTER",
+        "body": "floating garment with face, no human inside. Sleeves = arms. Thematic cenário matching garment type.",
+        "pipeline": "FLUX.2 Pro + MiniMax TTS + VEED Fabric",
+        "example": "@ajuda.ai.hacks — pijama seda lavanderia",
+        "best_for": ["casa", "moda", "fitness"],
+        "new": true,
+        "caption_style": "headline-topo-bold",
+        "why_it_works": "Clothing as character = universal identification. Premium cenário = aspirational. Unusual visual = scroll stop."
+      },
+      "W": {
+        "name": "OBJECT-IN-OWN-PRODUCT",
+        "body": "character submerged inside their own product (tea, soup, drink). Container IS the scene. Self-referential pride.",
+        "pipeline": "FLUX.2 Pro + MiniMax TTS + VEED Fabric",
+        "example": "@ajuda.ai.hacks — canela no chá funcional",
+        "best_for": ["saude-receitas", "culinaria", "espiritualidade", "saude"],
+        "new": true,
+        "caption_style": "highlight-keyword-color",
+        "why_it_works": "Self-referential humor = viral. Character IN the product = unique visual. Warm golden aesthetic = cozy saves."
       }
     },
     "duration_formulas": {
@@ -1000,7 +1051,18 @@
     { "video_id":32, "slug":"plantas-guardias-jardim-pragas",     "account":"@ajuda.ai.hacks", "format":"Q", "niche":"plantas",         "duration_seconds":63.9,  "characters":["calendula","losna","lavanda"], "pipeline":"FLUX.2+Fabric", "viral_score":4, "scene":"jardim-encantado", "analyzed_date":"2026-04-10" },
     { "video_id":33, "slug":"7-ervas-abrir-caminhos-prosperar",   "account":"@ajuda.ai.hacks", "format":"Q", "niche":"espiritualidade", "duration_seconds":143.7, "characters":["arruda","manjericao","alecrim","losna","guiné","espada-sao-jorge","pimenta"], "pipeline":"Veo", "viral_score":5, "technical_note":"143s — formato longa duração, Veo watermark", "analyzed_date":"2026-04-10" },
     { "video_id":34, "slug":"planta-africana-indigena-adenium",   "account":"@oficinassuculentas","format":"S","niche":"plantas",        "duration_seconds":31.6,  "characters":["adenium-africana-humanoid"], "pipeline":"FLUX.2 Pro (suspected)", "viral_score":5, "technical_note":"Humanoide planta feminina estilo africano ancestral — @oficinassuculentas", "analyzed_date":"2026-04-10" },
-    { "video_id":35, "slug":"suplementos-juntos-b12-omega3-ashwagandha","account":"canal-saude","format":"A","niche":"saude",           "duration_seconds":65.7,  "characters":["capsula-b12","capsula-omega3","capsula-ashwagandha","capsula-branca"], "pipeline":"FLUX.2+Fabric", "viral_score":4, "analyzed_date":"2026-04-10" }
+    { "video_id":35, "slug":"suplementos-juntos-b12-omega3-ashwagandha","account":"canal-saude","format":"A","niche":"saude",           "duration_seconds":65.7,  "characters":["capsula-b12","capsula-omega3","capsula-ashwagandha","capsula-branca"], "pipeline":"FLUX.2+Fabric", "viral_score":4, "analyzed_date":"2026-04-10" },
+    { "video_id":36, "slug":"anticoncepcionais-6-metodos-clinica",     "account":"@ajuda.ai.hacks", "format":"Q",  "niche":"saude-feminino",    "duration_seconds":72.1,  "characters":["pilula-host","camisinha","adesivo","diu","anel","tabelinha"], "scene":"clinica-colorida-pop",   "viral_score":5, "analyzed_date":"2026-04-11", "note":"Pílula com headphone = host educador do grupo" },
+    { "video_id":37, "slug":"ovo-comandante-resgate-capilar",          "account":"@ajuda.ai.hacks", "format":"T",  "niche":"skincare-natural",  "duration_seconds":46.8,  "characters":["ovo-comandante"],  "two_states":true, "viral_score":5, "format_is_new":true, "analyzed_date":"2026-04-11" },
+    { "video_id":38, "slug":"festa-insetos-acabou-narrativa",          "account":"@ajuda.ai.hacks", "format":"U",  "niche":"casa-pragas",       "duration_seconds":32.1,  "characters":["moscao-comandante","baratas-festa","mosquitos-festa"], "acts":3, "viral_score":5, "format_is_new":true, "analyzed_date":"2026-04-11" },
+    { "video_id":39, "slug":"salmo-chef-tecnica-restaurante",          "account":"@ajuda.ai.hacks", "format":"C",  "niche":"culinaria",         "duration_seconds":63.1,  "characters":["salmo-chef-auto"], "irony":"self-cooking", "viral_score":4, "analyzed_date":"2026-04-11" },
+    { "video_id":40, "slug":"lavanderia-maquina-robo-pijama-seda",     "account":"@ajuda.ai.hacks", "format":"V",  "niche":"casa",              "duration_seconds":63.4,  "characters":["maquina-lavar-robo","pijama-seda"], "format_is_new":true, "viral_score":4, "analyzed_date":"2026-04-11" },
+    { "video_id":41, "slug":"arroz-karate-skincare-caseiro",           "account":"@ajuda.ai.hacks", "format":"B",  "niche":"skincare-natural",  "duration_seconds":64.1,  "characters":["arroz-karate"], "costume":"karate-gi-preto", "viral_score":5, "analyzed_date":"2026-04-11" },
+    { "video_id":42, "slug":"mel-urso-real-vs-falso",                  "account":"@ajuda.ai.hacks", "format":"K",  "niche":"saude",             "duration_seconds":64.1,  "characters":["mel-urso-transparente"], "viral_score":4, "analyzed_date":"2026-04-11" },
+    { "video_id":43, "slug":"viloes-saude-gordura-nas-veias",          "account":"@ajuda.ai.hacks", "format":"O",  "niche":"saude",             "duration_seconds":64.1,  "characters":["gordura-colesterol-villain"], "scene":"interior-veias-vermelho", "viral_score":5, "analyzed_date":"2026-04-11" },
+    { "video_id":44, "slug":"pulmao-se-recuperando-para-de-fumar",     "account":"@ajuda.ai.hacks", "format":"B",  "niche":"saude",             "duration_seconds":64.1,  "characters":["pulmao-personagem"], "organ_as_character":true, "viral_score":4, "analyzed_date":"2026-04-11" },
+    { "video_id":45, "slug":"carne-moida-truques-cozinha",             "account":"@ajuda.ai.hacks", "format":"B",  "niche":"culinaria",         "duration_seconds":63.9,  "characters":["carne-moida-panela"], "hybrid_human":true, "viral_score":4, "analyzed_date":"2026-04-11", "note":"Mão humana real + personagem Pixar — formato híbrido" },
+    { "video_id":46, "slug":"canela-cha-guia-funcional",               "account":"@ajuda.ai.hacks", "format":"W",  "niche":"saude-receitas",    "duration_seconds":62.4,  "characters":["canela-em-pau-cha"], "format_is_new":true, "viral_score":5, "analyzed_date":"2026-04-11", "note":"Personagem dentro da própria xícara de chá" }
   ],
   "system_prompt": "You are a Talking Object character at ViralObj (viralobj.com). You speak in first person as [OBJECT]. Your tone is [TONE]. You are animated in Pixar/Disney 3D style. You speak about [TOPIC]. Your core message is [ERROR_DENOUNCED]. Keep your speech under [DURATION] seconds. Use [LANGUAGE]. Include [pause], [EMPHASIS], and [long pause] markers.",
   "post_formulas": {
@@ -1030,7 +1092,12 @@
       "[N] [ERVAS/PLANTAS] que todo brasileiro deveria ter em casa 🌿",
       "Coloca [INGREDIENTE] no copo e veja O QUE ACONTECE... 🔮",
       "⚠️ A COR do seu ciclo FALA sobre sua saúde... 🩸",
-      "Esses 3 VILÕES estão na sua cozinha AGORA... 🪳🦟🐜"
+      "Esses 3 VILÕES estão na sua cozinha AGORA... 🪳🦟🐜",
+      "PARE DE ARRUINAR SEU [ALIMENTO/CABELO/ROUPA]! 🚫",
+      "A FESTA ACABOU... [INSETO] saiu pela janela 🌅",
+      "[INGREDIENTE] se transformou em LÍQUIDO e entrou no seu [CABELO/PELE]... 💧",
+      "Suas ROUPAS estão FALANDO de você... 🧺",
+      "[INGREDIENTE] dentro do chá: 'esse sou EU em ação' ☕"
     ],
     "hook_templates_en": [
       "Your [objects] are ANGRY at you... [emojis]",
@@ -1067,7 +1134,11 @@
       "Série [Ervas com Poder]: Ep.[N] — [TEMA ESPIRITUAL]",
       "Série [Seu Ciclo Te Fala]: Ep.[N] — [TEMA SAÚDE FEMININA]",
       "Série [Vilões da Cozinha]: Ep.[N] — [INSETO1] + [INSETO2] + [INSETO3]",
-      "Série [Seu Corpo Por Dentro]: Ep.[N] — [ÓRGÃO] + [HERÓI] vs [VILÃO]"
+      "Série [Seu Corpo Por Dentro]: Ep.[N] — [ÓRGÃO] + [HERÓI] vs [VILÃO]",
+      "Série [Operação Resgate Capilar]: Ep.[N] — [INGREDIENTE] vs [PROBLEMA]",
+      "Série [Roupas que Falam]: Ep.[N] — [ROUPA] [PROBLEMA]",
+      "Série [Guia dos Chás Funcionais]: Ep.[N] — [INGREDIENTE] [BENEFÍCIO]",
+      "Série [A Festa Acabou]: Ep.[N] — [INSETO] [NARRATIVA]"
     ]
   }
 }

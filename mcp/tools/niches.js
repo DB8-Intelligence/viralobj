@@ -1,7 +1,7 @@
 /**
  * ViralObj — niches.js
  * 18-niche library with object lists, personalities, validated prompts
- * Formats A–S | 120+ objects | 18 niches | Pipelines: FLUX.2+Fabric, Veo
+ * Formats A–W | 135+ objects | 18 niches | Pipelines: FLUX.2+Fabric, Veo
  */
 
 // ─── FORMAT DEFINITIONS (J+K v1.7.0, L+M v1.8.0) ──────────────────────────
@@ -229,10 +229,83 @@ export const FORMATS = {
     plant_characters: [
       { id: "adenium-africana", label: "Adenium Africana", flowers: "pink-plumeria", bark: "thick-succulent-root" }
     ]
+  },
+  // ─── Formats T–W (v2.0.0) ────────────────────────────────────────────────
+  T: {
+    id: "T", name: "INGREDIENT-COMMANDER",
+    description: "Ingrediente como comandante militar que inspeciona um problema (cabelo danificado, pele) e depois SE TRANSFORMA em líquido que penetra na superfície. Dois estados: sólido-autoritário → líquido-infiltrado.",
+    body: "full-body-then-liquid-transform", two_states: true,
+    state_1: "solid-military-commander", state_2: "liquid-flowing-infiltrating",
+    surface_type: "hair-strand-or-skin-macro",
+    pipeline: ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+    camera: "medium-then-macro-surface", tone: "educational", sub_tone: "militar-didático",
+    expression_arc: "autoritário-inspeção → determinado-infiltração",
+    best_for: ["skincare-natural", "saude", "saude-receitas", "cabelo"],
+    caption_style: "highlight-keyword-color",
+    flux_template: {
+      state_1: "[INGREDIENTE] animated character as military commander, [FORMA DO INGREDIENTE] body shape, green military beret with badge, camouflage tactical vest, hands on hips inspecting pose, standing in [CENÁRIO PROBLEMA: damaged hair strands / pore-filled skin], serious authoritative expression, Disney/Pixar 3D render, 8K",
+      state_2: "Same [INGREDIENTE] character transforming into glowing [COR] liquid, flowing along [CABELO/PELE] surface, golden luminous trail, determined expression still visible in liquid form, macro close-up of [SUPERFÍCIE ORGÂNICA], Disney/Pixar 3D render, 8K"
+    },
+    reference_account: "@ajuda.ai.hacks",
+    objects_catalog: ["ovo-comandante", "mel-comandante", "oleo-coco-comandante", "vitamina-c-comandante"]
+  },
+  U: {
+    id: "U", name: "INSECT-PARTY-NARRATIVE",
+    description: "Narrativa de 3 atos com insetos. Ato 1: festa/bagunça em ambiente doméstico. Ato 2: chegada da tecnologia repelente (ondas/luz). Ato 3: inseto derrotado/exilado olhando de fora com expressão de perda.",
+    acts: 3, arc: "celebração → confronto → derrota-exílio",
+    party_props: ["birthday-hats", "food-crumbs", "juice-boxes"],
+    defeat_effect: "ultrasonic-waves-blue OR toxic-fog OR UV-light",
+    final_shot: "insect-watching-from-outside-window-sunset",
+    pipeline: ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+    camera: "wide-establishing-then-close-dramatic-then-cinematic-window",
+    tone: "funny", sub_tone: "terror-comico-narrativo",
+    best_for: ["casa", "casa-pragas"],
+    caption_style: "alpha-bold-white",
+    flux_template: {
+      act1_party: "Charismatic [INSETO] commander character in tactical vest with big compound eyes, watching [COCKROACHES/MOSQUITOES/ANTS] with party hats eating and dancing on messy kitchen counter, full scene wide shot, party chaos, green kitchen cabinets background, Disney/Pixar 3D render, 8K",
+      act2_defeat: "Blue ultrasonic wave rings expanding from device, [INSETOS] characters scattering in panic, motion blur, Disney/Pixar 3D render, 8K",
+      act3_exile: "[INSETO] commander character hovering outside kitchen window at golden sunset, looking inside with sad/defeated expression, backlit cinematic shot, Disney/Pixar 3D render, 8K"
+    },
+    reference_account: "@ajuda.ai.hacks"
+  },
+  V: {
+    id: "V", name: "CLOTHING-CHARACTER",
+    description: "ROUPA como personagem completo — flutua com face na frente, sem corpo humano dentro. Manga = braço, calça = perna. Cenário temático combina com tipo de roupa.",
+    body: "floating-clothing-with-face", no_human_inside: true,
+    face_position: "front-center-of-garment", arms: "sleeves-as-arms",
+    pipeline: ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+    camera: "medium-full-garment", tone: "funny", sub_tone: "vaidoso-elegante",
+    expression_arc: "vaidoso → informativo → satisfeito",
+    best_for: ["casa", "moda", "fitness"],
+    flux_template: {
+      character: "Animated [TIPO DE ROUPA] garment character, floating upright [ROUPA COMPLETA] with no human inside, face embedded on [FRENTE DA PEÇA] with [EXPRESSÃO] cartoon eyes, [MANGA] as arms gesturing, [CALÇA/INFERIOR] as legs, [COR E TECIDO] fabric texture visible, [CENÁRIO TEMÁTICO], Disney/Pixar 3D render, 8K"
+    },
+    reference_account: "@ajuda.ai.hacks",
+    garment_catalog: ["pijama-seda", "camiseta-algodao", "jaqueta-couro", "meia-esportiva", "toalha-velha"]
+  },
+  W: {
+    id: "W", name: "OBJECT-IN-OWN-PRODUCT",
+    description: "O personagem está literalmente DENTRO do produto final que ele mesmo cria. Ex: pau de canela dentro da xícara de chá de canela. Orgulhoso do próprio produto, como se estivesse em um spa.",
+    body: "full-body-submerged-in-product", self_referential: true, product_is_scene: true,
+    expression: "proud-satisfied-relaxed",
+    pipeline: ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+    camera: "medium-close-container-with-character", tone: "educational", sub_tone: "orgulhoso-relaxado",
+    best_for: ["saude-receitas", "culinaria", "espiritualidade", "saude"],
+    flux_template: {
+      character: "Cute animated [INGREDIENTE] character with face, [FORMA DO INGREDIENTE] body, sitting or standing inside a [XÍCARA/TIGELA/COPO] filled with [PRODUTO FINAL], proud satisfied relaxed expression, warm [ILUMINAÇÃO DOURADA/RÚSTICA], [INGREDIENTES EXTRAS] around, Disney/Pixar 3D render, 8K"
+    },
+    reference_account: "@ajuda.ai.hacks",
+    examples: [
+      { ingredient: "canela-em-pau", product: "cha-de-canela", container: "xicara-vidro" },
+      { ingredient: "gengibre", product: "cha-de-gengibre", container: "xicara-ceramica" },
+      { ingredient: "hortelã", product: "agua-de-hortelã", container: "copo-vidro-alto" },
+      { ingredient: "alho", product: "sopa-de-alho", container: "panela-rustica" },
+      { ingredient: "limao", product: "agua-detox", container: "jarro-vidro" }
+    ]
   }
 };
 
-// ─── FORMAT REGISTRY (all 19 formats A–S) ───────────────────────────────────
+// ─── FORMAT REGISTRY (all 23 formats A–W) ───────────────────────────────────
 
 export const FORMAT_REGISTRY = [
   { id: "A", name: "MULTI-STUB",                    niches: ["casa", "plantas", "financeiro"],                              tone: "angry" },
@@ -254,6 +327,10 @@ export const FORMAT_REGISTRY = [
   { id: "Q", name: "MULTI-GROUP-SCENE",           niches: ["plantas", "espiritualidade", "saude"],                          tone: "educational" },
   { id: "R", name: "LIQUID-FACE-EMBEDDED",        niches: ["espiritualidade", "saude", "casa"],                             tone: "dramatic" },
   { id: "S", name: "PLANT-HUMANOID",              niches: ["plantas", "espiritualidade", "saude-natural"],                  tone: "educational" },
+  { id: "T", name: "INGREDIENT-COMMANDER",       niches: ["skincare-natural", "saude", "cabelo"],                          tone: "educational" },
+  { id: "U", name: "INSECT-PARTY-NARRATIVE",     niches: ["casa", "casa-pragas"],                                          tone: "funny" },
+  { id: "V", name: "CLOTHING-CHARACTER",          niches: ["casa", "moda", "fitness"],                                      tone: "funny" },
+  { id: "W", name: "OBJECT-IN-OWN-PRODUCT",      niches: ["saude-receitas", "culinaria", "saude"],                          tone: "educational" },
 ];
 
 // ─── CAPTION STYLES ─────────────────────────────────────────────────────────
@@ -340,6 +417,17 @@ export const CAPTION_STYLES = {
     outline: "2px black",
     headline_top: "bold black text on white semi-transparent background — full phrase visible throughout",
     examples: ["INCHADO", "ESPINAFRE", "INTESTINO", "PREGUIÇOSOS", "SANGUE"]
+  },
+  "headline-topo-bold": {
+    id: "headline-topo-bold",
+    description: "Frase completa em bold branco no topo, sem pill/fundo — texto diretamente sobre a imagem com outline preto. Presente durante todo o vídeo como headline fixa. Combinada com karaokê highlight-keyword-color no rodapé.",
+    font: "bold sans-serif",
+    color: "#FFFFFF",
+    outline: "2-3px black",
+    position: "top-center",
+    duration: "full-video-static",
+    bottom_complement: "highlight-keyword-color",
+    examples: ["PARE DE ARRUINAR SEU SALMÃO! 🐟", "PARE DE GASTAR COM SKINCARE! 🍚✨", "PARE DE ARRUINAR SUAS ROUPAS! 🧺", "O que sua comida faz dentro de você... 🍔🔬"]
   },
 };
 
@@ -455,6 +543,9 @@ export const NICHES = {
       // —— Objetos Velhos (Tipo A - @casasincerona) ——————————————————————————
       // —— Novos objetos casa v1.9.0 ————————————————————————————————————————
       { id: "oleo-cozinha-bottle", pt: "garrafa de óleo de cozinha", en: "cooking oil bottle", emoji: "🫗", personality: "apavorada, caindo, derramando", format: "K", pipeline_note: "Veo gerado", flux_base: "Terrified animated cooking oil bottle character, transparent golden-yellow plastic bottle body, liquid gold oil visible inside, scared wide-eyed expression, arms spread in panic falling position, pouring into white toilet bowl, clean marble bathroom background, Disney/Pixar 3D render, 8K" },
+      // —— Máquina + Inseto narrativa v2.0.0 ————————————————————————————————
+      { id: "maquina-lavar-robo", pt: "máquina de lavar robótica", en: "robotic washing machine", emoji: "🤖", personality: "ameaçadora, smug, high-tech", format: "V", flux_base: "Intimidating animated washing machine robot character, front-load washing machine body with green neon LED strips, menacing glowing green emoji face visible through porthole window, large robotic claw arms raised threateningly, rolling on industrial wheels, futuristic white circular room, Disney/Pixar 3D render, 8K", voice: { voice_id: "Wise_Woman", emotion: "angry", speed: 1.15, pitch: -2 } },
+      { id: "moscao-comandante", pt: "moscão comandante", en: "fly commander", emoji: "🪰", personality: "carismático, confiante, líder dos insetos", format: "U", flux_base: "Charismatic animated housefly commander character, large dark blue-gray fly body, oversized orange compound eyes, small antennae, tactical beige vest with pouches, confident arms crossed, flying pose, Disney/Pixar 3D render villain-but-lovable style, 8K", voice: { voice_id: "Wise_Woman", emotion: "cheerful", speed: 1.05, pitch: 0 } },
       { id: "tabua-de-corte-obj", pt: "tábua de corte (personagem)", en: "cutting board character", emoji: "🪵", personality: "furiosa, enojada, bacteria-hater", format: "A", flux_base: "Extremely angry animated wooden cutting board character, large rectangular wood cutting board body with grain texture, furious disgusted face embedded in wood, brown grain eyebrows furrowed, lemon half and salt visible on surface, arms gripping edges, Disney/Pixar 3D render, 8K", voice: { voice_id: "Wise_Woman", emotion: "angry", speed: 1.15, pitch: -1 } },
       { id: "cueca-velha", pt: "cueca velha", en: "old underwear", emoji: "🩲", personality: "resignada, confusa, perdida", format: "A", shape: "underwear-flat-with-face", color: "#F8BBD9", flux_base: "Cute animated old pink underwear character, flat fabric body shape, face embedded in fabric with worried confused expression and big round eyes, small fabric arms spread open in confusion, short fabric legs, inside open wooden drawer with folded clothes, Disney/Pixar 3D render, ultra-realistic 3D animation, 8K", voice: { voice_id: "Calm_Woman", emotion: "sad", speed: 0.90, pitch: -1 } },
     ],
@@ -477,6 +568,16 @@ export const NICHES = {
       episodes: [
         { ep: 1, objects: ["cueca-velha","esponja-velha","escova-dente-velha","chinelo-velho"], status: "catalogado" },
         { ep: 2, objects: ["toalha-velha","travesseiro-velho","pano-de-prato-velho","bucha-velha"], status: "pronto-produzir" }
+      ]
+    },
+    series_V: {
+      name: "Roupas que Falam",
+      format: "V",
+      episodes: [
+        { ep: 1, garment: "pijama-seda",     problem: "lavagem-errada",  status: "catalogado" },
+        { ep: 2, garment: "jeans-preferido", problem: "desbotamento",    status: "pronto-produzir" },
+        { ep: 3, garment: "toalha-velha",    problem: "odor-fungo",      status: "pronto-produzir" },
+        { ep: 4, garment: "meia-esportiva",  problem: "mau-cheiro",      status: "planejado" }
       ]
     },
   },
@@ -530,6 +631,8 @@ export const NICHES = {
       { pt: "forno", en: "oven", emoji: "♨️", personality: "autoritário, preciso" },
       // —— Chefs animais/alimentos (Tipo C-variant) v1.9.0 ——————————————————
       { id: "chef-frango", pt: "chef frango", en: "chef chicken", emoji: "🐔", personality: "orgulhoso, animado, cozinheiro", format: "C", body_type: "C-variant-animal", accessory: "white-chef-hat + gray-apron", flux_base: "Cheerful animated rooster/chicken character dressed as professional chef, full bird body with wings as arms, white chef hat, gray chef apron with wheat emblem, excited cooking expression, rustic warm restaurant kitchen background with hanging pots and pans, Disney/Pixar 3D render, 8K", voice: { voice_id: "Friendly_Person", emotion: "cheerful", speed: 1.10, pitch: 2 } },
+      { id: "salmo-chef-auto", pt: "salmão chef (ensina a si mesmo)", en: "salmon self-chef", emoji: "🐟", personality: "furioso, didático, irônico — ensina a preparar a si mesmo", format: "C", irony_note: "salmão ensina como preparar salmão", flux_base: "Furious-but-educational animated salmon fillet character, half-round cut salmon body with orange-pink marbled texture and white fat lines, face on flat side, white apron, white gloves, pointing finger in teaching pose, dark granite kitchen counter, Disney/Pixar 3D render, 8K", voice: { voice_id: "Wise_Woman", emotion: "angry", speed: 1.20, pitch: -1 } },
+      { id: "carne-moida-panela", pt: "carne moída na frigideira", en: "ground beef in pan", emoji: "🥩", personality: "apavorada, sendo pressionada por espátula humana", format: "B", hybrid_human: true, special_note: "Mão humana real interage com personagem Pixar — formato híbrido", flux_base: "Scared animated raw ground beef ball character, round meat ball body with grainy texture, terrified wide eyes, in black cast iron skillet on stove, metal spatula being pressed on top by REAL human hand (hybrid shot), Disney/Pixar 3D render integrated with real kitchen scene, 8K", voice: { voice_id: "Gentle_Woman", emotion: "fearful", speed: 1.25, pitch: 3 } },
       { id: "chef-carne", pt: "chef carne (Steak Master)", en: "chef steak", emoji: "🥩", personality: "confiante, apresentador, master", format: "C", body_type: "C-variant-food-chef", accessory: "chef-hat-labeled-STEAK-MASTER + white-gloves + white-apron", flux_base: "Confident animated beef steak character as chef, round marbled red meat body with visible fat marbling texture, face on meat surface with expressive brown eyes, white chef hat reading STEAK MASTER, white gloves, white apron, cheerful waving gesture, bright modern kitchen with green cabinets background, Disney/Pixar 3D render, 8K", voice: { voice_id: "Friendly_Person", emotion: "cheerful", speed: 1.05, pitch: 1 } },
     ],
     prompts_base: "Modern Brazilian kitchen, warm cooking atmosphere, Pixar 3D render, cook/chef character, ingredients on counter",
@@ -564,6 +667,8 @@ export const NICHES = {
       { pt: "cigarro", en: "cigarette", emoji: "🚬", personality: "arrependido, honesto" },
       // —— Suplementos (Tipo A-MULTI grupo) v1.9.0 ——————————————————————————
       { id: "capsula-b12", pt: "cápsula B12", en: "B12 supplement", emoji: "💊", personality: "furiosa, alerta, urgente", format: "A", group_format: true, flux_base: "Extremely angry animated vitamin B12 supplement tablet character, white rectangular tablet body, face on tablet front with intense furious expression, small arms and legs, standing on wooden table beside B12 label, Disney/Pixar 3D render, 8K" },
+      { id: "pulmao-personagem", pt: "pulmão (órgão-personagem)", en: "lung organ character", emoji: "🫁", personality: "exausto, danificado, em recuperação", format: "B", body_type: "organ-as-full-body", expression_arc: "exausto-danificado → recuperando → saudável", flux_base: "Tired worn-out animated lung organ character, bilobed pink lung body shape with trachea on top as neck, sad exhausted face, black smoke damage patch on one side, sitting hunched on bathroom marble counter, arms (bronchi) supporting body weight, Disney/Pixar 3D render, 8K", voice: { voice_id: "Calm_Woman", emotion: "sad", speed: 0.85, pitch: -2 } },
+      { id: "arroz-karate", pt: "arroz mestre de karatê", en: "karate rice master", emoji: "🍚", personality: "furioso, mestre marcial, apontando dedo", format: "B", accessory: "black-karate-gi + white-belt + rice-hat", flux_base: "Tough animated cooked rice character as karate master, round white rice grain cluster body, face with fierce pointing expression, full black karate gi uniform, white belt, small rice hat on top, pointing finger authoritatively, white marble bathroom background with bamboo toothbrush and rice jar, Disney/Pixar 3D render, 8K", voice: { voice_id: "Wise_Woman", emotion: "angry", speed: 1.15, pitch: -1 } },
       { id: "capsula-omega3", pt: "cápsula Omega-3", en: "Omega-3 capsule", emoji: "🟡", personality: "furiosa, professora, acusadora", format: "A", group_format: true, flux_base: "Extremely angry animated Omega-3 fish oil capsule character, golden oval capsule body with Omega-3 label, intense furious expression, small muscular arms pointing accusingly, Disney/Pixar 3D render, 8K" },
     ],
     prompts_base: "Health/home context, Pixar 3D render, person ignoring health advice in background",
@@ -680,6 +785,8 @@ export const NICHES = {
       { pt: "aveia", en: "oat flakes", emoji: "🥣", personality: "modesta, poderosa, subestimada", format: "A" },
       { pt: "banana cardiologista", en: "banana cardiologist", emoji: "🍌", personality: "energética, expert em coração", format: "G", costume: "jaleco branco + estetoscópio" },
       { pt: "morango dermatologista", en: "strawberry dermatologist", emoji: "🍓", personality: "delicada, especialista em pele", format: "G", costume: "jaleco branco + prancheta" },
+      // —— Chá funcional (Tipo W) v2.0.0 ————————————————————————————————————
+      { id: "canela-em-pau-cha", pt: "canela em pau (no chá)", en: "cinnamon stick in tea", emoji: "☕", personality: "orgulhosa, satisfeita, relaxada dentro do próprio chá", format: "W", body_submerged: true, flux_base: "Happy proud animated cinnamon stick character, rectangular brown bark-textured body with face, sitting inside a glass cup of hot cinnamon tea, golden-amber liquid around body, proud satisfied expression, rustic warm wooden table, golden bokeh background, Disney/Pixar 3D render, 8K", voice: { voice_id: "Friendly_Person", emotion: "cheerful", speed: 1.05, pitch: 1 } },
     ],
     prompts_base: "Brazilian kitchen, marble counter, glass pot boiling on gas stove, natural ingredients around, warm golden lighting, Pixar 3D render, no human in background (ingredient is the star)",
     caption_style: "gamma",
@@ -695,6 +802,19 @@ export const NICHES = {
       "ESSE CHÁ SIMPLES MUDOU MINHA VIDA",
       "TOMA EM JEJUM E VÊ O QUE ACONTECE"
     ],
+    series_W: {
+      name: "Guia dos Chás Funcionais",
+      format: "W",
+      episodes: [
+        { ep: 1, ingredient: "canela-em-pau",  beneficio: "controle-glicemia",        status: "catalogado" },
+        { ep: 2, ingredient: "gengibre",       beneficio: "digestao-antiinflamatorio", status: "pronto-produzir" },
+        { ep: 3, ingredient: "hortelã",        beneficio: "digestao-refrescante",      status: "pronto-produzir" },
+        { ep: 4, ingredient: "camomila",       beneficio: "sono-ansiedade",            status: "planejado" },
+        { ep: 5, ingredient: "erva-cidreira",  beneficio: "calmante",                  status: "planejado" },
+        { ep: 6, ingredient: "hibisco",        beneficio: "pressao-colesterol",        status: "planejado" },
+        { ep: 7, ingredient: "cha-verde",      beneficio: "antioxidante-metabolismo",  status: "planejado" }
+      ]
+    },
   },
 
   // ─── gastronomia — Type I DUO-SCENE ─────────────────────────────────────────
@@ -847,6 +967,26 @@ export const NICHES = {
     ],
     correlated_niches: ["saude-receitas","casa","maternidade","fitness","saude"],
     prompts_base: "Extreme macro close-up of human body surface as background, Pixar 3D character walking on/interacting with surface, hyper-realistic organic texture + Disney/Pixar 3D render contrast, warm clinical lighting, 9:16 vertical, 8K",
+    // ─── Sub-niche: cabelo (v2.0.0) ────────────────────────────────────────
+    sub_niche_cabelo: {
+      id: "cabelo",
+      label: "Saúde Capilar",
+      default_format: "T",
+      alt_formats: ["J", "B"],
+      series: {
+        name: "Operação Resgate Capilar",
+        format: "T",
+        episodes: [
+          { ep: 1, ingredient: "ovo",          problem: "pontas-duplas",  status: "catalogado" },
+          { ep: 2, ingredient: "oleo-de-coco", problem: "ressecamento",   status: "pronto-produzir" },
+          { ep: 3, ingredient: "abacate",      problem: "queda-capilar",  status: "planejado" },
+          { ep: 4, ingredient: "mel",          problem: "cabelo-opaco",   status: "planejado" }
+        ]
+      },
+      objects: [
+        { id: "ovo-comandante", pt: "ovo comandante", en: "egg commander", emoji: "🥚", personality: "militar, autoritário, inspeciona e infiltra", format: "T", military_accessory: "green-beret + camouflage-vest", flux_base: "Tough animated egg character as military commander, oval egg-shaped body with determined face, green military beret with badge, camouflage tactical vest, muscular egg arms, inspecting damaged curly hair strands macro close-up, Disney/Pixar 3D render, 8K", flux_liquid: "Same egg character transforming into flowing golden yolk liquid, infiltrating along damaged hair strand surface, golden luminous trail along hair cuticle, Disney/Pixar 3D render, 8K", voice: { voice_id: "Wise_Woman", emotion: "angry", speed: 1.10, pitch: -1 } }
+      ]
+    },
   },
 
   // ─── culinaria-receitas — Type K SINGLE-RECIPE-JOURNEY (v1.7.0) ──────────
@@ -963,6 +1103,7 @@ export const NICHES = {
     source_reference: "@ajuda.ai.hacks — absorvente ciclo menstrual 2026-04-10",
     objects: [
       { id: "absorvente-ciclo", pt: "absorvente (ciclo menstrual)", en: "sanitary pad", emoji: "🩹", personality: "preocupado, empático, educativo", format: "B", expression_arc: "preocupado → explicando → empático", flux_base: "Cute animated sanitary pad character, white quilted rectangular body with face, worried concerned expression, holding color indicator showing menstrual blood color, full body with small arms and legs with blue shoes, realistic kitchen granite counter background, Disney/Pixar 3D render, 8K", voice: { voice_id: "Gentle_Woman", emotion: "fearful", speed: 0.95, pitch: 1 } },
+      { id: "anticoncepcional-pilula", pt: "cartela de pílula anticoncepcional", en: "birth control pill pack", emoji: "💊", personality: "educadora, host do grupo, cheerful", format: "Q", role: "host-educator", accessory: "red-white-headphones-with-mic", companions: ["camisinha","diu","adesivo-hormonal","anel-vaginal","tabelinha"], flux_base: "Cute animated birth control pill blister pack character, rectangular silver-white blister pack body, face on front with expressive eyes, red and white headphones with microphone, small arms and legs, standing in colorful modern clinic waiting room with pop-art posters, Disney/Pixar 3D render, 8K", voice: { voice_id: "Friendly_Person", emotion: "cheerful", speed: 1.10, pitch: 2 } },
     ],
     series: {
       name: "Seu Ciclo Te Fala",
@@ -1156,6 +1297,59 @@ Pipeline: Veo recomendado para movimento fluido dentro do órgão
 
 ### Objects: ${objects_to_add.map(o => o.pt || o.id).join(", ")}
 ${JSON.stringify(prompts_validated, null, 2)}
+`;
+  }
+
+  // ─── Special case: cabelo-capilar (Format T) ──────────────────────────────
+  if (niche_key === "cabelo" || (niche_key === "skincare-natural" && format_type === "T")) {
+    return `
+# ViralObj Implementation — Cabelo Capilar (Format T)
+## Video: ${video_file} | Account: ${account}
+
+### Format: T (INGREDIENT-COMMANDER) — Estado 1: militar inspeção → Estado 2: liquefação infiltração
+### Série: Operação Resgate Capilar (4 eps)
+Voz: Wise_Woman | angry | 1.10x | -1 | Legenda: highlight-keyword-color
+### Objects: ${objects_to_add.map(o => o.pt || o.id).join(", ")}
+`;
+  }
+
+  // ─── Special case: inseto-narrativa (Format U) ────────────────────────────
+  if (format_type === "U") {
+    return `
+# ViralObj Implementation — Inseto Narrativa (Format U)
+## Video: ${video_file} | Account: ${account}
+
+### Format: U (INSECT-PARTY-NARRATIVE) — 3 atos: festa → derrota → exílio
+Inseto com personalidade complexa e arco emocional. Cena final: pôr do sol, olhando de fora pela janela.
+Voz: Wise_Woman | cheerful (ato1) → fearful (ato2-3) | Legenda: alpha-bold-white
+### Characters: ${objects_to_add.map(o => o.pt || o.id).join(", ")}
+`;
+  }
+
+  // ─── Special case: roupa-personagem (Format V) ────────────────────────────
+  if (format_type === "V") {
+    return `
+# ViralObj Implementation — Roupa Personagem (Format V)
+## Video: ${video_file} | Account: ${account}
+
+### Format: V (CLOTHING-CHARACTER) — Roupa flutua com face, sem humano dentro
+### Série: Roupas que Falam (4 eps). Cenário combina com tipo de roupa.
+Voz: Wise_Woman | angry | 1.15x
+### Garments: ${objects_to_add.map(o => o.pt || o.id).join(", ")}
+`;
+  }
+
+  // ─── Special case: chá-funcional (Format W) ───────────────────────────────
+  if (format_type === "W") {
+    return `
+# ViralObj Implementation — Chá Funcional (Format W)
+## Video: ${video_file} | Account: ${account}
+
+### Format: W (OBJECT-IN-OWN-PRODUCT) — Personagem dentro da própria xícara/bebida
+### Série: Guia dos Chás Funcionais (7 eps)
+Cenário: xícara/copo com chá como ambiente. Voz: Friendly_Person | cheerful | 1.05x
+Legenda: highlight-keyword-color
+### Ingredients: ${objects_to_add.map(o => o.pt || o.id).join(", ")}
 `;
   }
 
