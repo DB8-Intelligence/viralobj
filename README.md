@@ -38,6 +38,9 @@ Requires: Node.js 18+, Claude Code, ffmpeg (optional, for video analysis)
 # Generate a package
 "Generate a talking object reel for [niche] with [objects] about [topic]"
 
+# Generate with specific provider
+"Generate a talking object reel for [niche] with [objects] about [topic] using provider openai"
+
 # Analyze an existing video
 "Analyze this video: /path/to/reel.mp4"
 
@@ -72,6 +75,10 @@ Requires: Node.js 18+, Claude Code, ffmpeg (optional, for video analysis)
 | `generate_package` | Full bilingual production package |
 | `export_artifacts` | HTML dashboard + SKILL.md |
 | `list_niches` | Available niches + object libraries |
+
+Provider routing for `generate_package`:
+- `provider=auto` (default): follows `VIRALOBJ_PROVIDER_ORDER` fallback
+- `provider=anthropic|openai|gemini`: forces a single provider
 
 ---
 

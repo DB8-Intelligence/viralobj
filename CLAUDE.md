@@ -88,9 +88,19 @@ outputs/                  Generated HTML, skills, videos, packages
 
 ## Env Vars (.env)
 - `ANTHROPIC_API_KEY` — for generate_package (from Railway db8-agent)
+- `OPENAI_API_KEY` — optional fallback/primary for generate_package
+- `GEMINI_API_KEY` — optional fallback/primary for generate_package
+- `VIRALOBJ_PROVIDER_ORDER` — optional provider order, e.g. `anthropic,openai,gemini`
+- `OPENAI_MODEL` — optional override (default: `gpt-4.1-mini`)
+- `GEMINI_MODEL` — optional override (default: `gemini-2.5-flash`)
 - `FAL_KEY` — for generate_video (from Railway db8-agent)
 - `INSTAGRAM_ACCESS_TOKEN` — for post_to_instagram (TODO: add to Railway)
 - `INSTAGRAM_ACCOUNT_ID` — for post_to_instagram (TODO: add to Railway)
+
+### Provider Routing (`generate_package`)
+- Default behavior: `provider=auto` (tries providers in `VIRALOBJ_PROVIDER_ORDER`)
+- Force one provider per call: `provider=anthropic|openai|gemini`
+- Example: `generate_package` with `provider: "openai"` to reduce cost on drafts
 
 ## Production Stack (automated)
 1. FLUX.2 Pro (via Fal.ai) — character image 9:16

@@ -9,6 +9,149 @@ import { loadNicheData } from "./niches.js";
 
 const client = new Anthropic();
 
+const DEFAULT_PROVIDER_ORDER = ["anthropic", "openai", "gemini"];
+
+function getProviderOrder(provider = "auto") {
+  if (provider && provider !== "auto") {
+    return [provider];
+  }
+
+  const envOrder = (process.env.VIRALOBJ_PROVIDER_ORDER || "")
+    .split(",")
+    .map((p) => p.trim().toLowerCase())
+    .filter(Boolean);
+
+  const valid = envOrder.filter((p) => DEFAULT_PROVIDER_ORDER.includes(p));
+  return valid.length ? valid : DEFAULT_PROVIDER_ORDER;
+}
+
+async function callAnthropic(systemPrompt, userPrompt) {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error("ANTHROPIC_API_KEY not configured");
+  }
+
+  const response = await client.messages.create({
+    model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6",
+    max_tokens: 8000,
+    system: systemPrompt,
+    messages: [{ role: "user", content: userPrompt }],
+  });
+
+  return response.content?.[0]?.text?.trim() || "";
+}
+
+async function callOpenAI(systemPrompt, userPrompt) {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OPENAI_API_KEY not configured");
+  }
+
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
+      temperature: 0.7,
+      max_completion_tokens: 8000,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+    }),
+  });
+
+  const json = await response.json();
+  if (!response.ok) {
+    throw new Error(json?.error?.message || "OpenAI request failed");
+  }
+
+  const text = json?.choices?.[0]?.message?.content;
+  if (!text) {
+    throw new Error("OpenAI returned empty content");
+  }
+
+  return text.trim();
+}
+
+async function callGemini(systemPrompt, userPrompt) {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY not configured");
+  }
+
+  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      systemInstruction: {
+        parts: [{ text: systemPrompt }],
+      },
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: userPrompt }],
+        },
+      ],
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0.7,
+      },
+    }),
+  });
+
+  const json = await response.json();
+  if (!response.ok) {
+    throw new Error(json?.error?.message || "Gemini request failed");
+  }
+
+  const text = json?.candidates?.[0]?.content?.parts
+    ?.map((p) => p.text)
+    .filter(Boolean)
+    .join("\n");
+
+  if (!text) {
+    throw new Error("Gemini returned empty content");
+  }
+
+  return text.trim();
+}
+
+function parsePackage(raw) {
+  const jsonMatch = raw.match(/\{[\s\S]*\}/);
+  return JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+}
+
+async function generateWithProviderOrder(providerOrder, systemPrompt, userPrompt) {
+  const errors = [];
+
+  for (const provider of providerOrder) {
+    try {
+      let raw;
+      if (provider === "anthropic") {
+        raw = await callAnthropic(systemPrompt, userPrompt);
+      } else if (provider === "openai") {
+        raw = await callOpenAI(systemPrompt, userPrompt);
+      } else if (provider === "gemini") {
+        raw = await callGemini(systemPrompt, userPrompt);
+      } else {
+        throw new Error(`Unsupported provider: ${provider}`);
+      }
+
+      const pkg = parsePackage(raw);
+      return { pkg, provider };
+    } catch (error) {
+      errors.push(`${provider}: ${error.message}`);
+    }
+  }
+
+  throw new Error(`All providers failed -> ${errors.join(" | ")}`);
+}
+
 export async function generatePackage({
   niche,
   objects,
@@ -17,6 +160,7 @@ export async function generatePackage({
   duration = 30,
   lang = "both",
   analysis = null,
+  provider = "auto",
 }) {
   const nicheData = await loadNicheData(niche);
   const numObjects = objects.length;
@@ -117,18 +261,18 @@ Return this exact JSON structure:
   ]
 }`;
 
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 8000,
-    system: systemPrompt,
-    messages: [{ role: "user", content: userPrompt }],
-  });
+  const providerOrder = getProviderOrder(provider);
 
   let pkg;
+  let selectedProvider;
   try {
-    const raw = response.content[0].text.trim();
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    pkg = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+    const generated = await generateWithProviderOrder(
+      providerOrder,
+      systemPrompt,
+      userPrompt
+    );
+    pkg = generated.pkg;
+    selectedProvider = generated.provider;
   } catch (e) {
     throw new Error(`Failed to parse package: ${e.message}`);
   }
@@ -138,6 +282,7 @@ Return this exact JSON structure:
 🎭 ${numObjects} character(s): ${objects.join(", ")}
 🏷️  Niche: ${niche} | Tone: ${tone} | Duration: ${duration}s
 🌎 Bilingual: PT-BR + EN
+🤖 Provider: ${selectedProvider}
 
 📦 Package includes:
    • ${numObjects} character scripts with AI prompts

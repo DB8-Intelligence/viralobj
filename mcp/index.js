@@ -101,6 +101,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
             description:
               "Optional: pass result from analyze_video to generate package based on real video analysis",
           },
+          provider: {
+            type: "string",
+            enum: ["auto", "anthropic", "openai", "gemini"],
+            default: "auto",
+            description:
+              "LLM provider routing: auto uses fallback order from VIRALOBJ_PROVIDER_ORDER",
+          },
         },
         required: ["niche", "objects", "topic"],
       },
