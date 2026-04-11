@@ -1,9 +1,25 @@
+# Vídeos e frames (muito pesados para git)
+downloads/instagram/*.mp4
+downloads/tiktok/*.mp4
+downloads/youtube/*.mp4
+downloads/uploaded/*.mp4
+frames/
+.viralobj_frames_*
+
+# Arquivos temporários
+*.tmp
+*.log
 node_modules/
 .env
 .env.local
-*.log
+
+# OS
 .DS_Store
 Thumbs.db
-.viralobj_frames_*
+
+# Outputs temporários (manter HTMLs e skills, ignorar apenas mp4)
+outputs/*.mp4
+
+# Misc
 files/
 files.zip
