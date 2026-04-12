@@ -146,7 +146,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     {
       name: "generate_video",
       description:
-        "Generates the complete .mp4 video automatically via Fal.ai cloud APIs: character image (FLUX Pro v1.1) → voice narration (MiniMax TTS, tone per character) → lip sync (VEED Fabric). No manual work required. Requires FAL_KEY. / Gera o vídeo .mp4 completo automaticamente via Fal.ai: imagem do personagem → voz com tonalidade por personagem → lip sync. Sem trabalho manual.",
+        "Generates the complete .mp4 video via Fal.ai cloud APIs. Two pipelines: FLUX (image+TTS+lip sync, default) or Veo (direct video generation, best for organic movement in formats Q/R/S/O). Multi-character reels are auto-concatenated via ffmpeg. / Gera vídeo .mp4 completo via Fal.ai. Dois pipelines: FLUX (imagem+voz+lip sync) ou Veo (vídeo direto, melhor para movimento orgânico).",
       inputSchema: {
         type: "object",
         properties: {
@@ -164,6 +164,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
             default: "standard",
             description: "draft=$0.50/reel · standard=$2/reel · premium=$4/reel",
           },
+          pipeline: {
+            type: "string",
+            enum: ["flux", "veo"],
+            default: "flux",
+            description: "flux = FLUX Pro + MiniMax TTS + VEED Fabric (default). veo = Google Veo 2 + TTS (organic motion, best for plants/liquids/humanoids formats Q/R/S/O)",
+          },
           lang: {
             type: "string",
             enum: ["pt", "en"],
@@ -172,9 +178,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           },
           caption_style: {
             type: "string",
-            enum: ["bold_white", "minimal", "colorful"],
+            enum: ["bold_white", "minimal", "colorful", "alpha", "beta", "gamma", "gamma-B", "gamma-B-rodape", "alpha-karaoke", "beta-word-karaoke", "gamma-emoji-pill", "highlight-keyword-color", "headline-topo-bold"],
             default: "bold_white",
-            description: "Caption visual style",
+            description: "Caption visual style. 10 ViralObj styles: alpha (bold white caps), beta (white pill), gamma (dark pill top), alpha-karaoke (word-by-word), highlight-keyword-color (neon keyword), etc.",
           },
           overrides: {
             type: "object",
