@@ -4,9 +4,174 @@
  * Formats A–W | 135+ objects | 18 niches | Pipelines: FLUX.2+Fabric, Veo
  */
 
-// ─── FORMAT DEFINITIONS (J+K v1.7.0, L+M v1.8.0) ──────────────────────────
+// ─── FORMAT DEFINITIONS (A–I originals, J+K v1.7.0, L+M v1.8.0, N–S v1.9.0, T–W v2.0.0) ──
 
 export const FORMATS = {
+  A: {
+    id: "A",
+    name: "MULTI-STUB",
+    description: "Múltiplos objetos domésticos com stub arms (braços curtos) e sem pernas. Humano ao fundo cometendo o erro denunciado. Cada objeto em seu cenário brasileiro exclusivo.",
+    body: "stub-arms-no-legs",
+    legs: false,
+    human_background: true,
+    pipeline: ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+    camera: "static-medium",
+    expression_arc: "angry → furious → resigned",
+    best_for: ["casa", "plantas", "financeiro"],
+    tone: "angry",
+    characters_per_video: "3-5",
+    flux_template: {
+      character: "[OBJETO DOMÉSTICO] animated character, [FORMA] shape body, face embedded on front surface with [EXPRESSÃO] expression, short stub arms, NO legs, [COR] color, standing on [CENÁRIO BRASILEIRO EXCLUSIVO], human character in background doing [ERRO], Disney/Pixar 3D render, 8K"
+    },
+    caption_style: "alpha",
+    reference_account: "@coisadecasa.ia"
+  },
+  B: {
+    id: "B",
+    name: "SINGLE-FULL",
+    description: "1 personagem com corpo completo (torso + pernas + pés). Caminha e interage. Usado para tutoriais, apresentações de produto, órgãos como personagem.",
+    body: "full-body-legs",
+    legs: true,
+    human_background: false,
+    pipeline: ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+    camera: "medium-tracking",
+    expression_arc: "confident → working → proud",
+    best_for: ["culinaria", "natureza", "saude", "skincare-natural"],
+    tone: "educational",
+    flux_template: {
+      character: "[OBJETO/INGREDIENTE] animated character, [FORMA] body shape, full body with torso legs and feet, face embedded on surface with [EXPRESSÃO] expression, [ACESSÓRIO], [COR] smooth texture, [CENÁRIO BRASILEIRO], Disney/Pixar 3D render, 8K"
+    },
+    caption_style: "alpha",
+    reference_account: "@coisadecasa.ia"
+  },
+  C: {
+    id: "C",
+    name: "DRESSED-CHAR",
+    description: "Objeto como cabeça em corpo humano vestido (terno, avental, jaleco). Corpo humanoide completo com roupas profissionais. Inclui variante animal-chef (frango/salmão com avental).",
+    body: "object-head-human-body-dressed",
+    legs: true,
+    clothing: true,
+    pipeline: ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+    camera: "medium-close",
+    expression_arc: "professional → authoritative → CTA",
+    best_for: ["imoveis", "juridico", "empreendedorismo", "culinaria"],
+    tone: "dramatic",
+    flux_template: {
+      character: "[OBJETO] as head on human body wearing [ROUPA PROFISSIONAL], [EXPRESSÃO] expression, standing in [CENÁRIO PROFISSIONAL], professional pose, Disney/Pixar 3D render, 8K"
+    },
+    caption_style: "beta",
+    reference_account: "@snapinsta"
+  },
+  D: {
+    id: "D",
+    name: "MAP-DOC",
+    description: "Mapa ou documento com pernas que caminha. Camera tracking acompanha o personagem. Formato viagem/educação.",
+    body: "flat-document-with-legs",
+    legs: true,
+    camera_tracking: true,
+    pipeline: ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+    camera: "tracking-follow",
+    expression_arc: "excited → informative → CTA",
+    best_for: ["viagem", "imoveis", "educacao"],
+    tone: "educational",
+    flux_template: {
+      character: "Animated [MAPA/DOCUMENTO] character, flat [TIPO] body with printed details visible, face embedded on surface, small legs walking, [EXPRESSÃO] expression, [CENÁRIO RELEVANTE], Disney/Pixar 3D render, 8K"
+    },
+    caption_style: "alpha",
+    reference_account: "@objetosfalantes"
+  },
+  E: {
+    id: "E",
+    name: "RECIPE-MAGIC",
+    description: "Corpo completo com partículas douradas mágicas ao redor. Efeito visual de receita/transformação. Cenário de cozinha com brilho.",
+    body: "full-body-golden-particles",
+    legs: true,
+    particles: "golden-magic",
+    pipeline: ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+    camera: "medium-sparkle",
+    expression_arc: "magical → teaching → proud",
+    best_for: ["culinaria", "casa", "saude"],
+    tone: "educational",
+    flux_template: {
+      character: "[INGREDIENTE] animated character, [FORMA] body, full body with legs, golden magic particles floating around, [EXPRESSÃO] expression, [CENÁRIO COZINHA] with warm lighting, Disney/Pixar 3D render, 8K"
+    },
+    caption_style: "alpha",
+    reference_account: "@coisadecasa.ia"
+  },
+  F: {
+    id: "F",
+    name: "SINGLE-MULTI-COSTUME",
+    description: "1 personagem único com múltiplas trocas de roupa/expressão por etapa da receita. Hook pill fixo no topo 0-5s. Cada step = nova intensidade de expressão.",
+    body: "full-body-costume-changes",
+    legs: true,
+    costume_changes: true,
+    pipeline: ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+    camera: "static-medium",
+    expression_arc: "happy → confident → angry → furious",
+    best_for: ["saude-receitas", "culinaria", "beleza"],
+    tone: "educational",
+    flux_template: {
+      character: "[INGREDIENTE] animated character, [FORMA] body, wearing [ROUPA STEP N], [EXPRESSÃO STEP N] expression, [CENÁRIO], golden particles, Disney/Pixar 3D render, 8K"
+    },
+    caption_style: "gamma",
+    reference_account: "@objetosfalantes"
+  },
+  G: {
+    id: "G",
+    name: "DRESSED-CHAR+RECIPE-SPLIT-SCREEN",
+    description: "50% Pixar 3D DRESSED-CHAR apresenta resultado + 50% vídeo real split-screen 3 painéis mostra preparo. Personagem com roupa profissional (nutricionista, chef, médico).",
+    body: "object-head-human-body-professional",
+    legs: true,
+    split_screen: true,
+    pipeline: ["FLUX.2 Pro", "CapCut (split-screen)", "VEED Fabric"],
+    camera: "static-then-split",
+    structure: "character_phase: 9s + recipe_phase: 6s = 15s total",
+    best_for: ["saude-receitas", "culinaria", "beleza"],
+    tone: "educational",
+    flux_template: {
+      character: "[INGREDIENTE] character wearing [ROUPA PROFISSIONAL: jaleco/avental], [EXPRESSÃO] expression, presenting [RESULTADO], professional authority pose, Disney/Pixar 3D render, 8K"
+    },
+    caption_style: "gamma-B",
+    reference_account: "@objetosfalantes"
+  },
+  H: {
+    id: "H",
+    name: "VILLAIN-HERO NARRATIVE",
+    description: "Vilão embedded NA superfície (parede, chão, pia) + Herói produto confronta + Batalha com destruição da colônia. 3 atos: vilão confiante (0-13s) → herói confronta (1s) → batalha+destruição (30s+). Palavra irônica final.",
+    body: "villain-embedded-in-surface",
+    acts: 3,
+    pipeline: ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+    camera: "dramatic-zoom-action",
+    expression_arc: "confident → angry → terrified → ironic-resignation",
+    best_for: ["casa", "saude", "natureza"],
+    tone: "dramatic",
+    flux_template: {
+      villain: "[VILÃO: mofo/barata/aranha] character embedded IN [SUPERFÍCIE: parede/chão/pia], growing from surface texture, [EXPRESSÃO] expression, mini-colony children around, dark dramatic lighting, Disney/Pixar 3D render villain style, 8K",
+      hero: "[PRODUTO LIMPEZA] animated hero character entering from right side, determined expression, spray nozzle ready, Disney/Pixar 3D render, 8K"
+    },
+    caption_style: "gamma-B-rodape",
+    reference_account: "@objetosfalantes"
+  },
+  I: {
+    id: "I",
+    name: "DUO-SCENE",
+    description: "2 personagens por cena em mesmo cenário, personalidades contrastantes (arrogante vs resignado). SEM humano ao fundo. Faces embedded na textura do alimento/produto. Variantes: gastronomia (stub arms, cenário BR) e banheiro (braços longos articulados, deterioração extrema).",
+    body: "duo-contrasting-personalities",
+    legs: true,
+    human_background: false,
+    characters_per_scene: 2,
+    pipeline: ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+    camera: "static-wide-duo",
+    expression_arc: "contrasting duo dynamics",
+    best_for: ["gastronomia", "casa", "culinaria", "fitness", "beleza"],
+    tone: "funny",
+    flux_template: {
+      duo: "Two animated [CATEGORIA] characters side by side: LEFT: [PERSONAGEM A] with [EXPRESSÃO A]. RIGHT: [PERSONAGEM B] with [EXPRESSÃO B]. [CENÁRIO BRASILEIRO ICÔNICO], NO human characters, Disney/Pixar 3D render, 8K"
+    },
+    caption_style: "alpha-karaoke",
+    reference_account: "@objetosfalantes",
+    duo_dynamics: ["arrogante vs resignada", "saudável vs indulgente", "velho vs moderno", "ambos tristes"]
+  },
   J: {
     id: "J",
     name: "SINGLE-TUTORIAL-BODY",
@@ -483,7 +648,7 @@ export const SOURCE_ACCOUNTS = {
   "@ajuda.ai.hacks": {
     handle: "@ajuda.ai.hacks",
     style: "saude-educativo-viral",
-    formats_used: ["N","O","P","Q","R","A","B","C","I","J"],
+    formats_used: ["A","B","C","I","J","K","N","O","P","Q","R","T","U","V","W"],
     niches: ["saude","saude-receitas","fitness-nutricao","skincare-natural","casa","plantas","espiritualidade","saude-feminino","culinaria"],
     caption_pattern: "headline-topo + highlight-keyword-bottom + CTA 'Comenta: [PALAVRA]'",
     cta_comment_bait: true,
@@ -492,6 +657,14 @@ export const SOURCE_ACCOUNTS = {
     logo: "pill vermelho/coral canto superior direito",
     first_analyzed: "2026-04-10",
     videos_analyzed: 19
+  },
+  "@dinheirofalante": {
+    handle: "@dinheirofalante",
+    style: "financeiro-dramatico",
+    formats_used: ["A","C"],
+    niches: ["financeiro"],
+    first_analyzed: "2026-04-09",
+    videos_analyzed: 1
   },
   "@oficinassuculentas": {
     handle: "@oficinassuculentas",

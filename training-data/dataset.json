@@ -4,6 +4,7 @@
   "description": "Validated patterns from real Talking Object reel analysis",
   "last_updated": "2026-04-10",
   "videos_analyzed": 47,
+  "formats_total": 23,
   "source_accounts": [
     "@coisadecasa.ia",
     "@dinheirofalante",
@@ -763,6 +764,16 @@
     ]
   },
   "videos": [
+    { "video_id":1,  "slug":"agua-sanitaria-celular-garrafa-alface-lixeira", "account":"@coisadecasa.ia", "format":"A", "niche":"casa",           "characters":["agua-sanitaria","celular","garrafa","alface","lixeira"], "pipeline":"FLUX.2+Fabric", "viral_score":5, "analyzed_date":"2026-04-09" },
+    { "video_id":2,  "slug":"adenium-jiboia-rosa-plantas",                   "account":"@coisadecasa.ia", "format":"A", "niche":"plantas",        "characters":["adenium","jiboia","rosa"], "pipeline":"FLUX.2+Fabric", "viral_score":4, "analyzed_date":"2026-04-09" },
+    { "video_id":3,  "slug":"cravo-da-india-aromatizante",                   "account":"@coisadecasa.ia", "format":"E", "niche":"culinaria",      "characters":["cravo-da-india"], "pipeline":"FLUX.2+Fabric", "viral_score":4, "analyzed_date":"2026-04-09" },
+    { "video_id":4,  "slug":"contrato-financiamento-imobiliario",            "account":"@snapinsta",      "format":"C", "niche":"financeiro",     "characters":["contrato-financiamento"], "pipeline":"FLUX.2+Fabric", "viral_score":4, "analyzed_date":"2026-04-09" },
+    { "video_id":5,  "slug":"mapa-florida-orlando",                          "account":"@objetosfalantes","format":"D", "niche":"viagem",         "characters":["mapa-florida"], "pipeline":"FLUX.2+Fabric", "viral_score":4, "analyzed_date":"2026-04-09" },
+    { "video_id":6,  "slug":"canela-em-pau-multi-costume",                   "account":"@objetosfalantes","format":"F", "niche":"saude-receitas", "characters":["canela-em-pau"], "pipeline":"FLUX.2+Fabric", "viral_score":5, "analyzed_date":"2026-04-09" },
+    { "video_id":7,  "slug":"maca-nutricionista-split-screen",               "account":"@objetosfalantes","format":"G", "niche":"saude-receitas", "characters":["maca-nutricionista"], "pipeline":"FLUX.2+CapCut+Fabric", "viral_score":5, "analyzed_date":"2026-04-09" },
+    { "video_id":8,  "slug":"mofo-de-parede-villain-hero",                   "account":"@objetosfalantes","format":"H", "niche":"casa",           "characters":["mofo-villain","spray-hero"], "pipeline":"FLUX.2+Fabric", "viral_score":5, "analyzed_date":"2026-04-09" },
+    { "video_id":9,  "slug":"duos-comida-brasileira-7-duos",                 "account":"@objetosfalantes","format":"I", "niche":"gastronomia",    "characters":["picanha","linguica","batata-doce","batata-frita","pudim","brigadeiro","acai","granola","tapioca-duo"], "pipeline":"FLUX.2+Fabric", "viral_score":5, "analyzed_date":"2026-04-10" },
+    { "video_id":10, "slug":"duos-banheiro-5-duos",                          "account":"@objetosfalantes","format":"I", "niche":"casa",           "characters":["sabonete-velho","sabonete-liquido","shampoo-galao","shampoo-seco","barbeador","depilador"], "pipeline":"FLUX.2+Fabric", "viral_score":5, "analyzed_date":"2026-04-10" },
     {
       "video_id": 11,
       "account": "@objetosfalantes",
@@ -1062,7 +1073,8 @@
     { "video_id":43, "slug":"viloes-saude-gordura-nas-veias",          "account":"@ajuda.ai.hacks", "format":"O",  "niche":"saude",             "duration_seconds":64.1,  "characters":["gordura-colesterol-villain"], "scene":"interior-veias-vermelho", "viral_score":5, "analyzed_date":"2026-04-11" },
     { "video_id":44, "slug":"pulmao-se-recuperando-para-de-fumar",     "account":"@ajuda.ai.hacks", "format":"B",  "niche":"saude",             "duration_seconds":64.1,  "characters":["pulmao-personagem"], "organ_as_character":true, "viral_score":4, "analyzed_date":"2026-04-11" },
     { "video_id":45, "slug":"carne-moida-truques-cozinha",             "account":"@ajuda.ai.hacks", "format":"B",  "niche":"culinaria",         "duration_seconds":63.9,  "characters":["carne-moida-panela"], "hybrid_human":true, "viral_score":4, "analyzed_date":"2026-04-11", "note":"Mão humana real + personagem Pixar — formato híbrido" },
-    { "video_id":46, "slug":"canela-cha-guia-funcional",               "account":"@ajuda.ai.hacks", "format":"W",  "niche":"saude-receitas",    "duration_seconds":62.4,  "characters":["canela-em-pau-cha"], "format_is_new":true, "viral_score":5, "analyzed_date":"2026-04-11", "note":"Personagem dentro da própria xícara de chá" }
+    { "video_id":46, "slug":"canela-cha-guia-funcional",               "account":"@ajuda.ai.hacks", "format":"W",  "niche":"saude-receitas",    "duration_seconds":62.4,  "characters":["canela-em-pau-cha"], "format_is_new":true, "viral_score":5, "analyzed_date":"2026-04-11", "note":"Personagem dentro da própria xícara de chá" },
+    { "video_id":47, "slug":"chas-funcionais-guia-completo",             "account":"@ajuda.ai.hacks", "format":"W",  "niche":"saude-receitas",    "duration_seconds":64.1,  "characters":["gengibre-cha","hortela-cha","camomila-cha"], "viral_score":4, "analyzed_date":"2026-04-11", "note":"Guia completo de chás funcionais — múltiplos ingredientes em suas xícaras" }
   ],
   "system_prompt": "You are a Talking Object character at ViralObj (viralobj.com). You speak in first person as [OBJECT]. Your tone is [TONE]. You are animated in Pixar/Disney 3D style. You speak about [TOPIC]. Your core message is [ERROR_DENOUNCED]. Keep your speech under [DURATION] seconds. Use [LANGUAGE]. Include [pause], [EMPHASIS], and [long pause] markers.",
   "post_formulas": {
