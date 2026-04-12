@@ -47,8 +47,8 @@ export default function Home() {
           completo de <strong className="text-viral-text">análise → geração → vídeo → publicação</strong>.
         </p>
         <div className="mt-10 flex items-center justify-center gap-4">
-          <Link href="/generate" className="btn-primary">
-            Gerar meu primeiro reel →
+          <Link href="/signup" className="btn-primary">
+            Começar grátis →
           </Link>
           <Link href="/niches" className="btn-secondary">
             Explorar nichos
@@ -98,8 +98,8 @@ export default function Home() {
             Escolha um nicho, lista de objetos e o tópico. A IA cuida do resto —
             roteiro, prompts visuais, legendas e hashtags.
           </p>
-          <Link href="/generate" className="btn-primary">
-            Começar agora →
+          <Link href="/signup" className="btn-primary">
+            Criar conta grátis →
           </Link>
         </div>
       </section>

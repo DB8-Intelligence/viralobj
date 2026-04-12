@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -9,11 +10,16 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://viralobj.com"),
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <html lang="pt-BR">
       <body>
@@ -28,9 +34,20 @@ export default function RootLayout({
                 <Link href="/niches" className="text-viral-muted hover:text-viral-text">
                   Nichos
                 </Link>
-                <Link href="/generate" className="btn-primary text-xs py-2 px-4">
-                  Gerar Reel
-                </Link>
+                {user ? (
+                  <Link href="/app" className="btn-primary text-xs py-2 px-4">
+                    Meu painel
+                  </Link>
+                ) : (
+                  <>
+                    <Link href="/login" className="text-viral-muted hover:text-viral-text">
+                      Entrar
+                    </Link>
+                    <Link href="/signup" className="btn-primary text-xs py-2 px-4">
+                      Criar conta
+                    </Link>
+                  </>
+                )}
               </div>
             </nav>
           </header>
