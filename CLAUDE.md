@@ -119,4 +119,8 @@ All generated HTML dashboards, skills, videos go to `./outputs/`
 
 ## Known Pending Items
 
-1. **Instagram env vars** — `INSTAGRAM_ACCESS_TOKEN` + `INSTAGRAM_ACCOUNT_ID` (deferred — keys exist in db8-agent Railway as `INSTAGRAM_TOKEN_KEY` / `META_INSTAGRAM_ACCOUNT_ID`)
+1. **Instagram tokens — REFRESH NEEDED**
+   - Account ID `1668979704091045` is valid (in Railway db8-agent as `META_INSTAGRAM_ACCOUNT_ID`)
+   - All 3 Meta tokens in Railway (`INSTAGRAM_TOKEN_KEY`, `INSTAGRAM_API_KEY`, `META_ACCESS_TOKEN`) return `Cannot parse access token` from Graph API v21.0 — likely expired (60-day long-lived limit)
+   - Meta App credential pair (`META_IG_APP_ID` + `IMOBCREATOR_SECRET_META_KEY`) also returns `Error validating application` — also broken
+   - **Action required:** regenerate long-lived token via Meta Business Suite → Settings → Tokens, then update both Railway and local `.env` with the new `INSTAGRAM_ACCESS_TOKEN`
