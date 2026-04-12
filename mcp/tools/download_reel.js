@@ -41,7 +41,7 @@ function httpRequest(options, postData = null) {
       res.on("end", () => resolve({ status: res.statusCode, body, headers: res.headers }));
     });
     req.on("error", reject);
-    req.setTimeout(15000, () => { req.destroy(); reject(new Error("Request timeout")); });
+    req.setTimeout(30000, () => { req.destroy(); reject(new Error("Request timeout")); });
     if (postData) req.write(postData);
     req.end();
   });

@@ -151,7 +151,7 @@ Retorne exatamente esta estrutura JSON:
 }`;
 
   const response = await client.messages.create({
-    model: "claude-opus-4-5",
+    model: process.env.ANTHROPIC_VISION_MODEL || "claude-opus-4-6",
     max_tokens: 4096,
     system: systemPrompt,
     messages: [
