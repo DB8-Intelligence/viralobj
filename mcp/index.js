@@ -16,10 +16,11 @@ import { generatePackage } from "./tools/generate.js";
 import { generateVideo } from "./tools/generate_video.js";
 import { downloadReel } from "./tools/download_reel.js";
 import { exportArtifacts } from "./tools/export.js";
+import { postToInstagram } from "./tools/post_instagram.js";
 import { listNiches } from "./tools/niches.js";
 
 const server = new Server(
-  { name: "viralobj-mcp", version: "1.2.0" },
+  { name: "viralobj-mcp", version: "1.3.0" },
   { capabilities: { tools: {} } }
 );
 
@@ -209,6 +210,59 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       },
     },
     {
+      name: "post_to_instagram",
+      description:
+        "Publishes a reel to Instagram via Graph API v21.0. Supports immediate publishing or scheduling (10 min to 75 days ahead). Optionally shares to Stories. Requires INSTAGRAM_ACCESS_TOKEN and INSTAGRAM_ACCOUNT_ID. / Publica um reel no Instagram via Graph API. Suporta agendamento e compartilhamento em Stories.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          video_url: {
+            type: "string",
+            description: "Public URL of the video to publish",
+          },
+          caption_pt: {
+            type: "string",
+            description: "Caption text in Portuguese",
+          },
+          caption_en: {
+            type: "string",
+            description: "Caption text in English (optional)",
+          },
+          hashtags_pt: {
+            type: "array",
+            items: { type: "string" },
+            description: "Hashtags in Portuguese (e.g. ['#dicas', '#casa'])",
+          },
+          hashtags_en: {
+            type: "array",
+            items: { type: "string" },
+            description: "Hashtags in English",
+          },
+          schedule_time: {
+            type: "string",
+            description: "ISO 8601 datetime for scheduled publishing (null = immediate)",
+          },
+          share_to_stories: {
+            type: "boolean",
+            default: false,
+            description: "Also share the reel to Instagram Stories",
+          },
+          thumbnail_offset: {
+            type: "number",
+            default: 2000,
+            description: "Thumbnail offset in milliseconds",
+          },
+          lang: {
+            type: "string",
+            enum: ["pt", "en", "both"],
+            default: "pt",
+            description: "Caption language mode",
+          },
+        },
+        required: ["video_url", "caption_pt"],
+      },
+    },
+    {
       name: "list_niches",
       description:
         "Lists all available niches with their pre-loaded object libraries and validated AI prompts. / Lista todos os nichos disponíveis com bibliotecas de objetos e prompts AI validados.",
@@ -243,6 +297,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return await generateVideo(args);
       case "export_artifacts":
         return await exportArtifacts(args);
+      case "post_to_instagram":
+        return await postToInstagram(args);
       case "list_niches":
         return await listNiches(args);
       default:
@@ -260,4 +316,4 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 const transport = new StdioServerTransport();
 await server.connect(transport);
-console.error("ViralObj MCP Server v1.2.0 running — viralobj.com");
+console.error("ViralObj MCP Server v1.3.0 running — viralobj.com");

@@ -94,8 +94,8 @@ outputs/                  Generated HTML, skills, videos, packages
 - `OPENAI_MODEL` — optional override (default: `gpt-4.1-mini`)
 - `GEMINI_MODEL` — optional override (default: `gemini-2.5-flash`)
 - `FAL_KEY` — for generate_video (from Railway db8-agent)
-- `INSTAGRAM_ACCESS_TOKEN` — for post_to_instagram (TODO: add to Railway)
-- `INSTAGRAM_ACCOUNT_ID` — for post_to_instagram (TODO: add to Railway)
+- `INSTAGRAM_ACCESS_TOKEN` — for post_to_instagram (PENDING: add to Railway + .env)
+- `INSTAGRAM_ACCOUNT_ID` — for post_to_instagram (PENDING: add to Railway + .env)
 
 ### Provider Routing (`generate_package`)
 - Default behavior: `provider=auto` (tries providers in `VIRALOBJ_PROVIDER_ORDER`)
@@ -116,3 +116,11 @@ Do NOT merge these projects — keep them independent.
 
 ## Output Directory
 All generated HTML dashboards, skills, videos go to `./outputs/`
+
+## Known Pending Items
+
+1. **Instagram env vars** — `INSTAGRAM_ACCESS_TOKEN` + `INSTAGRAM_ACCOUNT_ID` need to be added to Railway and `.env`
+2. **Video concat** — Multi-character reels (2+ objects) return individual clips; no server-side concatenation yet (needs Creatomate or similar)
+3. **Google Veo pipeline** — Documented in dataset but no code path in `generate_video.js`
+4. **Caption styles** — Only 3 implemented (`bold_white`, `minimal`, `colorful`) of 10 documented in session state
+5. **Provider fallback keys** — `OPENAI_API_KEY` and `GEMINI_API_KEY` not configured in `.env`; auto-routing degrades to Anthropic-only
