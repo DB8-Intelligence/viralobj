@@ -119,5 +119,4 @@ All generated HTML dashboards, skills, videos go to `./outputs/`
 
 ## Known Pending Items
 
-1. **Instagram env vars** — `INSTAGRAM_ACCESS_TOKEN` + `INSTAGRAM_ACCOUNT_ID` need to be added to Railway and `.env` (deferred)
-2. **Provider fallback keys** — `OPENAI_API_KEY` and `GEMINI_API_KEY` not configured in `.env`; auto-routing degrades to Anthropic-only
+1. **Instagram env vars** — `INSTAGRAM_ACCESS_TOKEN` + `INSTAGRAM_ACCOUNT_ID` (deferred — keys exist in db8-agent Railway as `INSTAGRAM_TOKEN_KEY` / `META_INSTAGRAM_ACCOUNT_ID`)

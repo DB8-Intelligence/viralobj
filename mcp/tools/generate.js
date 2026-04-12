@@ -296,5 +296,6 @@ Return this exact JSON structure:
   return {
     content: [{ type: "text", text: summary }],
     package: pkg,
+    result: { provider_used: selectedProvider },
   };
 }
