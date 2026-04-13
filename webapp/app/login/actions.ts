@@ -27,12 +27,16 @@ export async function signupAction(formData: FormData) {
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
   const fullName = String(formData.get("full_name") ?? "");
+  const planIntent = String(formData.get("plan_intent") ?? "");
 
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: { full_name: fullName },
+      data: {
+        full_name: fullName,
+        ...(planIntent ? { plan_intent: planIntent } : {}),
+      },
     },
   });
 

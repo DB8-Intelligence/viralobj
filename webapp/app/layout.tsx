@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { Footer } from "@/components/Footer";
+import { CookieConsent } from "@/components/CookieConsent";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -63,15 +65,9 @@ export default async function RootLayout({
 
           <main className="flex-1">{children}</main>
 
-          <footer className="border-t border-viral-border/60 py-8 mt-16">
-            <div className="max-w-6xl mx-auto px-6 text-xs text-viral-muted flex items-center justify-between">
-              <span>
-                ViralObj · <a href="https://viralobj.com" className="hover:text-viral-text">viralobj.com</a> · DB8 Intelligence
-              </span>
-              <span>23 formatos · 17 nichos · 47 vídeos analisados</span>
-            </div>
-          </footer>
+          <Footer />
         </div>
+        <CookieConsent />
       </body>
     </html>
   );

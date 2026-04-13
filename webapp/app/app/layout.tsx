@@ -31,7 +31,8 @@ export default async function AppLayout({
             <SidebarLink href="/app" label="Dashboard" />
             <SidebarLink href="/app/generate" label="Nova geração" />
             <SidebarLink href="/app/history" label="Histórico" />
-            <SidebarLink href="/niches" label="Nichos" external />
+            <SidebarLink href="/app/billing" label="Assinatura" />
+            <SidebarLink href="/niches" label="Catálogo" external />
           </nav>
 
           <div className="card p-5">
