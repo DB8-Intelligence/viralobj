@@ -3,8 +3,15 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { checkIpRateLimit } from "@/lib/ip-rate-limit";
 
 export async function loginAction(formData: FormData) {
+  // IP rate limit: max 10 login attempts per IP per 15min
+  const { allowed } = await checkIpRateLimit("login", 10, 900);
+  if (!allowed) {
+    return { error: "Muitas tentativas de login. Tente novamente em 15 minutos." };
+  }
+
   const supabase = createClient();
 
   const email = String(formData.get("email") ?? "");
@@ -14,7 +21,9 @@ export async function loginAction(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return { error: error.message };
+    // Normalize to prevent user enumeration (email existence leak)
+    console.warn(`[login] failed for ${email}: ${error.message}`);
+    return { error: "Credenciais inválidas." };
   }
 
   revalidatePath("/", "layout");
@@ -22,12 +31,28 @@ export async function loginAction(formData: FormData) {
 }
 
 export async function signupAction(formData: FormData) {
+  // IP rate limit: max 5 signups per IP per hour
+  const { allowed } = await checkIpRateLimit("signup", 5, 3600);
+  if (!allowed) {
+    return { error: "Muitas tentativas de cadastro deste IP. Tente novamente em 1 hora." };
+  }
+
   const supabase = createClient();
 
-  const email = String(formData.get("email") ?? "");
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
-  const fullName = String(formData.get("full_name") ?? "");
+  const fullName = String(formData.get("full_name") ?? "").trim();
   const planIntent = String(formData.get("plan_intent") ?? "");
+
+  if (!fullName || fullName.length < 2) {
+    return { error: "Nome completo é obrigatório (mínimo 2 caracteres)." };
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { error: "Email inválido." };
+  }
+  if (password.length < 6) {
+    return { error: "Senha deve ter no mínimo 6 caracteres." };
+  }
 
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email,
@@ -52,13 +77,14 @@ export async function signupAction(formData: FormData) {
 
   // Auto-create tenant + profile if session is available (email confirmation off)
   if (signUpData.session) {
-    const { error: bootstrapError } = await bootstrapTenant(
-      supabase,
-      signUpData.user.id,
-      email,
-      fullName
-    );
-    if (bootstrapError) return { error: bootstrapError };
+    const { error: rpcErr } = await supabase.rpc("bootstrap_tenant_viralobj", {
+      p_user_id: signUpData.user.id,
+      p_email: email,
+      p_full_name: fullName,
+    });
+    if (rpcErr) {
+      return { error: `Erro ao criar workspace: ${rpcErr.message}` };
+    }
 
     revalidatePath("/", "layout");
     redirect("/app");
@@ -74,52 +100,3 @@ export async function logoutAction() {
   redirect("/");
 }
 
-/**
- * Creates a tenant + profile for a newly signed-up user.
- * Called inline when email confirmation is disabled.
- * For production with email confirmation on, this should live in a
- * database trigger or auth webhook.
- */
-async function bootstrapTenant(
-  supabase: ReturnType<typeof createClient>,
-  userId: string,
-  email: string,
-  fullName: string
-): Promise<{ error?: string }> {
-  const slug = email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "") + "-" + userId.slice(0, 6);
-
-  // Create tenant (individual/single-user) — trial plan, addon enabled
-  const { data: tenant, error: tenantErr } = await supabase
-    .from("tenants")
-    .insert({
-      name: fullName || email,
-      slug,
-      niche: "beleza", // default, user can change later
-      plan: "trial",
-      addon_talking_objects: true,
-      is_active: true,
-      trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-      email,
-    })
-    .select("id")
-    .single();
-
-  if (tenantErr || !tenant) {
-    return { error: `Erro ao criar workspace: ${tenantErr?.message ?? "desconhecido"}` };
-  }
-
-  const { error: profileErr } = await supabase.from("profiles").insert({
-    id: userId,
-    tenant_id: tenant.id,
-    full_name: fullName || email,
-    email,
-    role: "owner",
-    is_active: true,
-  });
-
-  if (profileErr) {
-    return { error: `Erro ao criar perfil: ${profileErr.message}` };
-  }
-
-  return {};
-}

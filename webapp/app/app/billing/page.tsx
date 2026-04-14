@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getSessionContext } from "@/lib/auth-helpers";
-import { PLAN_LABELS } from "@/lib/supabase/types";
+import { PLAN_LABELS, formatLimit, formatUsagePct } from "@/lib/supabase/types";
 import { PRICING_PLANS } from "@/lib/landing-data";
 
 export const metadata = {
@@ -166,8 +166,8 @@ function UsageMiniCard({
   used: number;
   max: number;
 }) {
-  const pct = max === 0 ? 0 : Math.min(100, Math.round((used / max) * 100));
-  const displayMax = max >= 999999 ? "∞" : max;
+  const pct = formatUsagePct(used, max);
+  const displayMax = formatLimit(max);
 
   return (
     <div className="rounded-lg border border-viral-border p-4">

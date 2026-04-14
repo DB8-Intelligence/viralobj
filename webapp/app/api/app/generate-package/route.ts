@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generatePackage } from "@/lib/generator";
+import { generatePackage, ProviderChainError } from "@/lib/generator";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { PLAN_LIMITS, type PlanType } from "@/lib/supabase/types";
+import { checkIpRateLimit } from "@/lib/ip-rate-limit";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 90;
 
 /**
  * Protected generate endpoint.
@@ -14,7 +15,17 @@ export const maxDuration = 60;
  * - Increments usage counter atomically
  */
 export async function POST(req: NextRequest) {
+  const reqId = crypto.randomUUID().slice(0, 8);
   try {
+    // ─── 0. IP rate limit (burst protection) ─────────────────────────────────
+    const { allowed } = await checkIpRateLimit("generate_package", 20, 60);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Muitas requisições. Aguarde um momento.", code: "IP_RATE_LIMIT" },
+        { status: 429 }
+      );
+    }
+
     // ─── 1. Auth check ───────────────────────────────────────────────────────
     const supabase = createClient();
     const {
@@ -61,54 +72,77 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ─── 3. Rate limit check (current month) ─────────────────────────────────
-    const monthStart = new Date();
-    monthStart.setDate(1);
-    monthStart.setHours(0, 0, 0, 0);
-    const monthStr = monthStart.toISOString().slice(0, 10);
+    // ─── 3. Parse body ───────────────────────────────────────────────────────
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Body JSON inválido", reqId },
+        { status: 400 }
+      );
+    }
 
-    const { data: usage } = await supabase
-      .from("usage_monthly")
-      .select("packages_count")
-      .eq("tenant_id", tenant.id)
-      .eq("month", monthStr)
-      .maybeSingle();
+    if (!body.niche || !body.objects || !body.topic) {
+      return NextResponse.json(
+        { error: "Campos obrigatórios: niche, objects, topic", reqId },
+        { status: 400 }
+      );
+    }
 
-    const used = usage?.packages_count ?? 0;
+    // ─── 4. Atomic quota reservation (prevents race condition) ──────────────
+    const svc = createServiceClient();
     const limit = PLAN_LIMITS[tenant.plan].packages;
 
-    if (used >= limit) {
+    const { data: reserveData, error: reserveErr } = await svc.rpc("reserve_quota", {
+      p_tenant_id: tenant.id,
+      p_counter: "packages",
+      p_limit: limit,
+    });
+
+    if (reserveErr) {
+      return NextResponse.json(
+        { error: `Erro ao reservar quota: ${reserveErr.message}` },
+        { status: 500 }
+      );
+    }
+
+    const reservation = Array.isArray(reserveData) ? reserveData[0] : reserveData;
+    if (!reservation?.reserved) {
       return NextResponse.json(
         {
-          error: `Limite mensal atingido (${used}/${limit}). Faça upgrade para continuar.`,
+          error: `Limite mensal atingido (${limit}/${limit}). Faça upgrade para continuar.`,
           code: "LIMIT_REACHED",
         },
         { status: 402 }
       );
     }
 
-    // ─── 4. Parse body + generate ────────────────────────────────────────────
-    const body = await req.json();
+    const used = (reservation.used_after as number) - 1;
 
-    if (!body.niche || !body.objects || !body.topic) {
-      return NextResponse.json(
-        { error: "Campos obrigatórios: niche, objects, topic" },
-        { status: 400 }
-      );
+    // ─── 5. Generate (reservation rolls back on failure) ────────────────────
+    let pkg;
+    try {
+      pkg = await generatePackage({
+        niche: body.niche as string,
+        objects: Array.isArray(body.objects) ? (body.objects as string[]) : [],
+        topic: body.topic as string,
+        tone: body.tone as string | undefined,
+        duration: body.duration as number | undefined,
+        lang: (body.lang as "pt" | "en" | "both") ?? "both",
+        provider: (body.provider as "auto" | "anthropic" | "openai" | "gemini") ?? "auto",
+      });
+    } catch (genErr) {
+      await svc.rpc("release_quota", { p_tenant_id: tenant.id, p_counter: "packages" });
+      console.error(`[generate-package ${reqId}] generation failed:`, genErr);
+      if (genErr instanceof ProviderChainError) {
+        return NextResponse.json(
+          { error: "Todos os provedores de IA falharam. Tente novamente em instantes.", reqId, code: "ALL_PROVIDERS_FAILED" },
+          { status: 503 }
+        );
+      }
+      throw genErr;
     }
-
-    const pkg = await generatePackage({
-      niche: body.niche,
-      objects: Array.isArray(body.objects) ? body.objects : [],
-      topic: body.topic,
-      tone: body.tone,
-      duration: body.duration,
-      lang: body.lang ?? "both",
-      provider: body.provider ?? "auto",
-    });
-
-    // ─── 5. Persist + increment usage (via service role to bypass RLS quirks) ─
-    const svc = createServiceClient();
 
     const { data: saved, error: insertErr } = await svc
       .from("generations")
@@ -128,17 +162,13 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (insertErr) {
+      await svc.rpc("release_quota", { p_tenant_id: tenant.id, p_counter: "packages" });
+      console.error(`[generate-package ${reqId}] insert failed:`, insertErr.message);
       return NextResponse.json(
-        { error: `Erro ao salvar geração: ${insertErr.message}` },
+        { error: "Erro ao salvar geração. Tente novamente.", reqId },
         { status: 500 }
       );
     }
-
-    // Increment counter via RPC (atomic)
-    await svc.rpc("increment_usage", {
-      p_tenant_id: tenant.id,
-      p_counter: "packages",
-    });
 
     return NextResponse.json({
       package: pkg,
@@ -150,7 +180,10 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error(`[generate-package ${reqId}] unhandled:`, e);
+    return NextResponse.json(
+      { error: "Erro interno. Tente novamente.", reqId },
+      { status: 500 }
+    );
   }
 }

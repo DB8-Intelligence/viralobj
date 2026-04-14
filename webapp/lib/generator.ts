@@ -116,9 +116,68 @@ Create ${numObjects} character(s), one per object in the list above.`;
   return { system, user };
 }
 
+const PROVIDER_TIMEOUT_MS = 20000;
+
+/**
+ * Defensive JSON parser: scans for the first balanced {...} block by tracking
+ * brace depth while skipping strings. Handles prose before/after + nested objects.
+ */
 function parseJson(raw: string): unknown {
-  const match = raw.match(/\{[\s\S]*\}/);
-  return JSON.parse(match ? match[0] : raw);
+  try {
+    return JSON.parse(raw);
+  } catch {
+    // fall through to scanning
+  }
+
+  const start = raw.indexOf("{");
+  if (start < 0) throw new Error("No JSON object found in response");
+
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  for (let i = start; i < raw.length; i++) {
+    const ch = raw[i];
+    if (escape) {
+      escape = false;
+      continue;
+    }
+    if (ch === "\\") {
+      escape = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (inString) continue;
+    if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) {
+        return JSON.parse(raw.slice(start, i + 1));
+      }
+    }
+  }
+  throw new Error("Unbalanced JSON braces in response");
+}
+
+async function withTimeout<T>(
+  fn: (signal: AbortSignal) => Promise<T>,
+  ms: number,
+  label: string
+): Promise<T> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fn(ctrl.signal);
+  } catch (e) {
+    if (ctrl.signal.aborted) {
+      throw new Error(`${label} timeout after ${ms}ms`);
+    }
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function callAnthropic(system: string, user: string): Promise<string> {
@@ -126,45 +185,64 @@ async function callAnthropic(system: string, user: string): Promise<string> {
     throw new Error("ANTHROPIC_API_KEY not configured");
   }
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  const res = await client.messages.create({
-    model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6",
-    max_tokens: 8000,
-    system,
-    messages: [{ role: "user", content: user }],
-  });
-  const text = res.content
-    .filter((b): b is Anthropic.TextBlock => b.type === "text")
-    .map((b) => b.text)
-    .join("");
-  return text.trim();
+  return withTimeout(
+    async (signal) => {
+      const res = await client.messages.create(
+        {
+          model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6",
+          max_tokens: 8000,
+          system,
+          messages: [
+            { role: "user", content: user },
+            // Prefill forces JSON-only output
+            { role: "assistant", content: "{" },
+          ],
+        },
+        { signal }
+      );
+      const text = res.content
+        .filter((b): b is Anthropic.TextBlock => b.type === "text")
+        .map((b) => b.text)
+        .join("");
+      return ("{" + text).trim();
+    },
+    PROVIDER_TIMEOUT_MS,
+    "anthropic"
+  );
 }
 
 async function callOpenAI(system: string, user: string): Promise<string> {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY not configured");
   }
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+  return withTimeout(
+    async (signal) => {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
+          messages: [
+            { role: "system", content: system },
+            { role: "user", content: user },
+          ],
+          max_tokens: 8000,
+          response_format: { type: "json_object" },
+        }),
+        signal,
+      });
+      if (!res.ok) {
+        throw new Error(`OpenAI HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      return data.choices?.[0]?.message?.content?.trim() ?? "";
     },
-    body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-      max_tokens: 8000,
-      response_format: { type: "json_object" },
-    }),
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`OpenAI ${res.status}: ${err.slice(0, 200)}`);
-  }
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content?.trim() ?? "";
+    PROVIDER_TIMEOUT_MS,
+    "openai"
+  );
 }
 
 async function callGemini(system: string, user: string): Promise<string> {
@@ -173,24 +251,37 @@ async function callGemini(system: string, user: string): Promise<string> {
   }
   const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: system }] },
-      contents: [{ role: "user", parts: [{ text: user }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        maxOutputTokens: 8000,
-      },
-    }),
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Gemini ${res.status}: ${err.slice(0, 200)}`);
+  return withTimeout(
+    async (signal) => {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: system }] },
+          contents: [{ role: "user", parts: [{ text: user }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            maxOutputTokens: 8000,
+          },
+        }),
+        signal,
+      });
+      if (!res.ok) {
+        throw new Error(`Gemini HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
+    },
+    PROVIDER_TIMEOUT_MS,
+    "gemini"
+  );
+}
+
+export class ProviderChainError extends Error {
+  constructor(public readonly errors: string[]) {
+    super("All LLM providers failed");
+    this.name = "ProviderChainError";
   }
-  const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
 }
 
 export async function generatePackage(input: GenerateInput) {
@@ -209,9 +300,11 @@ export async function generatePackage(input: GenerateInput) {
       const pkg = parseJson(raw) as Record<string, unknown>;
       return { ...pkg, provider_used: provider };
     } catch (e) {
-      errors.push(`${provider}: ${e instanceof Error ? e.message : String(e)}`);
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error(`[generator] ${provider} failed:`, msg);
+      errors.push(`${provider}: ${msg}`);
     }
   }
 
-  throw new Error(`All providers failed → ${errors.join(" | ")}`);
+  throw new ProviderChainError(errors);
 }

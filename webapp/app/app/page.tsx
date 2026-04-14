@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getSessionContext } from "@/lib/auth-helpers";
 import { createClient } from "@/lib/supabase/server";
 import type { Generation } from "@/lib/supabase/types";
+import { formatLimit } from "@/lib/supabase/types";
 
 export default async function AppDashboard() {
   const ctx = await getSessionContext();
@@ -33,17 +34,17 @@ export default async function AppDashboard() {
         <StatCard
           label="Pacotes gerados"
           value={ctx.usage.packages_count}
-          sub={`de ${ctx.limits.packages.max >= 999999 ? "∞" : ctx.limits.packages.max} este mês`}
+          sub={`de ${formatLimit(ctx.limits.packages.max)} este mês`}
         />
         <StatCard
           label="Vídeos"
           value={ctx.usage.videos_count}
-          sub={`de ${ctx.limits.videos.max >= 999999 ? "∞" : ctx.limits.videos.max}`}
+          sub={`de ${formatLimit(ctx.limits.videos.max)}`}
         />
         <StatCard
           label="Posts"
           value={ctx.usage.posts_count}
-          sub={`de ${ctx.limits.posts.max >= 999999 ? "∞" : ctx.limits.posts.max}`}
+          sub={`de ${formatLimit(ctx.limits.posts.max)}`}
         />
       </div>
 

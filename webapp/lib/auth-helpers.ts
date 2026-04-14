@@ -29,13 +29,34 @@ export async function getSessionContext(): Promise<SessionContext | null> {
   if (!user) return null;
 
   // Load profile + tenant in parallel via a join
-  const { data: profile, error: profileErr } = await supabase
+  let { data: profile, error: profileErr } = await supabase
     .from("profiles")
     .select("*, tenant:tenants(*)")
     .eq("id", user.id)
     .single();
 
-  if (profileErr || !profile) return null;
+  // Lazy bootstrap: user exists (auth) but no profile (orphan).
+  // Happens if trigger missed, or old signup before trigger was deployed.
+  if (profileErr?.code === "PGRST116" || !profile) {
+    const fullName =
+      (user.user_metadata as { full_name?: string } | undefined)?.full_name ??
+      user.email ??
+      "";
+    const { error: rpcErr } = await supabase.rpc("bootstrap_tenant_viralobj", {
+      p_user_id: user.id,
+      p_email: user.email ?? "",
+      p_full_name: fullName,
+    });
+    if (rpcErr) return null;
+
+    const retry = await supabase
+      .from("profiles")
+      .select("*, tenant:tenants(*)")
+      .eq("id", user.id)
+      .single();
+    profile = retry.data;
+    if (!profile) return null;
+  }
 
   const tenant = (profile as unknown as { tenant: Tenant }).tenant;
   const tenantId = tenant.id;

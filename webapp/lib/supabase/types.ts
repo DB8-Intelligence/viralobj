@@ -68,6 +68,15 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
   enterprise: { packages: 999999, videos: 999999, posts: 999999 },
 };
 
+export function formatLimit(max: number): string {
+  return max >= 999999 ? "∞" : String(max);
+}
+
+export function formatUsagePct(used: number, max: number): number {
+  if (max >= 999999 || max === 0) return 0;
+  return Math.min(100, Math.round((used / max) * 100));
+}
+
 export const PLAN_LABELS: Record<PlanType, string> = {
   trial: "Trial",
   starter: "Starter",
