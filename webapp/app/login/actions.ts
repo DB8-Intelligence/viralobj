@@ -6,8 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { checkIpRateLimit } from "@/lib/ip-rate-limit";
 
 export async function loginAction(formData: FormData) {
-  // IP rate limit: max 10 login attempts per IP per 15min
-  const { allowed } = await checkIpRateLimit("login", 10, 900);
+  // IP rate limit: max 15 login attempts per IP per 15min
+  const { allowed } = await checkIpRateLimit("login", 15, 900);
   if (!allowed) {
     return { error: "Muitas tentativas de login. Tente novamente em 15 minutos." };
   }
@@ -31,8 +31,8 @@ export async function loginAction(formData: FormData) {
 }
 
 export async function signupAction(formData: FormData) {
-  // IP rate limit: max 5 signups per IP per hour
-  const { allowed } = await checkIpRateLimit("signup", 5, 3600);
+  // IP rate limit: max 10 signups per IP per hour
+  const { allowed } = await checkIpRateLimit("signup", 10, 3600);
   if (!allowed) {
     return { error: "Muitas tentativas de cadastro deste IP. Tente novamente em 1 hora." };
   }

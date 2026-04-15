@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { signupAction } from "../login/actions";
 import { PRICING_PLANS } from "@/lib/landing-data";
+import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 
 function SignupForm() {
   const params = useSearchParams();
@@ -61,6 +62,16 @@ function SignupForm() {
           </p>
         </div>
       )}
+
+      <div className="card p-6 mb-4">
+        <GoogleAuthButton label="Criar conta com Google" />
+      </div>
+
+      <div className="flex items-center gap-3 mb-4 text-xs text-viral-muted">
+        <div className="flex-1 h-px bg-viral-border" />
+        <span>ou com email</span>
+        <div className="flex-1 h-px bg-viral-border" />
+      </div>
 
       <form action={handleSubmit} className="card p-6 space-y-4">
         <div>
