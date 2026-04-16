@@ -6,6 +6,12 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { NICHES } from "./niches-data";
+import { generateObjectBible } from "./viral-objects/object-bible.generator";
+import { buildSceneBlueprint, SceneBlueprint } from "./viral-objects/scene-blueprint";
+import { normalizeTone } from "./viral-objects/normalize-tone";
+import { buildSceneImagePromptPack } from "./viral-objects/image-prompt-pack";
+
+const SCENE_TYPES: SceneBlueprint["sceneType"][] = ["intro", "dialogue", "reaction", "cta"];
 
 const DEFAULT_ORDER = ["anthropic", "openai", "gemini"] as const;
 type ProviderName = (typeof DEFAULT_ORDER)[number];
@@ -298,7 +304,60 @@ export async function generatePackage(input: GenerateInput) {
       else throw new Error(`Unknown provider: ${provider}`);
 
       const pkg = parseJson(raw) as Record<string, unknown>;
-      return { ...pkg, provider_used: provider };
+      const tone = normalizeTone(input.tone);
+      const object_bibles = input.objects.map((obj) =>
+        generateObjectBible({ object: obj, niche: input.niche, tone })
+      );
+      const scene_blueprints = object_bibles.map((bible) => ({
+        objectId: bible.id,
+        scenes: SCENE_TYPES.map((sceneType) =>
+          buildSceneBlueprint({
+            objectId: bible.id,
+            sceneType,
+            topic: input.topic,
+            tone,
+            niche: input.niche,
+          })
+        ),
+      }));
+      const scene_image_prompts = buildSceneImagePromptPack({
+        objectBibles: object_bibles,
+        sceneBlueprints: scene_blueprints,
+      });
+
+      // Map the LLM-produced character voice script to each sceneId so the audio
+      // step uses the real first-person monologue, not the technical scene.action.
+      const scene_texts: Record<string, string> = {};
+      const characters =
+        (pkg as { characters?: Array<Record<string, unknown>> }).characters ?? [];
+      const preferredLang = input.lang === "en" ? "en" : "pt";
+      object_bibles.forEach((bible, idx) => {
+        const char = characters[idx] ?? {};
+        const primary = char[`voice_script_${preferredLang}`];
+        const secondary = char[`voice_script_${preferredLang === "pt" ? "en" : "pt"}`];
+        const script = (typeof primary === "string" && primary) ||
+          (typeof secondary === "string" && secondary) || "";
+        if (!script.trim()) return;
+        const sentences = script.trim().split(/(?<=[.!?…])\s+/).filter(Boolean);
+        const group = scene_blueprints.find((g) => g.objectId === bible.id);
+        if (!group) return;
+        group.scenes.forEach((scene, sceneIdx) => {
+          const text =
+            sentences[sceneIdx] ??
+            sentences[sceneIdx % Math.max(sentences.length, 1)] ??
+            script;
+          scene_texts[scene.sceneId] = text;
+        });
+      });
+
+      return {
+        ...pkg,
+        provider_used: provider,
+        object_bibles,
+        scene_blueprints,
+        scene_image_prompts,
+        scene_texts,
+      };
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       console.error(`[generator] ${provider} failed:`, msg);

@@ -3,6 +3,9 @@ import { generatePackage, ProviderChainError } from "@/lib/generator";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { PLAN_LIMITS, type PlanType } from "@/lib/supabase/types";
 import { checkIpRateLimit } from "@/lib/ip-rate-limit";
+import { normalizeTone } from "@/lib/viral-objects/normalize-tone";
+import { JobService } from "@/lib/jobs/job.service";
+import { JobOrchestrator } from "@/lib/jobs/orchestrator";
 
 export const runtime = "nodejs";
 export const maxDuration = 90;
@@ -121,13 +124,14 @@ export async function POST(req: NextRequest) {
     const used = (reservation.used_after as number) - 1;
 
     // ─── 5. Generate (reservation rolls back on failure) ────────────────────
+    const normalizedTone = normalizeTone(body.tone as string | undefined);
     let pkg;
     try {
       pkg = await generatePackage({
         niche: body.niche as string,
         objects: Array.isArray(body.objects) ? (body.objects as string[]) : [],
         topic: body.topic as string,
-        tone: body.tone as string | undefined,
+        tone: normalizedTone,
         duration: body.duration as number | undefined,
         lang: (body.lang as "pt" | "en" | "both") ?? "both",
         provider: (body.provider as "auto" | "anthropic" | "openai" | "gemini") ?? "auto",
@@ -152,11 +156,15 @@ export async function POST(req: NextRequest) {
         niche: body.niche,
         objects: body.objects,
         topic: body.topic,
-        tone: body.tone ?? "angry",
+        tone: normalizedTone,
         duration: body.duration ?? 30,
         lang: body.lang ?? "both",
         provider_used: (pkg as { provider_used?: string }).provider_used ?? null,
         package: pkg,
+        object_bibles: (pkg as { object_bibles?: unknown }).object_bibles ?? null,
+        scene_blueprints: (pkg as { scene_blueprints?: unknown }).scene_blueprints ?? null,
+        scene_image_prompts: (pkg as { scene_image_prompts?: unknown }).scene_image_prompts ?? null,
+        scene_images: (pkg as { scene_images?: unknown }).scene_images ?? null,
       })
       .select("id")
       .single();
@@ -170,9 +178,41 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // ─── 6. Dispatch async image generation job (fire-and-forget) ──────────
+    let jobId: string | null = null;
+    try {
+      const jobService = new JobService();
+      const job = await jobService.createJob({
+        tenant_id: tenant.id,
+        user_id: user.id,
+        status: "queued",
+        progress: 0,
+        input: {
+          generation_id: saved.id,
+          scene_image_prompts:
+            (pkg as { scene_image_prompts?: unknown }).scene_image_prompts ?? [],
+          scene_blueprints:
+            (pkg as { scene_blueprints?: unknown }).scene_blueprints ?? [],
+          scene_texts:
+            (pkg as { scene_texts?: Record<string, string> }).scene_texts ?? null,
+        },
+      });
+      jobId = job?.id ?? null;
+      if (jobId) {
+        new JobOrchestrator()
+          .run(jobId)
+          .catch((err) =>
+            console.error(`[generate-package ${reqId}] orchestrator:`, err)
+          );
+      }
+    } catch (jobErr) {
+      console.error(`[generate-package ${reqId}] job dispatch failed:`, jobErr);
+    }
+
     return NextResponse.json({
       package: pkg,
       generation_id: saved.id,
+      job_id: jobId,
       usage: {
         used: used + 1,
         max: limit,

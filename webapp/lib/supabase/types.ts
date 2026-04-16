@@ -42,6 +42,14 @@ export interface Generation {
   lang: string;
   provider_used: string | null;
   package: Record<string, unknown>;
+  object_bibles?: unknown | null;
+  scene_blueprints?: unknown | null;
+  scene_image_prompts?: unknown | null;
+  scene_images?: unknown | null;
+  scene_audios?: unknown | null;
+  video_timeline?: unknown | null;
+  video_url?: string | null;
+  video_assembly?: unknown | null;
   created_at: string;
 }
 

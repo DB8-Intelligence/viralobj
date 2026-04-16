@@ -4,13 +4,25 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { NICHES } from "@/lib/niches-data";
+import type { ObjectTone } from "@/lib/viral-objects/object-bible";
+
+const TONE_OPTIONS: Array<{ label: string; value: ObjectTone }> = [
+  { label: "Angry", value: "dramatic" },
+  { label: "Educational", value: "motivational" },
+  { label: "Cute", value: "funny" },
+  { label: "Dramatic", value: "dramatic" },
+  { label: "Funny", value: "funny" },
+  { label: "Emotional", value: "emotional" },
+  { label: "Sarcastic", value: "sarcastic" },
+  { label: "Motivational", value: "motivational" },
+];
 
 export default function AppGeneratePage() {
   const router = useRouter();
   const [niche, setNiche] = useState("casa");
   const [objects, setObjects] = useState("água sanitária, lixeira, celular");
   const [topic, setTopic] = useState("erros de higiene doméstica");
-  const [tone, setTone] = useState("angry");
+  const [tone, setTone] = useState<ObjectTone>("dramatic");
   const [duration, setDuration] = useState(30);
   const [provider, setProvider] = useState("auto");
 
@@ -93,13 +105,16 @@ export default function AppGeneratePage() {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="label">Tom</label>
-            <select className="input" value={tone} onChange={(e) => setTone(e.target.value)}>
-              <option value="angry">angry</option>
-              <option value="funny">funny</option>
-              <option value="educational">educational</option>
-              <option value="dramatic">dramatic</option>
-              <option value="cute">cute</option>
-              <option value="sarcastic">sarcastic</option>
+            <select
+              className="input"
+              value={tone}
+              onChange={(e) => setTone(e.target.value as ObjectTone)}
+            >
+              {TONE_OPTIONS.map((opt, i) => (
+                <option key={`${opt.label}-${i}`} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
           </div>
           <div>
