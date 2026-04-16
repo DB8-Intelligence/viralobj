@@ -1,3 +1,4 @@
+import { fal } from "@fal-ai/client";
 import type { SceneImagePrompt } from "./image-prompt-pack";
 import {
   FAL_INTEGRATION_READY,
@@ -37,17 +38,61 @@ function mockImageUrl(sceneId: string): string {
   return `https://placehold.co/576x1024/png?text=${safe}`;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+/** Gera seed deterministico a partir de jobId + sceneIndex */
+function buildSeed(jobId?: string, sceneIndex?: number): number | undefined {
+  if (!IP_ADAPTER_USE_SEED || !jobId) return undefined;
+  // Hash simples: soma dos charCodes do jobId + offset do sceneIndex
+  let hash = 0;
+  for (let i = 0; i < jobId.length; i++) {
+    hash = ((hash << 5) - hash + jobId.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash + (sceneIndex ?? 0));
+}
+
 async function generateWithFal(input: GenerateSceneImageInput): Promise<string> {
-  // TODO: integração real com Fal.ai (FLUX.2 Pro).
-  // Quando FAL_INTEGRATION_READY=true, chamar:
-  //   fal.queue.submit("fal-ai/flux-pro", {
-  //     prompt: input.prompt,
-  //     image_prompt: useIpAdapter ? input.referenceImageUrl : undefined,
-  //     image_prompt_strength: IP_ADAPTER_STRENGTH,
-  //     seed: IP_ADAPTER_USE_SEED ? `${input.jobId}-${input.sceneIndex}` : undefined,
-  //   })
-  return mockImageUrl(input.sceneId);
+  fal.config({ credentials: process.env.FAL_KEY });
+
+  const useIpAdapter = FEATURE_IP_ADAPTER && Boolean(input.referenceImageUrl);
+  const seed = buildSeed(input.jobId, input.sceneIndex);
+
+  console.log(
+    `[ImageGen] Calling fal-ai/flux-pro/v1.1 scene=${input.sceneId}` +
+    (seed ? ` seed=${seed}` : '') +
+    (useIpAdapter ? ` ip-adapter=true` : '')
+  );
+
+  const falInput = {
+    prompt: input.prompt,
+    image_size: "portrait_16_9" as const,
+    num_images: 1 as const,
+    output_format: "jpeg" as const,
+    ...(seed !== undefined ? { seed } : {}),
+    // IP-Adapter: passa imagem anterior como referencia de consistencia visual
+    ...(useIpAdapter && input.referenceImageUrl
+      ? {
+          image_prompt: input.referenceImageUrl,
+          image_prompt_strength: IP_ADAPTER_STRENGTH,
+        }
+      : {}),
+  };
+
+  const result = await fal.subscribe("fal-ai/flux-pro/v1.1", {
+    input: falInput,
+    logs: false,
+  });
+
+  const images = (result.data as Record<string, unknown>)?.images;
+  if (!Array.isArray(images) || images.length === 0) {
+    throw new Error(`[ImageGen] Fal.ai returned no images for scene=${input.sceneId}`);
+  }
+
+  const imageUrl = (images[0] as Record<string, unknown>)?.url;
+  if (typeof imageUrl !== 'string') {
+    throw new Error(`[ImageGen] Fal.ai returned invalid image URL for scene=${input.sceneId}`);
+  }
+
+  console.log(`[ImageGen] OK scene=${input.sceneId} url=${imageUrl.substring(0, 80)}...`);
+  return imageUrl;
 }
 
 export async function generateSceneImage(
