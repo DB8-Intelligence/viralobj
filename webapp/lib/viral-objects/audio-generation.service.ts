@@ -1,3 +1,10 @@
+import {
+  MINIMAX_READY,
+  ELEVENLABS_READY,
+  TTS_PROVIDER,
+  LOG_COSTS,
+} from "../config/features";
+
 export type SceneType = "intro" | "dialogue" | "reaction" | "cta";
 export type AudioProvider = "mock" | "minimax" | "elevenlabs";
 
@@ -20,11 +27,6 @@ export interface GenerateSceneAudioInput {
 }
 
 export type SceneAudioInput = GenerateSceneAudioInput;
-
-// Flip to true ONLY when a real TTS branch is wired. Until then, provider
-// is always reported as "mock" even if env vars are set.
-const MINIMAX_READY = false;
-const ELEVENLABS_READY = false;
 
 // ~180 words per minute → ~333ms per word. Deterministic estimate for mock.
 const MS_PER_WORD = 333;
@@ -58,7 +60,9 @@ async function generateWithElevenLabs(input: GenerateSceneAudioInput): Promise<s
 export async function generateSceneAudio(
   input: GenerateSceneAudioInput
 ): Promise<GeneratedSceneAudio> {
-  const useMinimax = MINIMAX_READY && Boolean(process.env.MINIMAX_API_KEY);
+  // TTS_PROVIDER env var seleciona preferência; flags *_READY controlam se o código está pronto.
+  const preferMinimax = TTS_PROVIDER === 'minimax';
+  const useMinimax = preferMinimax && MINIMAX_READY && Boolean(process.env.MINIMAX_API_KEY);
   const useElevenLabs =
     !useMinimax && ELEVENLABS_READY && Boolean(process.env.ELEVENLABS_API_KEY);
 
@@ -74,6 +78,11 @@ export async function generateSceneAudio(
   } else {
     audioUrl = mockAudioUrl(input.sceneId);
     provider = "mock";
+  }
+
+  if (LOG_COSTS && provider !== "mock") {
+    const cost = provider === "minimax" ? 0.0125 : 0.0225;
+    console.log(`[Cost] audio-generation: ~$${cost} (${provider}) scene=${input.sceneId}`);
   }
 
   return {

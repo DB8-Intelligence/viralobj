@@ -64,23 +64,22 @@ ALTER TABLE public.generation_job_steps  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.generation_artifacts  ENABLE ROW LEVEL SECURITY;
 
 -- Read policies (writes via service_role bypass RLS)
-CREATE POLICY IF NOT EXISTS "jobs_select_own_tenant" ON public.generation_jobs
-  FOR SELECT USING (
-    tenant_id IN (SELECT tenant_id FROM public.profiles WHERE id = auth.uid())
-  );
+DROP POLICY IF EXISTS "jobs_select_own" ON public.generation_jobs;
+CREATE POLICY "jobs_select_own" ON public.generation_jobs
+  FOR SELECT USING (user_id = auth.uid());
 
-CREATE POLICY IF NOT EXISTS "steps_select_own_tenant" ON public.generation_job_steps
+DROP POLICY IF EXISTS "steps_select_own" ON public.generation_job_steps;
+CREATE POLICY "steps_select_own" ON public.generation_job_steps
   FOR SELECT USING (
     job_id IN (
-      SELECT id FROM public.generation_jobs
-      WHERE tenant_id IN (SELECT tenant_id FROM public.profiles WHERE id = auth.uid())
+      SELECT id FROM public.generation_jobs WHERE user_id = auth.uid()
     )
   );
 
-CREATE POLICY IF NOT EXISTS "artifacts_select_own_tenant" ON public.generation_artifacts
+DROP POLICY IF EXISTS "artifacts_select_own" ON public.generation_artifacts;
+CREATE POLICY "artifacts_select_own" ON public.generation_artifacts
   FOR SELECT USING (
     job_id IN (
-      SELECT id FROM public.generation_jobs
-      WHERE tenant_id IN (SELECT tenant_id FROM public.profiles WHERE id = auth.uid())
+      SELECT id FROM public.generation_jobs WHERE user_id = auth.uid()
     )
   );
