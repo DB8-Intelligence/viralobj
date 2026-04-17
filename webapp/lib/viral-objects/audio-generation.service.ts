@@ -45,16 +45,94 @@ function mockAudioUrl(sceneId: string): string {
   return `mock://audio/${encodeURIComponent(sceneId)}.mp3`;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function generateWithMinimax(input: GenerateSceneAudioInput): Promise<string> {
-  // TODO: integração real com MiniMax TTS.
-  return mockAudioUrl(input.sceneId);
+// Vozes ElevenLabs para objetos falantes (dramaticos, expressivos)
+const ELEVENLABS_VOICES: Record<string, string> = {
+  dramatic: 'pNInz6obpgDQGcFmaJgB', // Adam — grave, dramatico
+  funny: 'EXAVITQu4vr4xnSDxMaL',    // Bella — animado
+  emotional: 'onwK4e9ZLuTAKqWW03F9', // Daniel — emotivo
+  sarcastic: 'N2lVS1w4EtoT3dr4eOWO', // Callum — sarcastico
+  motivational: 'TX3LPaxmHKxFdv7VOQHJ', // Liam — energetico
+};
+
+function pickVoiceId(sceneType: SceneType): string {
+  const map: Record<SceneType, string> = {
+    intro: ELEVENLABS_VOICES.dramatic,
+    dialogue: ELEVENLABS_VOICES.funny,
+    reaction: ELEVENLABS_VOICES.emotional,
+    cta: ELEVENLABS_VOICES.motivational,
+  };
+  return map[sceneType] ?? ELEVENLABS_VOICES.dramatic;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function generateWithElevenLabs(input: GenerateSceneAudioInput): Promise<string> {
-  // TODO: integração real com ElevenLabs.
-  return mockAudioUrl(input.sceneId);
+async function generateWithMinimax(input: GenerateSceneAudioInput): Promise<{ url: string; durationMs: number }> {
+  // MiniMax via Fal.ai (mesmo pattern do MCP generate_video.js)
+  const { fal } = await import("@fal-ai/client");
+  fal.config({ credentials: process.env.FAL_KEY });
+
+  console.log(`[TTS] MiniMax generating scene=${input.sceneId}`);
+
+  const result = await fal.subscribe("fal-ai/minimax-tts/text-to-speech", {
+    input: {
+      text: input.text,
+      voice_id: "male-qn-qingse", // voz padrao MiniMax PT-BR compativel
+    },
+    logs: false,
+  });
+
+  const data = result.data as Record<string, unknown>;
+  const audioUrl = (data.audio as Record<string, unknown>)?.url as string;
+  if (!audioUrl) throw new Error(`[TTS] MiniMax returned no audio for scene=${input.sceneId}`);
+
+  const durationMs = ((data.audio as Record<string, unknown>)?.duration as number ?? 0) * 1000;
+
+  console.log(`[TTS] MiniMax OK scene=${input.sceneId} url=${audioUrl.substring(0, 60)}...`);
+  return { url: audioUrl, durationMs: durationMs || estimateDurationMs(input.text) };
+}
+
+async function generateWithElevenLabs(input: GenerateSceneAudioInput): Promise<{ url: string; durationMs: number }> {
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+  if (!apiKey) throw new Error('[TTS] ELEVENLABS_API_KEY not set');
+
+  const voiceId = pickVoiceId(input.sceneType);
+
+  console.log(`[TTS] ElevenLabs generating scene=${input.sceneId} voice=${voiceId}`);
+
+  const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+    method: 'POST',
+    headers: {
+      'xi-api-key': apiKey,
+      'Content-Type': 'application/json',
+      'Accept': 'audio/mpeg',
+    },
+    body: JSON.stringify({
+      text: input.text,
+      model_id: 'eleven_multilingual_v2',
+      voice_settings: {
+        stability: 0.5,
+        similarity_boost: 0.75,
+        style: 0.4,
+        use_speaker_boost: true,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text().catch(() => 'unknown');
+    throw new Error(`[TTS] ElevenLabs API error ${response.status}: ${errText}`);
+  }
+
+  // ElevenLabs retorna audio binary — convertemos para data URL temporaria
+  // Em producao, fazer upload para Supabase Storage
+  const audioBuffer = await response.arrayBuffer();
+  const base64 = Buffer.from(audioBuffer).toString('base64');
+  const audioUrl = `data:audio/mpeg;base64,${base64}`;
+
+  // Estimar duracao pelo tamanho (MP3 ~128kbps = 16KB/s)
+  const fileSizeBytes = audioBuffer.byteLength;
+  const estimatedDurationMs = Math.round((fileSizeBytes / 16000) * 1000);
+
+  console.log(`[TTS] ElevenLabs OK scene=${input.sceneId} size=${fileSizeBytes}b ~${Math.round(estimatedDurationMs / 1000)}s`);
+  return { url: audioUrl, durationMs: estimatedDurationMs || estimateDurationMs(input.text) };
 }
 
 export async function generateSceneAudio(
@@ -68,12 +146,17 @@ export async function generateSceneAudio(
 
   let audioUrl: string;
   let provider: AudioProvider;
+  let realDurationMs: number | undefined;
 
   if (useMinimax) {
-    audioUrl = await generateWithMinimax(input);
+    const result = await generateWithMinimax(input);
+    audioUrl = result.url;
+    realDurationMs = result.durationMs;
     provider = "minimax";
   } else if (useElevenLabs) {
-    audioUrl = await generateWithElevenLabs(input);
+    const result = await generateWithElevenLabs(input);
+    audioUrl = result.url;
+    realDurationMs = result.durationMs;
     provider = "elevenlabs";
   } else {
     audioUrl = mockAudioUrl(input.sceneId);
@@ -93,7 +176,7 @@ export async function generateSceneAudio(
     audioUrl,
     provider,
     generatedAt: new Date().toISOString(),
-    durationMs: estimateDurationMs(input.text),
+    durationMs: realDurationMs ?? estimateDurationMs(input.text),
   };
 }
 
