@@ -36,6 +36,16 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
+  const host = request.headers.get("host") ?? "";
+  const isAppDomain = host.includes("viralobj.app");
+
+  // viralobj.app → redireciona raiz para /app (dashboard dos clientes)
+  if (isAppDomain && pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = user ? "/app" : "/login";
+    return NextResponse.redirect(url);
+  }
+
   const isProtectedRoute = pathname.startsWith("/app");
   const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/signup");
 
