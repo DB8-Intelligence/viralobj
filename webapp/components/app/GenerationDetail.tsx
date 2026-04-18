@@ -431,13 +431,40 @@ export default function GenerationDetail({ pkg, sceneImages, videoUrl }: Props) 
             <h4 className="text-xs font-semibold uppercase tracking-wider text-viral-muted mb-3">
               🎬 Vídeo Final
             </h4>
-            {videoUrl && videoUrl.startsWith("http") ? (
+            {videoUrl && videoUrl.startsWith("http") && !videoUrl.startsWith("mock://") ? (
               // eslint-disable-next-line jsx-a11y/media-has-caption
               <video controls src={videoUrl} className="w-full max-w-md rounded border border-viral-border/40" />
             ) : (
-              <div className="flex items-center gap-2 text-sm text-viral-muted py-4">
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                Vídeo em processamento...
+              <div className="rounded-lg bg-viral-bg/60 p-5 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                    <span className="text-emerald-400 text-lg">✓</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-viral-text">Pacote de produção pronto!</p>
+                    <p className="text-[10px] text-viral-muted">
+                      Roteiro, voz e legendas gerados. Vídeo será renderizado em breve.
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="bg-emerald-500/5 rounded p-2">
+                    <span className="text-emerald-400 text-xs">✓</span>
+                    <p className="text-[10px] text-viral-muted mt-1">Roteiro</p>
+                  </div>
+                  <div className="bg-emerald-500/5 rounded p-2">
+                    <span className="text-emerald-400 text-xs">✓</span>
+                    <p className="text-[10px] text-viral-muted mt-1">Áudio</p>
+                  </div>
+                  <div className="bg-amber-500/5 rounded p-2">
+                    <span className="text-amber-400 text-xs">⏳</span>
+                    <p className="text-[10px] text-viral-muted mt-1">Vídeo</p>
+                  </div>
+                </div>
+                <p className="text-[10px] text-viral-muted/60">
+                  A renderização do vídeo final estará disponível em breve.
+                  Enquanto isso, revise o roteiro, a voz e o post nas outras abas.
+                </p>
               </div>
             )}
           </div>

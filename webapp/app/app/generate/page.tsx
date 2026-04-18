@@ -110,7 +110,9 @@ export default function AppGeneratePage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erro desconhecido");
 
-      setStatus("Pronto! Redirecionando...");
+      setStatus("✅ Pacote gerado com sucesso! Abrindo resultado...");
+      // Pequeno delay para o usuario ver a mensagem de sucesso
+      await new Promise((r) => setTimeout(r, 1500));
       router.push(`/app/history`);
       router.refresh();
     } catch (err: unknown) {
