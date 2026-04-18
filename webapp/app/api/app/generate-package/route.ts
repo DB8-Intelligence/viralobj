@@ -110,8 +110,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const reservation = Array.isArray(reserveData) ? reserveData[0] : reserveData;
-    if (!reservation?.reserved) {
+    const reserved = Array.isArray(reserveData) ? reserveData[0] : reserveData;
+    if (reserved !== true) {
       return NextResponse.json(
         {
           error: `Limite mensal atingido (${limit}/${limit}). Faça upgrade para continuar.`,
@@ -121,7 +121,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const used = (reservation.used_after as number) - 1;
+    // reserve_quota retorna boolean — buscar contagem atual para resposta
+    const { data: usageRow } = await svc
+      .from("usage_monthly")
+      .select("packages_count")
+      .eq("tenant_id", tenant.id)
+      .single();
+    const used = ((usageRow?.packages_count as number) ?? 1) - 1;
 
     // ─── 5. Generate (reservation rolls back on failure) ────────────────────
     const normalizedTone = normalizeTone(body.tone as string | undefined);
