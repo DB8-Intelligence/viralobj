@@ -148,7 +148,7 @@ RULES:
   return { system, user };
 }
 
-const PROVIDER_TIMEOUT_MS = 20000;
+const PROVIDER_TIMEOUT_MS = 60000; // 60s — prompt complexo com captions + variations
 
 /**
  * Defensive JSON parser: scans for the first balanced {...} block by tracking
