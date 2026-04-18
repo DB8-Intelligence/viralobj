@@ -132,20 +132,6 @@ export default function AppGeneratePage() {
           </div>
         </div>
 
-        <div>
-          <label className="label">LLM Provider</label>
-          <select
-            className="input"
-            value={provider}
-            onChange={(e) => setProvider(e.target.value)}
-          >
-            <option value="auto">auto (fallback chain)</option>
-            <option value="anthropic">Anthropic Claude</option>
-            <option value="openai">OpenAI GPT</option>
-            <option value="gemini">Google Gemini</option>
-          </select>
-        </div>
-
         <div className="flex items-center gap-3 pt-2">
           <button type="submit" className="btn-primary" disabled={loading}>
             {loading ? "Gerando…" : "Gerar pacote →"}

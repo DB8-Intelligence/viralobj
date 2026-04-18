@@ -96,38 +96,41 @@ export async function POST(req: NextRequest) {
     // ─── 4. Atomic quota reservation (prevents race condition) ──────────────
     const svc = createServiceClient();
     const limit = PLAN_LIMITS[tenant.plan].packages;
+    const isAdmin = profile.role === 'owner' && tenant.plan === 'enterprise';
 
-    const { data: reserveData, error: reserveErr } = await svc.rpc("reserve_quota", {
-      p_tenant_id: tenant.id,
-      p_counter: "packages",
-      p_limit: limit,
-    });
+    let used = 0;
+    if (!isAdmin) {
+      const { data: reserveData, error: reserveErr } = await svc.rpc("reserve_quota", {
+        p_tenant_id: tenant.id,
+        p_counter: "packages",
+        p_limit: limit,
+      });
 
-    if (reserveErr) {
-      return NextResponse.json(
-        { error: `Erro ao reservar quota: ${reserveErr.message}` },
-        { status: 500 }
-      );
+      if (reserveErr) {
+        return NextResponse.json(
+          { error: `Erro ao reservar quota: ${reserveErr.message}` },
+          { status: 500 }
+        );
+      }
+
+      const reserved = Array.isArray(reserveData) ? reserveData[0] : reserveData;
+      if (reserved !== true) {
+        return NextResponse.json(
+          {
+            error: `Limite mensal atingido (${limit}/${limit}). Faça upgrade para continuar.`,
+            code: "LIMIT_REACHED",
+          },
+          { status: 402 }
+        );
+      }
+
+      const { data: usageRow } = await svc
+        .from("usage_monthly")
+        .select("packages_count")
+        .eq("tenant_id", tenant.id)
+        .single();
+      used = ((usageRow?.packages_count as number) ?? 1) - 1;
     }
-
-    const reserved = Array.isArray(reserveData) ? reserveData[0] : reserveData;
-    if (reserved !== true) {
-      return NextResponse.json(
-        {
-          error: `Limite mensal atingido (${limit}/${limit}). Faça upgrade para continuar.`,
-          code: "LIMIT_REACHED",
-        },
-        { status: 402 }
-      );
-    }
-
-    // reserve_quota retorna boolean — buscar contagem atual para resposta
-    const { data: usageRow } = await svc
-      .from("usage_monthly")
-      .select("packages_count")
-      .eq("tenant_id", tenant.id)
-      .single();
-    const used = ((usageRow?.packages_count as number) ?? 1) - 1;
 
     // ─── 5. Generate (reservation rolls back on failure) ────────────────────
     const normalizedTone = normalizeTone(body.tone as string | undefined);
