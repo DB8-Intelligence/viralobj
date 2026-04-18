@@ -1,13 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import type { Generation } from "@/lib/supabase/types";
-import ScenePromptPreview from "@/components/app/ScenePromptPreview";
-import type { ObjectBible } from "@/lib/viral-objects/object-bible";
-import type { SceneBlueprint } from "@/lib/viral-objects/scene-blueprint";
-import type { SceneImagePrompt } from "@/lib/viral-objects/image-prompt-pack";
-import type { GeneratedSceneImage } from "@/lib/viral-objects/image-generation.service";
-import type { GeneratedSceneAudio } from "@/lib/viral-objects/audio-generation.service";
-import type { VideoTimeline } from "@/lib/viral-objects/video-timeline";
+import GenerationDetail from "@/components/app/GenerationDetail";
 
 export default async function HistoryPage() {
   const supabase = createClient();
@@ -35,6 +29,7 @@ export default async function HistoryPage() {
 
       {generations.length === 0 ? (
         <div className="card p-12 text-center">
+          <div className="text-4xl mb-4">🎬</div>
           <div className="text-viral-muted text-sm mb-4">
             Você ainda não gerou nenhum pacote.
           </div>
@@ -43,23 +38,41 @@ export default async function HistoryPage() {
           </Link>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {generations.map((g) => {
             const pkg = g.package as {
-              meta?: { topic_pt?: string; topic_en?: string; format?: string };
-              characters?: Array<{ emoji?: string; name_pt?: string }>;
+              meta?: { topic_pt?: string; topic_en?: string; format?: string; tone?: string; duration?: number; niche?: string };
+              characters?: Array<{ emoji?: string; name_pt?: string; name_en?: string; personality?: string; expression_arc?: string[]; voice_script_pt?: string; voice_script_en?: string; ai_prompt_midjourney?: string; timestamp_start?: string; timestamp_end?: string; id?: string }>;
+              post_copy?: { caption_pt?: string; caption_en?: string; hashtags_pt?: string[] | string; hashtags_en?: string[] | string };
+              variations?: Array<{ title_pt?: string; hook_pt?: string; description_pt?: string }>;
             };
+
+            const sceneImages = (g as unknown as { scene_images?: Array<{ sceneId: string; imageUrl: string; sceneType: string }> | null }).scene_images;
+            const videoUrl = (g as unknown as { video_url?: string | null }).video_url;
+
             return (
-              <details key={g.id} className="card overflow-hidden">
-                <summary className="cursor-pointer p-5 list-none">
+              <details key={g.id} className="card overflow-hidden group">
+                <summary className="cursor-pointer p-5 list-none hover:bg-viral-border/10 transition">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold truncate">
+                      <div className="font-semibold truncate text-viral-text">
                         {pkg.meta?.topic_pt ?? g.topic}
                       </div>
-                      <div className="text-xs text-viral-muted mt-1">
-                        {g.niche} · {g.tone} · {g.duration}s · {g.objects.length} obj
-                        {g.provider_used && ` · via ${g.provider_used}`}
+                      <div className="text-xs text-viral-muted mt-1 flex items-center gap-2 flex-wrap">
+                        <span className="px-2 py-0.5 rounded bg-viral-accent/10 text-viral-accent text-[10px] uppercase">
+                          {g.niche}
+                        </span>
+                        <span>{g.tone}</span>
+                        <span>·</span>
+                        <span>{g.duration}s</span>
+                        <span>·</span>
+                        <span>{g.objects.length} obj</span>
+                        {g.provider_used && (
+                          <>
+                            <span>·</span>
+                            <span>via {g.provider_used}</span>
+                          </>
+                        )}
                       </div>
                     </div>
                     <div className="text-xs text-viral-muted whitespace-nowrap">
@@ -76,55 +89,21 @@ export default async function HistoryPage() {
                       {pkg.characters.map((c, i) => (
                         <span
                           key={i}
-                          className="text-xs px-2 py-0.5 rounded-full bg-viral-border/30"
+                          className="text-xs px-2.5 py-1 rounded-full bg-viral-border/30 flex items-center gap-1"
                         >
-                          {c.emoji} {c.name_pt}
+                          <span>{c.emoji}</span>
+                          <span>{c.name_pt}</span>
                         </span>
                       ))}
                     </div>
                   )}
                 </summary>
-                <div className="border-t border-viral-border/60 p-5 bg-viral-bg/40 space-y-5">
-                  <ScenePromptPreview
-                    objectBibles={
-                      (g as unknown as { object_bibles?: ObjectBible[] | null })
-                        .object_bibles ?? null
-                    }
-                    sceneBlueprints={
-                      (g as unknown as {
-                        scene_blueprints?: Array<{ objectId: string; scenes: SceneBlueprint[] }> | null;
-                      }).scene_blueprints ?? null
-                    }
-                    sceneImagePrompts={
-                      (g as unknown as { scene_image_prompts?: SceneImagePrompt[] | null })
-                        .scene_image_prompts ?? null
-                    }
-                    sceneImages={
-                      (g as unknown as { scene_images?: GeneratedSceneImage[] | null })
-                        .scene_images ?? null
-                    }
-                    sceneAudios={
-                      (g as unknown as { scene_audios?: GeneratedSceneAudio[] | null })
-                        .scene_audios ?? null
-                    }
-                    videoTimeline={
-                      (g as unknown as { video_timeline?: VideoTimeline | null })
-                        .video_timeline ?? null
-                    }
-                    videoUrl={
-                      (g as unknown as { video_url?: string | null })
-                        .video_url ?? null
-                    }
+                <div className="border-t border-viral-border/60 p-5 bg-viral-bg/40">
+                  <GenerationDetail
+                    pkg={pkg}
+                    sceneImages={sceneImages}
+                    videoUrl={videoUrl}
                   />
-                  {/* Captions para Instagram */}
-                  {pkg.meta && (
-                    <div className="card p-4 space-y-2">
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-viral-muted">Caption Instagram</h4>
-                      <p className="text-sm text-viral-text whitespace-pre-wrap">
-                        {(g.package as { post_copy?: { caption_pt?: string } }).post_copy?.caption_pt ?? "—"}
-                      </p>
-                    </div>
-                  )}
                 </div>
               </details>
             );
