@@ -8,7 +8,7 @@ import { JobService } from "@/lib/jobs/job.service";
 import { JobOrchestrator } from "@/lib/jobs/orchestrator";
 
 export const runtime = "nodejs";
-export const maxDuration = 90;
+export const maxDuration = 300; // 5min — sincrono (LLM + FLUX + TTS + timeline + render)
 
 /**
  * Protected generate endpoint.
@@ -187,8 +187,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ─── 6. Dispatch async image generation job (fire-and-forget) ──────────
+    // ─── 6. Run orchestrator inline (sync) ──────────────────────────────────
+    // Roda sincrono para garantir que Vercel serverless nao mate o processo.
+    // maxDuration=90s e suficiente para mock providers + FLUX + ElevenLabs.
     let jobId: string | null = null;
+    let jobStatus: string = "pending";
     try {
       const jobService = new JobService();
       const job = await jobService.createJob({
@@ -208,20 +211,19 @@ export async function POST(req: NextRequest) {
       });
       jobId = job?.id ?? null;
       if (jobId) {
-        new JobOrchestrator()
-          .run(jobId)
-          .catch((err) =>
-            console.error(`[generate-package ${reqId}] orchestrator:`, err)
-          );
+        await new JobOrchestrator().run(jobId);
+        jobStatus = "completed";
       }
     } catch (jobErr) {
-      console.error(`[generate-package ${reqId}] job dispatch failed:`, jobErr);
+      jobStatus = "failed";
+      console.error(`[generate-package ${reqId}] orchestrator failed:`, jobErr);
     }
 
     return NextResponse.json({
       package: pkg,
       generation_id: saved.id,
       job_id: jobId,
+      job_status: jobStatus,
       usage: {
         used: used + 1,
         max: limit,

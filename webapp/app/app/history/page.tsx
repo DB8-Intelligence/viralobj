@@ -116,9 +116,15 @@ export default async function HistoryPage() {
                         .video_url ?? null
                     }
                   />
-                  <pre className="text-[11px] text-viral-muted overflow-x-auto max-h-96">
-                    {JSON.stringify(g.package, null, 2)}
-                  </pre>
+                  {/* Captions para Instagram */}
+                  {pkg.meta && (
+                    <div className="card p-4 space-y-2">
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-viral-muted">Caption Instagram</h4>
+                      <p className="text-sm text-viral-text whitespace-pre-wrap">
+                        {(g.package as { post_copy?: { caption_pt?: string } }).post_copy?.caption_pt ?? "—"}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </details>
             );

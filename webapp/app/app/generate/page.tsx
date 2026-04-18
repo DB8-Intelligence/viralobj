@@ -27,14 +27,33 @@ export default function AppGeneratePage() {
   const [provider, setProvider] = useState("auto");
 
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setStatus("Criando roteiro com IA...");
 
     try {
+      const statusSteps = [
+        "Criando roteiro com IA...",
+        "Gerando identidade visual dos objetos...",
+        "Montando cenas e prompts...",
+        "Gerando imagens 3D (FLUX Pro)...",
+        "Gerando narração (ElevenLabs)...",
+        "Montando timeline do vídeo...",
+        "Finalizando...",
+      ];
+
+      // Simular progresso visual enquanto a API processa
+      let stepIdx = 0;
+      const progressTimer = setInterval(() => {
+        stepIdx = Math.min(stepIdx + 1, statusSteps.length - 1);
+        setStatus(statusSteps[stepIdx]);
+      }, 8000);
+
       const res = await fetch("/api/app/generate-package", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -49,14 +68,17 @@ export default function AppGeneratePage() {
         }),
       });
 
+      clearInterval(progressTimer);
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erro desconhecido");
 
-      // Redirect to history entry
+      setStatus("Pronto! Redirecionando...");
       router.push(`/app/history`);
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
+      setStatus(null);
       setLoading(false);
     }
   }
@@ -136,10 +158,24 @@ export default function AppGeneratePage() {
           <button type="submit" className="btn-primary" disabled={loading}>
             {loading ? "Gerando…" : "Gerar pacote →"}
           </button>
-          <Link href="/app" className="btn-secondary">
-            Cancelar
-          </Link>
+          {!loading && (
+            <Link href="/app" className="btn-secondary">
+              Cancelar
+            </Link>
+          )}
         </div>
+
+        {loading && status && (
+          <div className="flex items-center gap-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+            <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+            <div>
+              <p className="text-sm text-blue-300 font-medium">{status}</p>
+              <p className="text-xs text-blue-400/70 mt-1">
+                Isso pode levar até 2 minutos. Não feche esta página.
+              </p>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-3">

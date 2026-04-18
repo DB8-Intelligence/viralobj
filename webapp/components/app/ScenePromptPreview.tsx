@@ -15,10 +15,20 @@ interface Props {
   videoUrl?: string | null;
 }
 
+const SCENE_LABELS: Record<string, string> = {
+  intro: "Abertura",
+  dialogue: "Diálogo",
+  reaction: "Reação",
+  cta: "Chamada para ação",
+};
+
+function isRealUrl(url?: string | null): boolean {
+  return Boolean(url && url.startsWith("http") && !url.includes("placehold.co"));
+}
+
 export default function ScenePromptPreview({
   objectBibles,
   sceneBlueprints,
-  sceneImagePrompts,
   sceneImages,
   sceneAudios,
   videoTimeline,
@@ -31,11 +41,6 @@ export default function ScenePromptPreview({
     blueprintsByObject.set(group.objectId, group.scenes);
   }
 
-  const promptsByScene = new Map<string, string>();
-  for (const p of sceneImagePrompts ?? []) {
-    promptsByScene.set(p.sceneId, p.prompt);
-  }
-
   const imagesByScene = new Map<string, GeneratedSceneImage>();
   for (const img of sceneImages ?? []) {
     imagesByScene.set(img.sceneId, img);
@@ -46,63 +51,38 @@ export default function ScenePromptPreview({
     audiosByScene.set(a.sceneId, a);
   }
 
+  const totalDuration = videoTimeline
+    ? `${Math.round(videoTimeline.totalDurationMs / 1000)}s`
+    : null;
+
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-viral-muted">
-        Preview de cenas
-      </h3>
-
-      <div className="rounded-lg border border-viral-border/60 bg-viral-bg/40 p-3 text-xs space-y-2">
-        <div className="font-semibold">Vídeo final</div>
-        {videoUrl ? (
-          videoUrl.startsWith("http") ? (
-            <div className="space-y-2">
-              {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-              <video
-                controls
-                src={videoUrl}
-                className="w-full max-w-sm rounded border border-viral-border/40"
-              />
-              <a
-                href={videoUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="underline text-viral-muted"
-              >
-                {videoUrl}
-              </a>
-            </div>
-          ) : (
-            <div className="text-viral-muted">
-              <span className="opacity-70">url:</span> {videoUrl}
-              <span className="ml-2 opacity-50">(mock — preview indisponível)</span>
-            </div>
-          )
-        ) : (
-          <div className="flex items-center gap-2 italic text-viral-muted">
-            <span className="inline-block w-2 h-2 rounded-full bg-viral-muted/60 animate-pulse" />
-            Vídeo em renderização…
+      {/* Video final */}
+      <div className="rounded-lg border border-viral-border/60 bg-viral-bg/40 p-4">
+        <h4 className="text-sm font-semibold mb-2">Vídeo final</h4>
+        {videoUrl && isRealUrl(videoUrl) ? (
+          <div className="space-y-2">
+            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+            <video
+              controls
+              src={videoUrl}
+              className="w-full max-w-md rounded border border-viral-border/40"
+            />
           </div>
+        ) : (
+          <div className="flex items-center gap-2 text-sm text-viral-muted">
+            <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+            Vídeo em processamento...
+          </div>
+        )}
+        {totalDuration && (
+          <p className="text-xs text-viral-muted mt-2">
+            Duração estimada: {totalDuration}
+          </p>
         )}
       </div>
 
-      {videoTimeline ? (
-        <div className="rounded-lg border border-viral-border/60 bg-viral-bg/40 p-3 text-xs">
-          <div className="font-semibold mb-1">
-            Timeline · total {videoTimeline.totalDurationMs} ms
-          </div>
-          <ul className="space-y-0.5 text-viral-muted">
-            {videoTimeline.scenes.map((s) => (
-              <li key={s.sceneId}>
-                <span className="uppercase opacity-70">{s.sceneType}</span>{" "}
-                <span className="opacity-70">{s.sceneId}</span>{" "}
-                — {s.startMs}→{s.endMs} ms ({s.durationMs} ms)
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-
+      {/* Personagens e cenas */}
       {objectBibles.map((bible) => {
         const scenes = blueprintsByObject.get(bible.id) ?? [];
         return (
@@ -110,106 +90,96 @@ export default function ScenePromptPreview({
             key={bible.id}
             className="rounded-lg border border-viral-border/60 bg-viral-bg/40 p-4"
           >
-            <div className="flex items-start justify-between gap-4 mb-3">
-              <div>
-                <div className="font-semibold">{bible.name}</div>
-                <div className="text-xs text-viral-muted">{bible.id}</div>
+            {/* Header do personagem */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-viral-accent/20 flex items-center justify-center text-lg">
+                {bible.visual.baseColor === "yellow" ? "🍌" :
+                 bible.visual.baseColor === "white" ? "🧴" :
+                 bible.visual.baseColor === "black" ? "📱" :
+                 bible.visual.baseColor === "silver" ? "🗑️" : "🎭"}
               </div>
-              <div className="text-xs text-viral-muted text-right space-y-0.5">
-                <div>
-                  <span className="opacity-70">cor:</span> {bible.visual.baseColor}
-                </div>
-                <div>
-                  <span className="opacity-70">forma:</span> {bible.visual.shape}
-                </div>
-                <div>
-                  <span className="opacity-70">tone:</span> {bible.voice.tone}
-                </div>
+              <div>
+                <h4 className="font-semibold capitalize">{bible.name}</h4>
+                <p className="text-xs text-viral-muted">
+                  {bible.visual.baseColor} · {bible.visual.shape} · tom {bible.voice.tone}
+                </p>
               </div>
             </div>
 
+            {/* Cenas */}
             {scenes.length === 0 ? (
-              <div className="text-xs text-viral-muted italic">
-                Nenhuma cena gerada para este objeto.
-              </div>
+              <p className="text-sm text-viral-muted italic">
+                Nenhuma cena gerada para este personagem.
+              </p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {scenes.map((scene) => {
-                  const prompt = promptsByScene.get(scene.sceneId);
                   const image = imagesByScene.get(scene.sceneId);
                   const audio = audiosByScene.get(scene.sceneId);
+                  const hasRealImage = isRealUrl(image?.imageUrl);
+
                   return (
-                    <details
+                    <div
                       key={scene.sceneId}
-                      className="rounded border border-viral-border/40 bg-viral-bg/60"
+                      className="rounded border border-viral-border/40 bg-viral-bg/60 p-3"
                     >
-                      <summary className="cursor-pointer px-3 py-2 text-xs list-none flex items-center justify-between gap-2">
-                        <span className="font-medium uppercase">{scene.sceneType}</span>
-                        <span className="text-viral-muted truncate">
-                          {scene.action}
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-semibold uppercase text-viral-accent">
+                          {SCENE_LABELS[scene.sceneType] ?? scene.sceneType}
                         </span>
-                      </summary>
-                      <div className="border-t border-viral-border/40 px-3 py-2 text-[11px] text-viral-muted space-y-2">
-                        {image ? (
-                          <div className="space-y-1">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={image.imageUrl}
-                              alt={`${scene.sceneType} – ${scene.sceneId}`}
-                              className="w-full max-w-[240px] rounded border border-viral-border/40 bg-black/30"
-                              loading="lazy"
-                            />
-                            <div className="flex items-center gap-2">
-                              <span className="opacity-70">provider:</span>
-                              <span>{image.provider}</span>
-                              <a
-                                href={image.imageUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="underline truncate"
-                              >
-                                {image.imageUrl}
-                              </a>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2 italic">
-                            <span className="inline-block w-2 h-2 rounded-full bg-viral-muted/60 animate-pulse" />
-                            Gerando imagem…
-                          </div>
-                        )}
-                        {audio ? (
-                          <div className="space-y-0.5">
-                            <div>
-                              <span className="opacity-70">audio:</span>{" "}
-                              <span>{audio.audioUrl}</span>
-                            </div>
-                            <div>
-                              <span className="opacity-70">duração:</span>{" "}
-                              {audio.durationMs ?? "?"} ms
-                              <span className="opacity-70 ml-2">provider:</span>{" "}
-                              {audio.provider}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="italic">áudio ainda não gerado</div>
-                        )}
-                        <div>
-                          <span className="opacity-70">environment:</span>{" "}
-                          {scene.environment}
-                        </div>
-                        <div>
-                          <span className="opacity-70">camera:</span> {scene.camera}
-                        </div>
-                        {prompt ? (
-                          <pre className="whitespace-pre-wrap overflow-x-auto max-h-60 rounded bg-black/30 p-2">
-                            {prompt}
-                          </pre>
-                        ) : (
-                          <div className="italic">Prompt não disponível.</div>
+                        {audio?.durationMs && (
+                          <span className="text-[10px] text-viral-muted">
+                            {Math.round(audio.durationMs / 1000)}s
+                          </span>
                         )}
                       </div>
-                    </details>
+
+                      <div className="flex gap-3">
+                        {/* Imagem da cena */}
+                        <div className="flex-shrink-0">
+                          {hasRealImage ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={image!.imageUrl}
+                              alt={`${bible.name} - ${scene.sceneType}`}
+                              className="w-24 h-40 object-cover rounded border border-viral-border/40"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="w-24 h-40 rounded border border-viral-border/40 bg-viral-border/20 flex items-center justify-center">
+                              <span className="text-xs text-viral-muted text-center px-1">
+                                {image ? "Gerando..." : "Aguardando"}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Texto da cena */}
+                        <div className="flex-1 min-w-0">
+                          {scene.overlayText && (
+                            <p className="text-sm text-viral-text mb-1">
+                              &ldquo;{scene.overlayText}&rdquo;
+                            </p>
+                          )}
+                          {scene.action && (
+                            <p className="text-xs text-viral-muted">
+                              {scene.action}
+                            </p>
+                          )}
+                          {scene.environment && (
+                            <p className="text-[10px] text-viral-muted/70 mt-1">
+                              Cenário: {scene.environment}
+                            </p>
+                          )}
+                          {audio && audio.provider !== "mock" && (
+                            <div className="mt-2 flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                              <span className="text-[10px] text-emerald-400">Áudio gerado</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
