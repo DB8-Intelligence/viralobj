@@ -109,15 +109,41 @@ Return this EXACT JSON structure (no markdown, no extra text):
       "timestamp_end": "${secsPerObject}s"
     }
   ],
+  "captions": [
+    {
+      "time": "0:00",
+      "text": "BOLD TEXT ON SCREEN",
+      "character": "Character name",
+      "style": "Bold · White · Black outline"
+    }
+  ],
   "post_copy": {
-    "caption_pt": "Full Instagram caption in PT",
+    "caption_pt": "Full Instagram caption in PT with hook + story + CTA. Max 300 words.",
     "caption_en": "Full Instagram caption in EN",
-    "hashtags_pt": ["#hashtag1", "..."],
+    "hashtags_pt": ["#hashtag1", "#hashtag2", "... 20-30 hashtags"],
     "hashtags_en": ["#hashtag1", "..."]
-  }
+  },
+  "variations": [
+    {
+      "title_pt": "Variation title in PT",
+      "title_en": "Variation title in EN",
+      "hook_pt": "Opening hook that grabs attention",
+      "hook_en": "Opening hook EN",
+      "objects": ["object1", "object2"],
+      "description_pt": "Brief description of variation",
+      "description_en": "Brief description EN",
+      "tone": "dramatic"
+    }
+  ]
 }
 
-Create ${numObjects} character(s), one per object in the list above.`;
+RULES:
+- Create ${numObjects} character(s), one per object in the list above.
+- Create 8-12 captions (on-screen text) distributed across the ${duration}s timeline. Bold for emphasis, regular for narration. Max 6 words per caption.
+- Create exactly 3 variations: same format, different objects/angles, each with a viral hook.
+- voice_script_pt must be spoken in first person as the object, with dramatic pauses.
+- post_copy caption_pt must include: hook sentence + story + CTA ("comenta", "salva", "marca").
+- hashtags_pt must include 20-30 relevant hashtags.`;
 
   return { system, user };
 }

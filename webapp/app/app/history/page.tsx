@@ -43,8 +43,9 @@ export default async function HistoryPage() {
             const pkg = g.package as {
               meta?: { topic_pt?: string; topic_en?: string; format?: string; tone?: string; duration?: number; niche?: string };
               characters?: Array<{ emoji?: string; name_pt?: string; name_en?: string; personality?: string; expression_arc?: string[]; voice_script_pt?: string; voice_script_en?: string; ai_prompt_midjourney?: string; timestamp_start?: string; timestamp_end?: string; id?: string }>;
+              captions?: Array<{ time?: string; text?: string; character?: string; style?: string }>;
               post_copy?: { caption_pt?: string; caption_en?: string; hashtags_pt?: string[] | string; hashtags_en?: string[] | string };
-              variations?: Array<{ title_pt?: string; hook_pt?: string; description_pt?: string }>;
+              variations?: Array<{ title_pt?: string; title_en?: string; hook_pt?: string; hook_en?: string; objects?: string[]; description_pt?: string; description_en?: string; tone?: string }>;
             };
 
             const sceneImages = (g as unknown as { scene_images?: Array<{ sceneId: string; imageUrl: string; sceneType: string }> | null }).scene_images;

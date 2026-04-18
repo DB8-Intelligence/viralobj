@@ -23,6 +23,24 @@ interface PostCopy {
   hashtags_en?: string[] | string;
 }
 
+interface Caption {
+  time?: string;
+  text?: string;
+  character?: string;
+  style?: string;
+}
+
+interface Variation {
+  title_pt?: string;
+  title_en?: string;
+  hook_pt?: string;
+  hook_en?: string;
+  objects?: string[];
+  description_pt?: string;
+  description_en?: string;
+  tone?: string;
+}
+
 interface PackageData {
   meta?: {
     niche?: string;
@@ -33,15 +51,9 @@ interface PackageData {
     format?: string;
   };
   characters?: Character[];
+  captions?: Caption[];
   post_copy?: PostCopy;
-  variations?: Array<{
-    title_pt?: string;
-    title_en?: string;
-    hook_pt?: string;
-    hook_en?: string;
-    description_pt?: string;
-    description_en?: string;
-  }>;
+  variations?: Variation[];
 }
 
 interface Props {
@@ -50,12 +62,14 @@ interface Props {
   videoUrl?: string | null;
 }
 
-type Tab = "roteiro" | "voz" | "post" | "preview";
+type Tab = "roteiro" | "voz" | "legendas" | "post" | "variacoes" | "preview";
 
 const TAB_CONFIG: Array<{ id: Tab; label: string; icon: string }> = [
   { id: "roteiro", label: "Roteiro", icon: "🎬" },
   { id: "voz", label: "Voz", icon: "🎙️" },
+  { id: "legendas", label: "Legendas", icon: "📝" },
   { id: "post", label: "Post", icon: "📱" },
+  { id: "variacoes", label: "Variações", icon: "🔄" },
   { id: "preview", label: "Preview", icon: "👁️" },
 ];
 
@@ -306,6 +320,104 @@ export default function GenerationDetail({ pkg, sceneImages, videoUrl }: Props) 
                 text={`${postCopy.caption_pt}\n\n${parseHashtags(postCopy.hashtags_pt).map((h) => `#${h}`).join(" ")}`}
                 label="Copiar tudo PT-BR"
               />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* LEGENDAS */}
+      {activeTab === "legendas" && (
+        <div className="space-y-3">
+          {pkg.captions && pkg.captions.length > 0 ? (
+            <div className="card p-5 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-viral-border/60 text-[10px] uppercase tracking-wider text-viral-muted">
+                    <th className="text-left px-3 py-2 w-16">Tempo</th>
+                    <th className="text-left px-3 py-2">Legenda</th>
+                    <th className="text-left px-3 py-2 hidden sm:table-cell">Personagem / Estilo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pkg.captions.map((cap, i) => (
+                    <tr key={i} className="border-b border-viral-border/30 hover:bg-viral-border/10">
+                      <td className="px-3 py-2 text-viral-accent font-mono text-xs">
+                        [{cap.time}]
+                      </td>
+                      <td className="px-3 py-2 text-viral-text font-medium">
+                        {cap.text}
+                      </td>
+                      <td className="px-3 py-2 text-xs text-viral-muted hidden sm:table-cell">
+                        {cap.character}{cap.style ? ` · ${cap.style}` : ""}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="card p-8 text-center text-sm text-viral-muted">
+              Legendas nao disponíveis para esta geração.
+              <p className="text-[10px] mt-2 text-viral-muted/60">
+                Gere um novo pacote para incluir legendas timestamped.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* VARIACOES */}
+      {activeTab === "variacoes" && (
+        <div className="space-y-3">
+          {pkg.variations && pkg.variations.length > 0 ? (
+            <>
+              <div className="card p-4 bg-amber-500/5 border-amber-500/20">
+                <p className="text-xs text-amber-400">
+                  💡 Escolha uma variação e clique para gerar — mesmo formato, ângulo diferente, alta retenção garantida.
+                </p>
+              </div>
+              {pkg.variations.map((v, i) => (
+                <div key={i} className="card p-5 hover:border-viral-accent/40 transition cursor-pointer group">
+                  <div className="text-[10px] uppercase tracking-wider text-viral-muted mb-2">
+                    Variação {String(i + 1).padStart(2, "0")}
+                    {v.tone && (
+                      <span className="ml-2 px-2 py-0.5 rounded bg-viral-accent/10 text-viral-accent">
+                        {v.tone}
+                      </span>
+                    )}
+                  </div>
+                  <h4 className="font-semibold text-viral-text mb-2">{v.title_pt}</h4>
+                  {v.hook_pt && (
+                    <div className="text-sm italic text-viral-accent/80 mb-2 pl-3 border-l-2 border-viral-accent/30">
+                      &ldquo;{v.hook_pt}&rdquo;
+                    </div>
+                  )}
+                  {v.description_pt && (
+                    <p className="text-xs text-viral-muted leading-relaxed">{v.description_pt}</p>
+                  )}
+                  {v.objects && v.objects.length > 0 && (
+                    <div className="mt-2 flex gap-1.5 flex-wrap">
+                      {v.objects.map((obj, j) => (
+                        <span key={j} className="text-[10px] px-2 py-0.5 rounded bg-viral-border/30 text-viral-text">
+                          {obj}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="mt-3 opacity-0 group-hover:opacity-100 transition">
+                    <span className="text-xs text-viral-accent">
+                      Gerar esta variação →
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </>
+          ) : (
+            <div className="card p-8 text-center text-sm text-viral-muted">
+              Variações não disponíveis para esta geração.
+              <p className="text-[10px] mt-2 text-viral-muted/60">
+                Gere um novo pacote para incluir 3 variações de alta retenção.
+              </p>
             </div>
           )}
         </div>
