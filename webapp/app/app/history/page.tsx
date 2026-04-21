@@ -49,6 +49,8 @@ export default async function HistoryPage() {
             };
 
             const sceneImages = (g as unknown as { scene_images?: Array<{ sceneId: string; imageUrl: string; sceneType: string }> | null }).scene_images;
+            const sceneAudios = (g as unknown as { scene_audios?: Array<{ sceneId: string; audioUrl: string; sceneType: string; objectId: string; durationMs: number }> | null }).scene_audios;
+            const sceneVideos = (g as unknown as { scene_videos?: Array<{ sceneId: string; sceneType: string; videoUrl: string; durationMs: number }> | null }).scene_videos;
             const videoUrl = (g as unknown as { video_url?: string | null }).video_url;
 
             return (
@@ -102,7 +104,10 @@ export default async function HistoryPage() {
                 <div className="border-t border-viral-border/60 p-5 bg-viral-bg/40">
                   <GenerationDetail
                     pkg={pkg}
+                    niche={g.niche}
                     sceneImages={sceneImages}
+                    sceneAudios={sceneAudios}
+                    sceneVideos={sceneVideos}
                     videoUrl={videoUrl}
                   />
                 </div>

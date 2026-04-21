@@ -187,11 +187,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ─── 6. Run orchestrator inline (sync) ──────────────────────────────────
-    // Roda sincrono para garantir que Vercel serverless nao mate o processo.
-    // maxDuration=90s e suficiente para mock providers + FLUX + ElevenLabs.
+    // ─── 6. Wizard mode: gera apenas roteiro + imagens ────────────────────
+    const isWizardMode = body.wizardMode === true;
+
     let jobId: string | null = null;
     let jobStatus: string = "pending";
+    let sceneImagesResult: unknown[] = [];
+
     try {
       const jobService = new JobService();
       const job = await jobService.createJob({
@@ -210,13 +212,40 @@ export async function POST(req: NextRequest) {
         },
       });
       jobId = job?.id ?? null;
+
       if (jobId) {
-        await new JobOrchestrator().run(jobId);
-        jobStatus = "completed";
+        if (isWizardMode) {
+          // Wizard: roda apenas ingest + image_generation (para o usuário aprovar)
+          const orchestrator = new JobOrchestrator();
+          await orchestrator.runUntilStep(jobId, "image_generation");
+          jobStatus = "images_ready";
+        } else {
+          // Modo clássico: roda pipeline completo
+          await new JobOrchestrator().run(jobId);
+          jobStatus = "completed";
+        }
+      }
+
+      // Buscar imagens geradas do banco
+      if (saved.id) {
+        const { data: gen } = await svc
+          .from("generations")
+          .select("scene_images")
+          .eq("id", saved.id)
+          .single();
+        sceneImagesResult = (gen?.scene_images as unknown[]) ?? [];
       }
     } catch (jobErr) {
       jobStatus = "failed";
       console.error(`[generate-package ${reqId}] orchestrator failed:`, jobErr);
+    }
+
+    // Atualizar pipeline_step se wizard mode
+    if (isWizardMode) {
+      await svc
+        .from("generations")
+        .update({ pipeline_step: "images_review" })
+        .eq("id", saved.id);
     }
 
     return NextResponse.json({
@@ -224,6 +253,7 @@ export async function POST(req: NextRequest) {
       generation_id: saved.id,
       job_id: jobId,
       job_status: jobStatus,
+      scene_images: sceneImagesResult,
       usage: {
         used: used + 1,
         max: limit,

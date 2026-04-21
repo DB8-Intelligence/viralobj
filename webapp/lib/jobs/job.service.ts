@@ -119,11 +119,19 @@ export class JobService {
   async updateGenerationVideoOutput(
     generationId: string,
     videoUrl: string,
-    videoAssembly: unknown
+    videoAssembly: unknown,
+    sceneVideos?: unknown,
   ) {
+    const updateData: Record<string, unknown> = {
+      video_url: videoUrl,
+      video_assembly: videoAssembly,
+    };
+    if (sceneVideos) {
+      updateData.scene_videos = sceneVideos;
+    }
     const { error } = await this.supabase
       .from('generations')
-      .update({ video_url: videoUrl, video_assembly: videoAssembly })
+      .update(updateData)
       .eq('id', generationId);
 
     if (error) {

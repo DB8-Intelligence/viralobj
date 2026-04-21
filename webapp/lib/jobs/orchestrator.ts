@@ -38,7 +38,19 @@ function resolveSceneText(
 export class JobOrchestrator {
   private jobService = new JobService();
 
-  async run(jobId: string) {
+  /**
+   * Roda o pipeline até (e incluindo) o step especificado.
+   * Usado pelo wizard para rodar apenas parte do pipeline.
+   */
+  async runUntilStep(jobId: string, stopAfter: "ingest" | "image_generation" | "audio_generation" | "timeline_build" | "video_render") {
+    const stepOrder = ["ingest", "image_generation", "audio_generation", "timeline_build", "video_render"];
+    const stopIndex = stepOrder.indexOf(stopAfter);
+
+    // Reusa o run() mas com flag interna
+    return this.run(jobId, stopIndex);
+  }
+
+  async run(jobId: string, stopAfterIndex?: number) {
     try {
       await this.jobService.updateJob(jobId, { status: 'running', progress: 0 });
 
@@ -54,6 +66,12 @@ export class JobOrchestrator {
         completed_at: new Date().toISOString(),
       });
       await this.jobService.updateJob(jobId, { progress: 10 });
+
+      // Wizard: parar após ingest?
+      if (stopAfterIndex !== undefined && stopAfterIndex <= 0) {
+        await this.jobService.updateJob(jobId, { status: 'completed', progress: 100 });
+        return;
+      }
 
       const job = await this.jobService.getJob(jobId);
       const input = (job?.input ?? {}) as JobInput;
@@ -105,6 +123,12 @@ export class JobOrchestrator {
           error: err?.message ?? String(err),
         });
         throw err;
+      }
+
+      // Wizard: parar após image_generation?
+      if (stopAfterIndex !== undefined && stopAfterIndex <= 1) {
+        await this.jobService.updateJob(jobId, { status: 'completed', progress: 100 });
+        return;
       }
 
       // STEP 3 — audio_generation
@@ -247,7 +271,8 @@ export class JobOrchestrator {
           await this.jobService.updateGenerationVideoOutput(
             input.generation_id,
             rendered.videoUrl,
-            assembly
+            assembly,
+            rendered.sceneVideos,
           );
         }
 
