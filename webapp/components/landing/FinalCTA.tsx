@@ -1,32 +1,66 @@
-import Link from "next/link";
+import Image from 'next/image';
+import Link from 'next/link';
+import { IconArrowRight } from './icons';
+
+/** Personagens flutuantes ao redor do CTA */
+const floatingChars = [
+  { src: '/landing/char-pasta.jpg',             style: { top: '8%',  left:  '6%' }, cls: 'float-1' },
+  { src: '/landing/char-detergente-hulk.jpg',   style: { top: '20%', right: '8%',  width: 100 }, cls: 'float-2' },
+  { src: '/landing/char-chave.jpg',             style: { bottom: '12%', left:  '10%', width: 110 }, cls: 'float-3' },
+  { src: '/landing/char-doce-leite-furioso.jpg',style: { bottom: '8%',  right: '10%' }, cls: 'float-2' },
+];
 
 export function FinalCTA() {
   return (
-    <section className="py-20 md:py-28">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="relative card p-12 md:p-20 text-center overflow-hidden">
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-viral-accent/15 via-purple-500/10 to-viral-accent2/15 pointer-events-none" />
+    <section id="cta" style={{ padding: '80px 0 120px' }}>
+      <div className="container">
+        <div className="final-cta noise">
+          {/* Floating characters */}
+          {floatingChars.map((ch, i) => (
+            <div
+              key={i}
+              className={`img-tile cta-float ${ch.cls}`}
+              style={ch.style}
+              aria-hidden="true"
+            >
+              <Image src={ch.src} alt="" fill sizes="120px" loading="lazy" />
+            </div>
+          ))}
 
-          {/* Ambient orbs */}
-          <div className="glow-orb bg-viral-accent/30 w-96 h-96 -top-40 left-1/4" />
-          <div className="glow-orb bg-viral-accent2/25 w-80 h-80 -bottom-40 right-1/4" />
-
-          <div className="relative">
-            <div className="eyebrow mb-4">PRONTO?</div>
-            <h2 className="text-4xl md:text-6xl font-bold tracking-tight leading-[1.1] mb-6">
-              <span className="text-gradient">Comece a viralizar hoje.</span>
+          <div style={{ position: 'relative', zIndex: 1, maxWidth: 680, margin: '0 auto' }}>
+            <h2
+              style={{
+                fontSize: 'clamp(36px, 5vw, 64px)',
+                fontWeight: 900,
+                letterSpacing: '-0.035em',
+                lineHeight: 1.05,
+                margin: '0 0 20px',
+              }}
+            >
+              Seus objetos estão esperando <span className="grad-text">para falar.</span>
             </h2>
-            <p className="text-lg md:text-xl text-viral-muted max-w-xl mx-auto mb-10">
-              14 dias grátis. Sem cartão. 5 pacotes prontos pra testar o
-              potencial viral do seu nicho.
+            <p
+              style={{
+                fontSize: 18,
+                color: 'var(--muted)',
+                lineHeight: 1.55,
+                margin: '0 0 36px',
+                textWrap: 'pretty',
+              }}
+            >
+              Crie seu primeiro vídeo viral em menos de 2 minutos. Grátis, sem cartão de crédito.
             </p>
-            <Link href="/signup" className="btn-primary-lg">
-              Criar minha conta grátis →
+            <Link
+              href="/signup"
+              className="btn-primary btn-glow"
+              style={{ padding: '18px 32px', fontSize: 16 }}
+            >
+              Criar conta grátis
+              <IconArrowRight size={18} />
             </Link>
-            <p className="mt-6 text-sm text-viral-muted">
-              ✓ Grátis por 14 dias · ✓ Sem cartão · ✓ Cancele quando quiser
-            </p>
+            <div style={{ marginTop: 20, fontSize: 13, color: 'var(--muted-2)' }}>
+              5 gerações grátis · Cancele quando quiser · Suporte em português
+            </div>
           </div>
         </div>
       </div>

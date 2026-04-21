@@ -1,0 +1,12 @@
+export { Nav } from './Nav';
+export { Hero } from './Hero';
+export { Marquee } from './Marquee';
+export { ProblemSolution } from './ProblemSolution';
+export { HowItWorks } from './HowItWorks';
+export { Gallery } from './Gallery';
+export { FeaturesBento } from './FeaturesBento';
+export { Metrics } from './Metrics';
+export { Pricing } from './Pricing';
+export { FAQ } from './FAQ';
+export { FinalCTA } from './FinalCTA';
+export { Footer } from './Footer';

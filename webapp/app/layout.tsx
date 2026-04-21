@@ -1,9 +1,21 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
-import { Footer } from "@/components/Footer";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import { CookieConsent } from "@/components/CookieConsent";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "ViralObj — Talking Object Reel Generator",
@@ -12,61 +24,15 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://viralobj.com"),
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body>
-        <div className="min-h-screen flex flex-col">
-          <header className="border-b border-viral-border/60 backdrop-blur sticky top-0 z-20 bg-viral-bg/80">
-            <nav className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-              <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-                <span className="text-viral-accent">●</span>
-                <span>ViralObj</span>
-              </Link>
-              <div className="flex items-center gap-6 text-sm">
-                <Link href="/#how-it-works" className="hidden md:inline text-viral-muted hover:text-viral-text">
-                  Como funciona
-                </Link>
-                <Link href="/#pricing" className="hidden md:inline text-viral-muted hover:text-viral-text">
-                  Preços
-                </Link>
-                <Link href="/#niches" className="hidden md:inline text-viral-muted hover:text-viral-text">
-                  Nichos
-                </Link>
-                <Link href="/#faq" className="hidden md:inline text-viral-muted hover:text-viral-text">
-                  FAQ
-                </Link>
-                {user ? (
-                  <Link href="/app" className="btn-primary text-xs py-2 px-4">
-                    Meu painel
-                  </Link>
-                ) : (
-                  <>
-                    <Link href="/login" className="text-viral-muted hover:text-viral-text">
-                      Entrar
-                    </Link>
-                    <Link href="/signup" className="btn-primary text-xs py-2 px-4">
-                      Criar conta grátis
-                    </Link>
-                  </>
-                )}
-              </div>
-            </nav>
-          </header>
-
-          <main className="flex-1">{children}</main>
-
-          <Footer />
-        </div>
+        {children}
         <CookieConsent />
       </body>
     </html>
