@@ -38,6 +38,7 @@ export const NICHES: NicheSummary[] = [
   { id: "saude-feminino", label: "Saúde Feminina", default_format: "B", tone: "educational", objects_count: 4, description: "Ciclo menstrual, cuidados íntimos. Tom empático-urgente" },
   { id: "imoveis", label: "Imóveis", default_format: "C", tone: "dramatic", objects_count: 3, description: "Contratos, plantas baixas, documentos" },
   { id: "viagem", label: "Viagem", default_format: "D", tone: "educational", objects_count: 3, description: "Mapas e documentos que caminham com camera tracking" },
+  { id: "chas-funcionais", label: "Chás Funcionais", default_format: "X", tone: "educational", objects_count: 8, description: "8 chás funcionais em formato catálogo-educativo: cada chá se apresenta com benefício e quando usar" },
 ];
 
 export const FORMATS: FormatSummary[] = [
@@ -64,6 +65,8 @@ export const FORMATS: FormatSummary[] = [
   { id: "U", name: "INSECT-PARTY-NARRATIVE", tone: "funny", best_for: ["casa", "casa-pragas"] },
   { id: "V", name: "CLOTHING-CHARACTER", tone: "funny", best_for: ["casa", "moda", "fitness"] },
   { id: "W", name: "OBJECT-IN-OWN-PRODUCT", tone: "educational", best_for: ["saude-receitas", "culinaria"] },
+  { id: "X", name: "CATALOGO-EDUCATIVO-SERIAL", tone: "educational", best_for: ["chas-funcionais", "saude-receitas", "plantas", "skincare-natural"] },
+  { id: "Y", name: "TUTORIAL-RECEITA-MASCOT", tone: "educational", best_for: ["gastronomia", "culinaria", "receitas"] },
 ];
 
 export const TONE_COLORS: Record<string, string> = {

@@ -346,16 +346,28 @@ export async function generatePackage(input: GenerateInput) {
           })
         ),
       }));
+      // Extrair ai_prompt_midjourney do LLM e mapear para objectId
+      const characters =
+        (pkg as { characters?: Array<Record<string, unknown>> }).characters ?? [];
+      const llmPrompts: Record<string, string> = {};
+      object_bibles.forEach((bible, idx) => {
+        const char = characters[idx];
+        const prompt = char?.ai_prompt_midjourney;
+        if (typeof prompt === "string" && prompt.trim().length > 20) {
+          llmPrompts[bible.id] = prompt;
+        }
+      });
+
       const scene_image_prompts = buildSceneImagePromptPack({
         objectBibles: object_bibles,
         sceneBlueprints: scene_blueprints,
+        llmPrompts,
+        niche: input.niche,
       });
 
       // Map the LLM-produced character voice script to each sceneId so the audio
       // step uses the real first-person monologue, not the technical scene.action.
       const scene_texts: Record<string, string> = {};
-      const characters =
-        (pkg as { characters?: Array<Record<string, unknown>> }).characters ?? [];
       const preferredLang = input.lang === "en" ? "en" : "pt";
       object_bibles.forEach((bible, idx) => {
         const char = characters[idx] ?? {};

@@ -448,6 +448,35 @@ export const FORMATS = {
     reference_account: "@ajuda.ai.hacks",
     garment_catalog: ["pijama-seda", "camiseta-algodao", "jaqueta-couro", "meia-esportiva", "toalha-velha"]
   },
+  X: {
+    id: "X", name: "CATALOGO-EDUCATIVO-SERIAL",
+    description: "Catálogo educativo serial — 6-10 personagens apresentados em sequência sem arco narrativo. Cada personagem se apresenta em 1ª pessoa (~8s), conta seu benefício funcional e dá CTA educativo. Formato ideal para guias, listas e séries 'X coisas sobre Y'. Gradiente de cenário reforça transição temporal (ex: cozinha manhã → quarto noite).",
+    body: "parallel-catalog-no-hierarchy", host_permanent: false, guest_carousel: true,
+    characters_per_video: "6-10",
+    pipeline: ["FLUX.2 Pro", "MiniMax TTS", "VEED Fabric"],
+    camera: "medium-close-per-character-static", tone: "educational", sub_tone: "maternal-acolhedor",
+    expression_arc: "acolhedor → educativo → sleepy-closure",
+    best_for: ["chas-funcionais", "saude-receitas", "plantas", "skincare-natural"],
+    narrative_framework: "Promessa+Hook → Apresentação Sequencial (cada: nome → benefício → quando usar) → Fechamento Emocional + CTA Salvamento",
+    duration_range: [50, 65],
+    flux_template: {
+      character: "Cute animated [INGREDIENTE/PRODUTO] character with {expression}, [FORMA] body, face embedded on surface with expressive Disney eyes, small [MATERIAL]-arms, standing in [CENÁRIO TEMÁTICO BRASILEIRO], [ILUMINAÇÃO], Disney/Pixar 3D render, 9:16 vertical, 8K",
+    },
+    caption_style: "neon-outline",
+    reference_account: "@ajuda.ai.hacks",
+    series_structure: {
+      segment_per_character: "6-10s: apresentação (nome + benefício + quando usar)",
+      total_characters: "6-10 por episódio",
+      gradient: "cenário evolui ao longo do vídeo (manhã→noite, cozinha→quarto)",
+      cta: "salvamento ('salve esse vídeo')",
+    },
+    diff_vs_drama_novela: {
+      narrative: "sem arco (paralelo) vs 5 atos com conflito",
+      tone: "maternal-acolhedor vs denunciante-indignado",
+      roles: "todos 'educator' em paridade vs vilão+herói+narrador",
+      cta: "salvamento vs compartilhamento emocional",
+    },
+  },
   W: {
     id: "W", name: "OBJECT-IN-OWN-PRODUCT",
     description: "O personagem está literalmente DENTRO do produto final que ele mesmo cria. Ex: pau de canela dentro da xícara de chá de canela. Orgulhoso do próprio produto, como se estivesse em um spa.",
@@ -467,10 +496,34 @@ export const FORMATS = {
       { ingredient: "alho", product: "sopa-de-alho", container: "panela-rustica" },
       { ingredient: "limao", product: "agua-detox", container: "jarro-vidro" }
     ]
+  },
+  Y: {
+    id: "Y", name: "TUTORIAL-RECEITA-MASCOT",
+    description: "Tutorial técnico de receita conduzido por mascote-marca recorrente. Estrutura linear: hook reveal-first (mostra resultado) → ingredientes → preparo passo a passo → reveal final + CTA. Personagem único host em TODOS os episódios. Máximo save-ability + brand recall. Único formato com potencial de monetização via produtos físicos.",
+    body: "animal-anthropomorphic-bipedal", host_permanent: true, mascot_recurring: true,
+    characters_per_video: "1",
+    pipeline: ["FLUX.2 Pro", "Kling 2.1 Pro", "MiniMax TTS", "Fabric/Hedra"],
+    camera: "mix-dynamic-medium-closeup", tone: "educational", sub_tone: "humor-culinario-acolhedor",
+    expression_arc: "animado → sério → satisfeito → orgulhoso",
+    best_for: ["gastronomia", "culinaria", "receitas"],
+    narrative_framework: "Hook Reveal-First → Ingrediente → Temperos → Preparo → Espera → Fritura/Reveal + CTA",
+    duration_range: [45, 90],
+    act_count: 6,
+    flux_template: {
+      character: "Anthropomorphic [ANIMAL] chef character with Disney Pixar 3D style, standing bipedal in cozy [CENÁRIO COZINHA], wearing [ROUPA DE CHEF], {expression}, [AÇÃO COM INGREDIENTE], [ILUMINAÇÃO GOLDEN HOUR], Disney/Pixar 3D render, 9:16 vertical, 8K",
+    },
+    caption_style: "gamma-bold-white-outline-accent",
+    reference_account: "@chefmarcos",
+    foley_layers: ["faca na tábua", "líquido na tigela", "óleo fritando", "vapor subindo", "ambient kitchen"],
+    watermark_strategy: "double — logo do canal + marca no avental do mascote",
+    monetization: {
+      potential: "very_high",
+      channels: ["products", "merch", "cookbook", "sponsorships", "brand_partnerships", "kids_kits"],
+    },
   }
 };
 
-// ─── FORMAT REGISTRY (all 23 formats A–W) ───────────────────────────────────
+// ─── FORMAT REGISTRY (all 23 formats A–W + Y) ────────────────────────────────
 
 export const FORMAT_REGISTRY = [
   { id: "A", name: "MULTI-STUB",                    niches: ["casa", "plantas", "financeiro"],                              tone: "angry" },
@@ -496,6 +549,8 @@ export const FORMAT_REGISTRY = [
   { id: "U", name: "INSECT-PARTY-NARRATIVE",     niches: ["casa", "casa-pragas"],                                          tone: "funny" },
   { id: "V", name: "CLOTHING-CHARACTER",          niches: ["casa", "moda", "fitness"],                                      tone: "funny" },
   { id: "W", name: "OBJECT-IN-OWN-PRODUCT",      niches: ["saude-receitas", "culinaria", "saude"],                          tone: "educational" },
+  { id: "X", name: "CATALOGO-EDUCATIVO-SERIAL", niches: ["chas-funcionais", "saude-receitas", "plantas", "skincare-natural"], tone: "educational" },
+  { id: "Y", name: "TUTORIAL-RECEITA-MASCOT",  niches: ["gastronomia", "culinaria", "receitas"],                                tone: "educational" },
 ];
 
 // ─── CAPTION STYLES ─────────────────────────────────────────────────────────
@@ -572,6 +627,17 @@ export const CAPTION_STYLES = {
     uppercase: true,
     examples: ["🔥 TAPIOCA OU PASTEL? O RECADINHO É DIRETO! 🔥‍", "🧽 ESPONJA VELHA FALANDO A VERDADE! 🤣"]
   },
+  "neon-outline": {
+    id: "neon-outline",
+    description: "Texto branco Montserrat Extra Bold com outline verde neon (#B3FF1A) 3px. Posição bottom-center. Usado no formato CATALOGO-EDUCATIVO-SERIAL para guias educativos com tom maternal. Cada frase acompanha a fala do personagem atual.",
+    font: "Montserrat Extra Bold",
+    color: "#FFFFFF",
+    outline: "3px solid #B3FF1A",
+    position: "center-bottom",
+    pill: false,
+    neon_glow: true,
+    examples: ["EU SOU A CANELA", "ME BEBA QUANDO", "EU RELAXO O", "SE SENTIR ESTRESSADO", "PEGAR NO SONO"]
+  },
   "highlight-keyword-color": {
     id: "highlight-keyword-color",
     description: "Texto karaokê bottom com palavra-chave destacada em COR diferente (verde neon, ciano, amarelo). Resto do texto em branco bold. Headline top em fundo semi-transparente.",
@@ -582,6 +648,22 @@ export const CAPTION_STYLES = {
     outline: "2px black",
     headline_top: "bold black text on white semi-transparent background — full phrase visible throughout",
     examples: ["INCHADO", "ESPINAFRE", "INTESTINO", "PREGUIÇOSOS", "SANGUE"]
+  },
+  "gamma-bold-white-outline-accent": {
+    id: "gamma-bold-white-outline-accent",
+    description: "Branco bold com outline preto grosso + palavra-chave em amarelo dourado #FFD700. Uppercase. Bottom-center. Casa com paleta de comida frita (golden brown). Usado pelo formato TUTORIAL-RECEITA-MASCOT.",
+    font: "sans-serif extrabold/black",
+    weight: 800,
+    size_px: 50,
+    color: "#FFFFFF",
+    outline: "3px solid #000000",
+    highlight_color: "#FFD700",
+    highlight_logic: "Destacar palavra-chave de AÇÃO ou DESCRITIVA central (ex: DOURADINHO, ESPETÁCULO, ESQUEÇA)",
+    position: "bottom-center",
+    position_offset_pct: 13,
+    pill: false,
+    transform: "uppercase",
+    examples: ["ESQUEÇA TUDO", "PEITO DE FRANGO", "QUANDO ESTIVER DOURADINHO ASSIM", "OLHA QUE ESPETÁCULO"]
   },
   "headline-topo-bold": {
     id: "headline-topo-bold",
@@ -665,6 +747,21 @@ export const SOURCE_ACCOUNTS = {
     niches: ["financeiro"],
     first_analyzed: "2026-04-09",
     videos_analyzed: 1
+  },
+  "@chefmarcos": {
+    handle: "@chefmarcos",
+    style: "tutorial-receita-mascot-recorrente",
+    formats_used: ["Y"],
+    niches: ["gastronomia", "culinaria"],
+    caption_pattern: "gamma-bold-white-outline-accent — branco + amarelo dourado destaque",
+    pipeline_mix: ["FLUX.2 Pro + Kling 2.1 Pro + MiniMax TTS + Fabric"],
+    watermark: "Dupla — logo Chef Marcos canto superior esquerdo + Chef Frangão bordado no avental",
+    watermark_strategy: "double",
+    recurring_character: "Chef Frangão (galo antropomórfico chef)",
+    monetization_potential: "very_high",
+    first_analyzed: "2026-04-20",
+    videos_analyzed: 1,
+    viral_score: 9.3
   },
   "@oficinassuculentas": {
     handle: "@oficinassuculentas",
@@ -1289,6 +1386,149 @@ export const NICHES = {
     },
     correlated_niches: ["saude", "maternidade"],
     prompts_base: "Empathetic health context, soft warm lighting, Pixar 3D render, educational gentle tone, 8K",
+  },
+
+  // ─── chas-funcionais — Format X (v2.1.0) ────────────────────────────────────
+  "chas-funcionais": {
+    name_pt: "Chás Funcionais",
+    name_en: "Functional Teas",
+    emoji: "🍵",
+    tone_default: "educational",
+    format_default: "X",
+    alt_formats: ["W", "B", "Q"],
+    sub_tone: "maternal-acolhedor",
+    bpm_range: [65, 85],
+    music_style: "gentle acoustic guitar + nature sounds, transitions piano at night scenes",
+    caption_style: "neon-outline",
+    hook_style: "guia-definitivo",
+    source_reference: "@ajuda.ai.hacks — chás funcionais v2.1.0 — 2026-04-19",
+    objects: [
+      {
+        id: "canela-cha", pt: "canela em pau", en: "cinnamon stick", emoji: "🪵",
+        personality: "confiante, acolhedora, primeira a se apresentar",
+        format: "X", role: "educator", body_type: "G-Stick-Cinnamon",
+        beneficio: "controle glicêmico e metabolismo",
+        timestamp: "0s–10s", cluster: "promessa-hook",
+        expression_arc: "acolhedora → orgulhosa → educativa",
+        flux_base: "Friendly animated cinnamon stick bundle character tied with rustic twine, warm brown bark texture body with natural grooves, big expressive Disney eyes with warm smile, small stub arms made of bark, standing on bright morning kitchen counter with ceramic cups and herb jars in background, golden sunrise light through window casting warm glow, Disney Pixar 3D render, 9:16 vertical, 8K",
+        voice: { voice_id: "Calm_Woman", emotion: "warm", speed: 1.0, pitch: 0 },
+      },
+      {
+        id: "gengibre-cha", pt: "gengibre", en: "ginger root", emoji: "🫚",
+        personality: "forte, picante, determinado, anti-inflamatório",
+        format: "X", role: "educator", body_type: "H-Root-Ginger",
+        beneficio: "digestão e imunidade",
+        timestamp: "10s–18s", cluster: "digestao-imunidade",
+        expression_arc: "determinado → forte → protetor",
+        flux_base: "Strong determined animated ginger root character with knobby bumpy beige-yellow skin, cross-section showing bright yellow interior, fierce expressive eyes with determined grin, small root-arm fists clenched with energy, standing on wooden cutting board next to sliced ginger pieces and steaming cup of tea, bright daylight kitchen, Disney Pixar 3D render, 9:16 vertical, 8K",
+        voice: { voice_id: "Wise_Woman", emotion: "determined", speed: 1.1, pitch: -1 },
+      },
+      {
+        id: "hortela-cha", pt: "hortelã", en: "peppermint", emoji: "🌿",
+        personality: "refrescante, calma, relaxante digestivo",
+        format: "X", role: "educator", body_type: "I-Leaf-Mint",
+        beneficio: "relaxamento digestivo e alívio de cólicas",
+        timestamp: "18s–25s", cluster: "digestao-imunidade",
+        expression_arc: "calma → refrescante → aliviada",
+        flux_base: "Calm relaxed animated mint leaf sprig character with bright vibrant green serrated leaves, delicate stem body, gentle half-closed eyes with peaceful smile, small leaf-arms open in welcoming relaxed pose, standing near open kitchen window with gentle breeze, fresh herb pots on windowsill, soft afternoon natural light with green ambient glow, Disney Pixar 3D render, 9:16 vertical, 8K",
+        voice: { voice_id: "Friendly_Person", emotion: "calm", speed: 0.95, pitch: 1 },
+      },
+      {
+        id: "camomila-cha", pt: "camomila", en: "chamomile", emoji: "🌼",
+        personality: "maternal, suave, anti-estresse, muda cenário para quarto",
+        format: "X", role: "educator", body_type: "J-Flower-Daisy",
+        beneficio: "anti-estresse e relaxamento muscular",
+        timestamp: "25s–30s", cluster: "relaxamento-emocional",
+        scene_transition: "cozinha → quarto à noite (marca mudança de cluster)",
+        expression_arc: "acolhedora → cuidadosa → maternal",
+        flux_base: "Gentle maternal animated chamomile flower character with white radiating petals around golden yellow center disc face, soft caring Disney eyes with warm maternal smile, small petal-arms in comforting gesture, standing on bedside table in cozy nighttime bedroom with soft blankets and pillows, warm dim bedside lamp casting golden glow, peaceful nighttime ambiance, Disney Pixar 3D render, 9:16 vertical, 8K",
+        voice: { voice_id: "Calm_Woman", emotion: "soothing", speed: 0.9, pitch: 1 },
+      },
+      {
+        id: "hibisco-cha", pt: "hibisco", en: "hibiscus", emoji: "🌺",
+        personality: "vibrante, confiante, cardiovascular",
+        format: "X", role: "educator", body_type: "K-Flower-Hibiscus",
+        beneficio: "circulação e saúde cardiovascular",
+        timestamp: "30s–42s", cluster: "circulacao-diuretico",
+        expression_arc: "vibrante → confiante → radiante",
+        flux_base: "Vibrant confident animated hibiscus flower character with deep magenta ruffled layered petals, prominent yellow pistil stamen crown, expressive Disney face in center with confident radiant smile, small petal-arms spread wide presenting, standing next to vibrant red hibiscus tea in clear glass cup on kitchen counter, warm sunset light casting golden-magenta glow, tropical fruits in background, Disney Pixar 3D render, 9:16 vertical, 8K",
+        voice: { voice_id: "Lively_Girl", emotion: "cheerful", speed: 1.05, pitch: 1 },
+      },
+      {
+        id: "dente-de-leao-cha", pt: "dente-de-leão", en: "dandelion", emoji: "🌾",
+        personality: "leve, brincalhão, diurético natural",
+        format: "X", role: "educator", body_type: "L-Flower-Dandelion",
+        beneficio: "diurético natural e saúde renal",
+        timestamp: "42s–48s", cluster: "circulacao-diuretico",
+        expression_arc: "brincalhão → leve → poético",
+        flux_base: "Playful mischievous animated dandelion puffball character with round white wispy seed head, tiny floating seeds drifting away in breeze, thin green stem body, cheerful Disney face with playful grin, small leaf-arms waving, standing in golden hour garden with green grass, seeds backlit by warm sunset creating dreamy bokeh effect, Disney Pixar 3D render, 9:16 vertical, 8K",
+        voice: { voice_id: "Friendly_Person", emotion: "playful", speed: 1.0, pitch: 2 },
+      },
+      {
+        id: "cha-verde-cha", pt: "chá verde", en: "green tea", emoji: "🍃",
+        personality: "focado, energético, antioxidante",
+        format: "X", role: "educator", body_type: "I-Leaf-Teapoint",
+        beneficio: "antioxidantes e metabolismo",
+        timestamp: "48s–54s", cluster: "fechamento-sono",
+        expression_arc: "atento → energético → focado",
+        flux_base: "Alert energetic animated green tea leaf bud character, tightly curled deep emerald green leaf body with subtle vein texture, bright attentive Disney eyes with knowing confident smile, small leaf-arms in dynamic energetic pose, standing next to clear glass cup of light green steaming tea on modern desk, bright clean natural daylight from window, minimalist studio environment, Disney Pixar 3D render, 9:16 vertical, 8K",
+        voice: { voice_id: "Wise_Woman", emotion: "focused", speed: 1.05, pitch: 0 },
+      },
+      {
+        id: "lavanda-cha", pt: "lavanda", en: "lavender", emoji: "💜",
+        personality: "sonolenta, pacífica, fechamento do guia, ansiedade→sono",
+        format: "X", role: "educator", body_type: "K-Flower-Lavender",
+        beneficio: "sono e ansiedade (fechamento emocional)",
+        timestamp: "54s–62s", cluster: "fechamento-sono",
+        scene_transition: "quarto escuro com lua, atmosfera noturna final",
+        expression_arc: "sonolenta → pacífica → dormindo",
+        flux_base: "Peaceful sleepy animated lavender flower sprig character with clustered purple buds along stem, silvery-green leaves, gentle half-closed drowsy Disney eyes with serene peaceful smile, small leaf-arms hugging soft pillow, standing in dark cozy bedroom at night with moonlight streaming through window, extinguished candles on bedside table, soft blue moonlight mixed with warm afterglow, dreamy tranquil atmosphere, Disney Pixar 3D render, 9:16 vertical, 8K",
+        voice: { voice_id: "Calm_Woman", emotion: "sleepy", speed: 0.85, pitch: 2 },
+      },
+    ],
+    clusters: [
+      { id: "promessa-hook", name: "Promessa + Canela", time: "0–10s", description: "Hook 'guia definitivo' + primeiro chá" },
+      { id: "digestao-imunidade", name: "Digestão & Imunidade", time: "10–25s", description: "Gengibre + Hortelã" },
+      { id: "relaxamento-emocional", name: "Relaxamento Emocional", time: "25–30s", description: "Camomila (muda cenário para quarto)" },
+      { id: "circulacao-diuretico", name: "Circulação & Diurético", time: "30–48s", description: "Hibisco + Dente-de-leão" },
+      { id: "fechamento-sono", name: "Fechamento do Sono", time: "48–62s", description: "Chá verde + Lavanda (atmosfera noturna)" },
+    ],
+    gradient_cenario: "cozinha de dia → quarto à noite (reforça transição manhã→noite)",
+    series_X: {
+      name: "Guias Definitivos da Natureza",
+      format: "X",
+      episodes: [
+        { ep: 1, tema: "chás funcionais (8 chás)", status: "em-producao", viral_score: 8.8 },
+        { ep: 2, tema: "frutas funcionais", status: "planejado" },
+        { ep: 3, tema: "temperos curativos", status: "planejado" },
+        { ep: 4, tema: "grãos integrais", status: "planejado" },
+        { ep: 5, tema: "vegetais crucíferos", status: "planejado" },
+        { ep: 6, tema: "castanhas e sementes", status: "planejado" },
+        { ep: 7, tema: "óleos essenciais", status: "planejado" },
+        { ep: 8, tema: "plantas medicinais brasileiras", status: "planejado" },
+        { ep: 9, tema: "probióticos naturais", status: "planejado" },
+        { ep: 10, tema: "cogumelos funcionais", status: "planejado" },
+      ],
+      cadencia: "1 episódio a cada 10-15 dias (permite acumular salvamentos)",
+    },
+    hooks: [
+      "ESSE É O GUIA DEFINITIVO DOS CHÁS FUNCIONAIS",
+      "SALVE ESSE VÍDEO PARA CONSULTAR SEMPRE",
+      "CADA CHÁ CURA UMA COISA DIFERENTE",
+      "VOCÊ SABIA QUE ESSE CHÁ FUNCIONA COMO REMÉDIO?",
+      "NÃO TOME CHÁ SEM SABER PRA QUE SERVE",
+    ],
+    cost_estimate: {
+      per_episode: "$20.60",
+      breakdown: {
+        "8 personagens × 2 variações (FLUX.2 Pro)": "$3.20",
+        "8 cenas × 6s vídeo (Kling 2.1 Pro)": "$14.40",
+        "TTS PT-BR completo (MiniMax)": "$0.60",
+        "Lip sync 8 cenas (Fabric/Hedra)": "$2.40",
+      },
+    },
+    correlated_niches: ["saude", "saude-receitas", "plantas", "espiritualidade"],
+    prompts_base: "Brazilian kitchen to bedroom gradient, ceramic/glass cups with hot tea, steam rising, warm golden lighting transitioning to moonlight blue, cozy home setting, Disney/Pixar 3D render, 9:16 vertical, 8K",
   },
 };
 

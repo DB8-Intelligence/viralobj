@@ -23,3 +23,6 @@ outputs/*.mp4
 # Misc
 files/
 files.zip
+
+.vercel
+.env*.local
