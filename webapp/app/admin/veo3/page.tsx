@@ -12,23 +12,40 @@ interface DebugResult {
   error?: string;
 }
 
-const PRESETS = [
+const CACTO_IMAGE = "https://v3b.fal.media/files/b/0a974914/qxb3ehpxdCmugveyh6XgJ_4184e23fa511401595815390ba63c505.jpg";
+
+// Veo 3 Fast: image_url + 1 prompt único descrevendo
+// (1) movimento de câmera, (2) ação do personagem, (3) fala em 1ª pessoa
+const PRESETS: Array<{
+  label: string;
+  prompt: string;
+  imageUrl: string;
+  duration?: "4s" | "6s" | "8s";
+  generateAudio?: boolean;
+}> = [
   {
-    label: "Cacto falante (imagem real de prod)",
-    imageUrl: "https://v3b.fal.media/files/b/0a974914/qxb3ehpxdCmugveyh6XgJ_4184e23fa511401595815390ba63c505.jpg",
-    speechText: "Eu sou o Cacto, resistente no calor do Brasil.",
+    label: "🎬 Cacto falando — prompt simples",
+    imageUrl: CACTO_IMAGE,
+    duration: "8s",
+    generateAudio: true,
+    prompt:
+      "Static shot of the cactus character. The cactus smiles, opens its mouth and says in Brazilian Portuguese: \"Eu sou o Cacto, resistente no calor do Brasil!\" Gentle head tilt, wide eyes blinking expressively. Warm cozy lighting, Pixar animated style.",
   },
   {
-    label: "Sem áudio (só imagem → vídeo mudo)",
-    imageUrl: "https://v3b.fal.media/files/b/0a974914/qxb3ehpxdCmugveyh6XgJ_4184e23fa511401595815390ba63c505.jpg",
-    speechText: "",
+    label: "🎥 Cacto com movimento de câmera (zoom in)",
+    imageUrl: CACTO_IMAGE,
+    duration: "8s",
+    generateAudio: true,
+    prompt:
+      "Slow zoom-in on the cactus character from medium to close-up. The cactus grins, raises its stubby arms and declares in Brazilian Portuguese: \"Eu sobrevivo onde ninguém mais aguenta!\" Dramatic warm sunset light, cinematic Pixar look.",
+  },
+  {
+    label: "🔇 Só movimento, sem áudio (4s)",
+    imageUrl: CACTO_IMAGE,
+    duration: "4s",
     generateAudio: false,
-  },
-  {
-    label: "Duração curta (4s)",
-    imageUrl: "https://v3b.fal.media/files/b/0a974914/qxb3ehpxdCmugveyh6XgJ_4184e23fa511401595815390ba63c505.jpg",
-    speechText: "Oi!",
-    duration: "4s" as const,
+    prompt:
+      "The cactus character sways gently in a breeze, blinking slowly. Subtle idle animation. Warm Pixar-style lighting.",
   },
 ];
 
