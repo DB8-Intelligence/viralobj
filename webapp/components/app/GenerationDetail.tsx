@@ -128,7 +128,17 @@ export default function GenerationDetail({ pkg, niche, sceneImages, sceneAudios,
   const meta = pkg.meta;
   const postCopy = pkg.post_copy;
 
-  if (characters.length === 0) return null;
+  if (characters.length === 0) {
+    return (
+      <div className="text-center py-8 text-sm text-viral-muted">
+        <div className="text-3xl mb-2">📭</div>
+        <p>Este pacote ainda não tem personagens gerados.</p>
+        <p className="text-[10px] mt-1 text-viral-muted/60">
+          Provavelmente uma geração interrompida — tente criar uma nova.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

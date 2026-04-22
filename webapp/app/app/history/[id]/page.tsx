@@ -19,13 +19,14 @@ export default async function GenerationDetailPage({
   if (!data) notFound();
 
   const g = data as Generation;
-  const pkg = g.package as {
+  const pkg = (g.package ?? {}) as {
     meta?: { topic_pt?: string; topic_en?: string; format?: string; tone?: string; duration?: number; niche?: string };
     characters?: Array<{ emoji?: string; name_pt?: string; name_en?: string; personality?: string; expression_arc?: string[]; voice_script_pt?: string; voice_script_en?: string; ai_prompt_midjourney?: string; timestamp_start?: string; timestamp_end?: string; id?: string }>;
     captions?: Array<{ time?: string; text?: string; character?: string; style?: string }>;
     post_copy?: { caption_pt?: string; caption_en?: string; hashtags_pt?: string[] | string; hashtags_en?: string[] | string };
     variations?: Array<{ title_pt?: string; title_en?: string; hook_pt?: string; hook_en?: string; objects?: string[]; description_pt?: string; description_en?: string; tone?: string }>;
   };
+  const objects = g.objects ?? [];
 
   const sceneImages = (g as unknown as { scene_images?: Array<{ sceneId: string; imageUrl: string; sceneType: string }> | null }).scene_images;
   const sceneAudios = (g as unknown as { scene_audios?: Array<{ sceneId: string; audioUrl: string; sceneType: string; objectId: string; durationMs: number }> | null }).scene_audios;
@@ -48,7 +49,7 @@ export default async function GenerationDetailPage({
             <span>·</span>
             <span>{g.duration}s</span>
             <span>·</span>
-            <span>{g.objects.length} objetos</span>
+            <span>{objects.length} objetos</span>
             <span>·</span>
             <span>{new Date(g.created_at).toLocaleString("pt-BR")}</span>
           </div>
