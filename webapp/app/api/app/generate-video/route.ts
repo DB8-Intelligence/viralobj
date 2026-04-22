@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
 
     // Montar timeline com imagens aprovadas + textos de fala
     const timelineScenes = approvedSceneImages
-      .filter((img) => img.imageUrl.startsWith("http") && !img.imageUrl.includes("placehold"))
+      .filter((img) => typeof img.imageUrl === "string" && img.imageUrl.startsWith("http") && !img.imageUrl.includes("placehold"))
       .map((img) => {
         const objectId = (img as any).objectId ?? img.sceneId.split("-").slice(0, -1).join("-");
         const script = scriptMap.get(objectId) ?? scriptMap.get(img.sceneId) ?? "";
@@ -101,6 +101,7 @@ export async function POST(req: NextRequest) {
       `[generate-video] Renderizando ${timelineScenes.length} cenas para generation ${generation_id}`,
     );
 
+    const startedAt = Date.now();
     const rendered = await renderVideo({
       generationId: generation_id,
       timeline: {
@@ -108,6 +109,7 @@ export async function POST(req: NextRequest) {
         scenes: timelineScenes,
       },
     });
+    const elapsedMs = Date.now() - startedAt;
 
     // Salvar no banco
     await svc
@@ -124,11 +126,20 @@ export async function POST(req: NextRequest) {
       video_url: rendered.videoUrl,
       provider: rendered.provider,
       count: rendered.sceneVideos.length,
+      report: {
+        scenes_requested: timelineScenes.length,
+        scenes_rendered: rendered.sceneVideos.length,
+        total_cost_usd: rendered.totalCostUsd ?? 0,
+        elapsed_ms: elapsedMs,
+        scene_reports: rendered.sceneReports ?? [],
+        skip_reason: rendered.skipReason,
+      },
     });
   } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
     console.error("[generate-video] error:", e);
     return NextResponse.json(
-      { error: "Erro ao gerar vídeo" },
+      { error: `Erro ao gerar vídeo: ${msg}` },
       { status: 500 },
     );
   }

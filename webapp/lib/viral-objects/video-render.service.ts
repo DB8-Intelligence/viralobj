@@ -38,6 +38,17 @@ export interface RenderedSceneVideo {
   durationMs: number;
 }
 
+export interface SceneRenderReport {
+  sceneId: string;
+  sceneType: SceneType;
+  status: "success" | "failed" | "skipped";
+  videoUrl?: string;
+  durationMs?: number;
+  costUsd?: number;
+  error?: string;
+  promptPreview?: string;
+}
+
 export interface RenderedVideo {
   generationId: string;
   videoUrl: string;
@@ -45,6 +56,9 @@ export interface RenderedVideo {
   provider: VideoProvider;
   renderedAt: string;
   totalDurationMs: number;
+  totalCostUsd?: number;
+  sceneReports?: SceneRenderReport[];
+  skipReason?: string;
 }
 
 /** Config FFmpeg exportada para uso futuro em assembly real */
@@ -89,11 +103,12 @@ async function renderWithFal(input: RenderVideoInput): Promise<RenderedVideo> {
   fal.config({ credentials: process.env.FAL_KEY });
 
   const sceneVideos: RenderedSceneVideo[] = [];
+  const sceneReports: SceneRenderReport[] = [];
   let totalCost = 0;
 
   const MAX_SCENE_VIDEOS = 4;
   const allValid = input.timeline.scenes.filter(
-    (s) => s.imageUrl && !s.imageUrl.startsWith("https://placehold"),
+    (s) => typeof s.imageUrl === "string" && s.imageUrl.startsWith("http") && !s.imageUrl.includes("placehold"),
   );
 
   const priorityOrder: Record<string, number> = {
@@ -111,9 +126,8 @@ async function renderWithFal(input: RenderVideoInput): Promise<RenderedVideo> {
     .slice(0, MAX_SCENE_VIDEOS);
 
   if (validScenes.length === 0) {
-    console.warn(
-      "[VideoRender] Nenhuma cena válida com imagem. Retornando mock.",
-    );
+    const reason = `Nenhuma cena válida: ${input.timeline.scenes.length} cenas no timeline, 0 com imageUrl começando com "http" (não-placeholder).`;
+    console.warn("[VideoRender]", reason);
     return {
       generationId: input.generationId,
       videoUrl: mockVideoUrl(input.generationId),
@@ -121,6 +135,13 @@ async function renderWithFal(input: RenderVideoInput): Promise<RenderedVideo> {
       provider: "mock",
       renderedAt: new Date().toISOString(),
       totalDurationMs: input.timeline.totalDurationMs,
+      skipReason: reason,
+      sceneReports: input.timeline.scenes.map((s) => ({
+        sceneId: s.sceneId,
+        sceneType: s.sceneType as SceneType,
+        status: "skipped" as const,
+        error: "imageUrl inválida ou placeholder",
+      })),
     };
   }
 
@@ -129,28 +150,26 @@ async function renderWithFal(input: RenderVideoInput): Promise<RenderedVideo> {
   );
 
   for (const scene of validScenes) {
+    const rawDuration = Math.ceil(scene.durationMs / 1000);
+    const veoDuration: "4s" | "6s" | "8s" =
+      rawDuration <= 4 ? "4s" : rawDuration <= 6 ? "6s" : "8s";
+    const durationSec = parseInt(veoDuration);
+
+    const speechText = scene.overlayText ?? "";
+    const sceneDirection =
+      scene.sceneType === "intro"
+        ? "Character speaks directly to camera with confident animated expression"
+        : scene.sceneType === "dialogue"
+          ? "Character gestures expressively while speaking with emotion"
+          : scene.sceneType === "reaction"
+            ? "Character reacts with dramatic facial expression changes"
+            : "Character gives final message with thumbs up and warm smile";
+
+    const prompt = speechText
+      ? `${sceneDirection}. The character says in Portuguese: "${speechText}". Disney Pixar 3D animated style, dramatic lighting, 9:16 vertical video, cozy Brazilian kitchen or living room background, warm golden hour lighting with bokeh.`
+      : `${sceneDirection}. Disney Pixar 3D animated character with expressive face, subtle idle animation with breathing and blinking, warm cinematic lighting, cozy environment.`;
+
     try {
-      // Escolher duração Veo (4s, 6s ou 8s)
-      const rawDuration = Math.ceil(scene.durationMs / 1000);
-      const veoDuration: "4s" | "6s" | "8s" =
-        rawDuration <= 4 ? "4s" : rawDuration <= 6 ? "6s" : "8s";
-      const durationSec = parseInt(veoDuration);
-
-      // Montar prompt com fala do personagem + direção de cena
-      const speechText = scene.overlayText ?? "";
-      const sceneDirection =
-        scene.sceneType === "intro"
-          ? "Character speaks directly to camera with confident animated expression"
-          : scene.sceneType === "dialogue"
-            ? "Character gestures expressively while speaking with emotion"
-            : scene.sceneType === "reaction"
-              ? "Character reacts with dramatic facial expression changes"
-              : "Character gives final message with thumbs up and warm smile";
-
-      const prompt = speechText
-        ? `${sceneDirection}. The character says in Portuguese: "${speechText}". Disney Pixar 3D animated style, dramatic lighting, 9:16 vertical video, cozy Brazilian kitchen or living room background, warm golden hour lighting with bokeh.`
-        : `${sceneDirection}. Disney Pixar 3D animated character with expressive face, subtle idle animation with breathing and blinking, warm cinematic lighting, cozy environment.`;
-
       console.log(
         `[VideoRender] Veo 3 Fast: ${scene.sceneId} (${veoDuration}, audio=true)`,
       );
@@ -185,20 +204,50 @@ async function renderWithFal(input: RenderVideoInput): Promise<RenderedVideo> {
 
         const sceneCost = durationSec * 0.15;
         totalCost += sceneCost;
+        sceneReports.push({
+          sceneId: scene.sceneId,
+          sceneType: scene.sceneType as SceneType,
+          status: "success",
+          videoUrl,
+          durationMs: durationSec * 1000,
+          costUsd: sceneCost,
+          promptPreview: prompt.slice(0, 180),
+        });
         console.log(
           `[VideoRender] ✓ ${scene.sceneId}: ${videoUrl.substring(0, 60)}... (~$${sceneCost.toFixed(2)})`,
         );
       } else {
-        console.warn(
-          `[VideoRender] ✗ ${scene.sceneId}: sem video URL na resposta`,
-          JSON.stringify(result).substring(0, 300),
-        );
+        const errMsg = `Resposta do Veo 3 sem videoUrl: ${JSON.stringify(result).substring(0, 200)}`;
+        console.warn(`[VideoRender] ✗ ${scene.sceneId}: ${errMsg}`);
+        sceneReports.push({
+          sceneId: scene.sceneId,
+          sceneType: scene.sceneType as SceneType,
+          status: "failed",
+          error: errMsg,
+          promptPreview: prompt.slice(0, 180),
+        });
       }
     } catch (err: any) {
-      console.error(
-        `[VideoRender] ✗ ${scene.sceneId} falhou: ${err?.message ?? err}`,
-      );
+      const errMsg = err?.message ?? String(err);
+      console.error(`[VideoRender] ✗ ${scene.sceneId} falhou: ${errMsg}`);
+      sceneReports.push({
+        sceneId: scene.sceneId,
+        sceneType: scene.sceneType as SceneType,
+        status: "failed",
+        error: errMsg,
+        promptPreview: prompt.slice(0, 180),
+      });
     }
+  }
+
+  // Cenas que nem foram tentadas (acima do MAX_SCENE_VIDEOS)
+  for (const s of allValid.slice(MAX_SCENE_VIDEOS)) {
+    sceneReports.push({
+      sceneId: s.sceneId,
+      sceneType: s.sceneType as SceneType,
+      status: "skipped",
+      error: `Excedeu limite de ${MAX_SCENE_VIDEOS} cenas/render`,
+    });
   }
 
   if (LOG_COSTS) {
@@ -219,6 +268,8 @@ async function renderWithFal(input: RenderVideoInput): Promise<RenderedVideo> {
     provider: "fal",
     renderedAt: new Date().toISOString(),
     totalDurationMs: sceneVideos.reduce((sum, s) => sum + s.durationMs, 0),
+    totalCostUsd: totalCost,
+    sceneReports,
   };
 }
 
@@ -266,6 +317,11 @@ export async function renderVideo(
   } else if (useVeed) {
     rendered = await renderWithVeed(input);
   } else {
+    const reasons: string[] = [];
+    if (!REMOTION_READY) reasons.push("REMOTION_READY=false");
+    if (!FAL_VIDEO_READY) reasons.push("FAL_VIDEO_READY=false");
+    else if (!process.env.FAL_KEY) reasons.push("FAL_KEY ausente");
+    if (!VEED_READY) reasons.push("VEED_READY=false");
     rendered = {
       generationId: input.generationId,
       videoUrl: mockVideoUrl(input.generationId),
@@ -273,6 +329,7 @@ export async function renderVideo(
       provider: "mock",
       renderedAt: new Date().toISOString(),
       totalDurationMs: input.timeline.totalDurationMs,
+      skipReason: `Nenhum provider de vídeo habilitado: ${reasons.join(", ")}`,
     };
   }
 

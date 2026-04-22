@@ -6,6 +6,7 @@ import Link from "next/link";
 import { NICHES } from "@/lib/niches-data";
 import { NICHE_CONFIGS, TONE_OPTIONS } from "@/lib/niche-objects-data";
 import type { ObjectTone } from "@/lib/viral-objects/object-bible";
+import DebugPanel, { type RenderReport } from "@/components/app/DebugPanel";
 
 // ─── Tipos do wizard ──────────────────────────────────────────────
 
@@ -79,6 +80,8 @@ export default function AppGeneratePage() {
 
   // Etapa 5: Vídeo
   const [videos, setVideos] = useState<SceneVideo[]>([]);
+  const [videoReport, setVideoReport] = useState<RenderReport | null>(null);
+  const [videoProvider, setVideoProvider] = useState<string | null>(null);
 
   // Global
   const [loading, setLoading] = useState(false);
@@ -267,6 +270,8 @@ export default function AppGeneratePage() {
       if (!res.ok) throw new Error(data.error || "Erro ao gerar vídeo");
 
       setVideos(data.scene_videos ?? []);
+      setVideoReport(data.report ?? null);
+      setVideoProvider(data.provider ?? null);
       setStatus(null);
       setStep("video");
     } catch (err: unknown) {
@@ -640,6 +645,8 @@ export default function AppGeneratePage() {
       {/* ═══ ETAPA 5: VÍDEOS GERADOS ═══ */}
       {step === "video" && (
         <div className="space-y-5">
+          {videoReport && <DebugPanel report={videoReport} provider={videoProvider ?? undefined} />}
+
           <div className="card p-5">
             <h2 className="text-lg font-bold mb-1">Vídeos gerados com lip sync</h2>
             <p className="text-xs text-viral-muted mb-4">
@@ -647,7 +654,7 @@ export default function AppGeneratePage() {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {videos
-                .filter((v) => v.videoUrl.startsWith("http"))
+                .filter((v) => typeof v.videoUrl === "string" && v.videoUrl.startsWith("http"))
                 .map((vid, i) => (
                   <div key={i} className="rounded-lg overflow-hidden border border-viral-border/40">
                     {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
@@ -660,9 +667,21 @@ export default function AppGeneratePage() {
                   </div>
                 ))}
             </div>
-            {videos.filter((v) => v.videoUrl.startsWith("http")).length === 0 && (
-              <div className="text-center text-viral-muted py-8">
-                <p>Nenhum vídeo gerado ainda. Tente novamente.</p>
+            {videos.filter((v) => typeof v.videoUrl === "string" && v.videoUrl.startsWith("http")).length === 0 && (
+              <div className="text-center text-viral-muted py-8 space-y-3">
+                <p>Nenhum vídeo gerado ainda.</p>
+                <p className="text-[10px] text-viral-muted/70">
+                  Verifique o painel de debug acima para detalhes. Você pode tentar novamente
+                  ou voltar para revisar imagens/roteiro.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleApproveAudioAndGenerateVideo}
+                  disabled={loading}
+                  className="btn-primary text-sm disabled:opacity-50"
+                >
+                  {loading ? "Tentando..." : "🔄 Tentar gerar vídeos novamente"}
+                </button>
               </div>
             )}
           </div>
