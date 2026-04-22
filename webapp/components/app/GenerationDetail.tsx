@@ -91,6 +91,12 @@ const TAB_CONFIG: Array<{ id: Tab; label: string; icon: string }> = [
   { id: "preview", label: "Preview", icon: "👁️" },
 ];
 
+/** Safe .includes() — only runs if value is a string. Prevents crashes when
+ *  DB returns objectId/sceneId as object or array instead of string. */
+function strIncludes(value: unknown, search: string): boolean {
+  return typeof value === "string" && typeof search === "string" && search.length > 0 && value.includes(search);
+}
+
 function parseHashtags(raw?: string[] | string): string[] {
   if (!raw) return [];
   if (Array.isArray(raw)) return raw.map((h) => h.replace(/^#/, "").trim()).filter(Boolean);
@@ -197,8 +203,8 @@ export default function GenerationDetail({ pkg, niche, sceneImages, sceneAudios,
               {sceneImages && sceneImages.length > 0 && (() => {
                 const charId = char.id ?? `char-${idx}`;
                 const charImages = sceneImages.filter(
-                  (img) => charId && img.sceneId && img.sceneId.includes(charId) &&
-                    img.imageUrl?.startsWith("http") && !img.imageUrl?.includes("placehold")
+                  (img) => strIncludes(img.sceneId, charId) &&
+                    typeof img.imageUrl === "string" && img.imageUrl.startsWith("http") && !img.imageUrl.includes("placehold")
                 );
                 if (charImages.length === 0) return null;
                 return (
@@ -509,14 +515,14 @@ export default function GenerationDetail({ pkg, niche, sceneImages, sceneAudios,
       {/* PREVIEW */}
       {activeTab === "preview" && (() => {
         const realImages = (sceneImages ?? []).filter(
-          (img) => img.imageUrl?.startsWith("http") && !img.imageUrl?.includes("placehold")
+          (img) => typeof img.imageUrl === "string" && img.imageUrl.startsWith("http") && !img.imageUrl.includes("placehold")
         );
         const realAudios = (sceneAudios ?? []).filter(
-          (a) => a.audioUrl && (a.audioUrl.startsWith("http") || a.audioUrl.startsWith("data:"))
+          (a) => typeof a.audioUrl === "string" && (a.audioUrl.startsWith("http") || a.audioUrl.startsWith("data:"))
         );
-        const hasVideo = videoUrl && videoUrl.startsWith("http") && !videoUrl.startsWith("mock://");
+        const hasVideo = typeof videoUrl === "string" && videoUrl.startsWith("http") && !videoUrl.startsWith("mock://");
         const realSceneVideos = (sceneVideos ?? []).filter(
-          (v) => v.videoUrl && v.videoUrl.startsWith("http"),
+          (v) => typeof v.videoUrl === "string" && v.videoUrl.startsWith("http"),
         );
 
         return (
@@ -582,10 +588,7 @@ export default function GenerationDetail({ pkg, niche, sceneImages, sceneAudios,
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {realSceneVideos.map((vid, i) => {
-                  const char = characters.find((c) => {
-                    const cid = c.id ?? "";
-                    return cid && vid.sceneId && vid.sceneId.includes(cid);
-                  });
+                  const char = characters.find((c) => strIncludes(vid.sceneId, c.id ?? ""));
                   return (
                     <div
                       key={i}
@@ -627,10 +630,7 @@ export default function GenerationDetail({ pkg, niche, sceneImages, sceneAudios,
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {realImages.map((img, i) => {
-                  const char = characters.find((c) => {
-                    const cid = c.id ?? "";
-                    return cid && img.sceneId && img.sceneId.includes(cid);
-                  });
+                  const char = characters.find((c) => strIncludes(img.sceneId, c.id ?? ""));
                   return (
                     <a
                       key={i}
@@ -675,9 +675,7 @@ export default function GenerationDetail({ pkg, niche, sceneImages, sceneAudios,
                 {realAudios.map((audio, i) => {
                   const char = characters.find((c) => {
                     const cid = c.id ?? "";
-                    if (!cid) return false;
-                    return (audio.objectId && audio.objectId.includes(cid)) ||
-                           (audio.sceneId && audio.sceneId.includes(cid));
+                    return strIncludes(audio.objectId, cid) || strIncludes(audio.sceneId, cid);
                   });
                   return (
                     <div key={i} className="flex items-center gap-3 bg-viral-bg/60 rounded-lg p-3 border border-viral-border/30">
@@ -753,7 +751,7 @@ export default function GenerationDetail({ pkg, niche, sceneImages, sceneAudios,
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {characters.map((char, i) => {
                 const charId = char.id ?? `char-${i}`;
-                const charImage = realImages.find((img) => charId && img.sceneId && img.sceneId.includes(charId));
+                const charImage = realImages.find((img) => strIncludes(img.sceneId, charId));
                 return (
                   <div key={i} className="bg-viral-bg/60 rounded-lg overflow-hidden border border-viral-border/30">
                     {charImage ? (
