@@ -42,6 +42,20 @@ interface SceneVideo {
   durationMs: number;
 }
 
+interface QueueItem {
+  sceneId: string;
+  sceneType: string;
+  requestId: string | null;
+  imageUrl: string;
+  promptPreview: string;
+  status: "IN_QUEUE" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "SUBMIT_FAILED";
+  videoUrl?: string;
+  error?: string;
+  submittedAt: string;
+  completedAt?: string;
+  durationMs?: number;
+}
+
 const STEPS: { key: WizardStep; label: string; icon: string }[] = [
   { key: "input", label: "Tema", icon: "1" },
   { key: "images", label: "Imagens", icon: "2" },
@@ -78,8 +92,10 @@ export default function AppGeneratePage() {
   // Etapa 4: Áudio
   const [audios, setAudios] = useState<GeneratedAudio[]>([]);
 
-  // Etapa 5: Vídeo
+  // Etapa 5: Vídeo (queue async + polling)
   const [videos, setVideos] = useState<SceneVideo[]>([]);
+  const [videoQueue, setVideoQueue] = useState<QueueItem[]>([]);
+  const [videoPolling, setVideoPolling] = useState(false);
   const [videoReport, setVideoReport] = useState<RenderReport | null>(null);
   const [videoProvider, setVideoProvider] = useState<string | null>(null);
 
@@ -250,11 +266,15 @@ export default function AppGeneratePage() {
     }
   }
 
-  // ─── Etapa 4 → 5: Aprovar áudio, gerar vídeo ──────────────────
+  // ─── Etapa 4 → 5: Submeter jobs à fila Fal, avançar UI, iniciar polling
   async function handleApproveAudioAndGenerateVideo() {
+    if (!generationId) {
+      setError("generation_id ausente. Recomece a geração.");
+      return;
+    }
     setLoading(true);
     setError(null);
-    setStatus("Gerando vídeos com lip sync...");
+    setStatus("Enviando cenas à fila do Veo 3...");
 
     try {
       const res = await fetch("/api/app/generate-video", {
@@ -267,19 +287,76 @@ export default function AppGeneratePage() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Erro ao gerar vídeo");
+      // Expected: 202 Accepted with queue_items
+      if (res.status !== 202 && !res.ok) {
+        throw new Error(data.error || "Erro ao submeter vídeo");
+      }
 
-      setVideos(data.scene_videos ?? []);
-      setVideoReport(data.report ?? null);
-      setVideoProvider(data.provider ?? null);
+      setVideoQueue(data.queue_items ?? []);
+      setVideoProvider("fal");
+      setVideos([]);
+      setVideoReport(null);
       setStatus(null);
       setStep("video");
+      // Inicia polling em background
+      startVideoStatusPolling(generationId);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
       setStatus(null);
     } finally {
       setLoading(false);
     }
+  }
+
+  // Polling a cada 10s até todos os jobs terminarem (ou erro/unmount)
+  function startVideoStatusPolling(genId: string) {
+    setVideoPolling(true);
+    let stopped = false;
+
+    const poll = async () => {
+      if (stopped) return;
+      try {
+        const res = await fetch(`/api/app/video-status?generation_id=${encodeURIComponent(genId)}`);
+        const data = await res.json();
+        if (!res.ok) {
+          console.warn("[poll] error:", data);
+          return;
+        }
+
+        setVideoQueue(data.items ?? []);
+        setVideos(data.scene_videos ?? []);
+
+        if (data.status === "completed" || data.status === "failed") {
+          stopped = true;
+          setVideoPolling(false);
+          // Atualizar report retrocompatível para o DebugPanel existente
+          setVideoReport({
+            scenes_requested: data.total ?? 0,
+            scenes_rendered: data.completed ?? 0,
+            total_cost_usd: (data.completed ?? 0) * 1.2, // estimativa (Veo3 Fast 8s ≈ $1.20)
+            elapsed_ms: 0,
+            scene_reports: (data.items ?? []).map((i: QueueItem) => ({
+              sceneId: i.sceneId,
+              sceneType: i.sceneType,
+              status: i.status === "COMPLETED" ? "success"
+                : i.status === "FAILED" || i.status === "SUBMIT_FAILED" ? "failed"
+                : "skipped",
+              videoUrl: i.videoUrl,
+              durationMs: i.durationMs,
+              error: i.error,
+              promptPreview: i.promptPreview,
+            })),
+          });
+          return;
+        }
+      } catch (err) {
+        console.warn("[poll] network error:", err);
+      }
+
+      if (!stopped) setTimeout(poll, 10000);
+    };
+
+    setTimeout(poll, 3000); // primeiro poll após 3s (dá tempo do Fal enfileirar)
   }
 
   // ─── Etapa 5 → 6: Ir para música ──────────────────────────────
@@ -642,32 +719,86 @@ export default function AppGeneratePage() {
         </div>
       )}
 
-      {/* ═══ ETAPA 5: VÍDEOS GERADOS ═══ */}
+      {/* ═══ ETAPA 5: VÍDEOS GERADOS (queue async + polling) ═══ */}
       {step === "video" && (
         <div className="space-y-5">
-          {videoReport && <DebugPanel report={videoReport} provider={videoProvider ?? undefined} />}
+          {/* Banner de progresso enquanto polling */}
+          {videoPolling && (
+            <div className="card p-4 border-viral-accent/40 bg-viral-accent/5">
+              <div className="flex items-center gap-3">
+                <span className="w-4 h-4 border-2 border-viral-accent border-t-transparent rounded-full animate-spin" />
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-viral-text">
+                    Renderizando no Veo 3 Fast...
+                  </div>
+                  <div className="text-[10px] text-viral-muted mt-0.5">
+                    {videoQueue.filter((q) => q.status === "COMPLETED").length}/{videoQueue.length} cenas prontas
+                    · ~1-3 min por cena · atualizando a cada 10s
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Grid de status por cena (aparece sempre que há queue) */}
+          {videoQueue.length > 0 && (
+            <div className="card p-5">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-viral-muted mb-3">
+                Status por cena ({videoQueue.length})
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {videoQueue.map((q, i) => {
+                  const statusConfig: Record<typeof q.status, { label: string; cls: string; icon: string }> = {
+                    IN_QUEUE: { label: "Na fila", cls: "bg-viral-border/10 text-viral-muted border-viral-border/40", icon: "⏳" },
+                    IN_PROGRESS: { label: "Renderizando", cls: "bg-amber-500/10 text-amber-400 border-amber-500/30", icon: "🎬" },
+                    COMPLETED: { label: "Pronto", cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30", icon: "✓" },
+                    FAILED: { label: "Falhou", cls: "bg-red-500/10 text-red-400 border-red-500/30", icon: "✗" },
+                    SUBMIT_FAILED: { label: "Erro ao enviar", cls: "bg-red-500/10 text-red-400 border-red-500/30", icon: "✗" },
+                  };
+                  const cfg = statusConfig[q.status];
+                  const isSuccess = q.status === "COMPLETED" && q.videoUrl;
+
+                  return (
+                    <div key={i} className={`rounded-lg border overflow-hidden ${cfg.cls}`}>
+                      {isSuccess ? (
+                        // eslint-disable-next-line jsx-a11y/media-has-caption
+                        <video controls src={q.videoUrl} className="w-full aspect-[9/16] object-cover" preload="metadata" />
+                      ) : (
+                        <div className="w-full aspect-[9/16] bg-viral-bg/60 flex flex-col items-center justify-center gap-2 p-4">
+                          <span className="text-3xl">{cfg.icon}</span>
+                          <span className="text-xs font-semibold uppercase tracking-wider">{cfg.label}</span>
+                          {q.status === "IN_PROGRESS" && (
+                            <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                          )}
+                          {q.error && (
+                            <span className="text-[9px] text-center opacity-80 mt-1 break-all">{q.error.slice(0, 120)}</span>
+                          )}
+                        </div>
+                      )}
+                      <div className="p-2 bg-viral-bg/60 flex items-center gap-2">
+                        <span className="text-[10px] font-semibold uppercase">{q.sceneType}</span>
+                        <span className="text-[9px] text-viral-muted truncate">{q.sceneId}</span>
+                        {q.durationMs && q.status === "COMPLETED" && (
+                          <span className="text-[9px] text-viral-muted ml-auto">{(q.durationMs / 1000).toFixed(0)}s</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {videoReport && !videoPolling && <DebugPanel report={videoReport} provider={videoProvider ?? undefined} />}
 
           <div className="card p-5">
-            <h2 className="text-lg font-bold mb-1">Vídeos gerados com lip sync</h2>
+            <h2 className="text-lg font-bold mb-1">Vídeos finais</h2>
             <p className="text-xs text-viral-muted mb-4">
-              Cada cena foi animada com lip sync via IA. Revise os vídeos abaixo.
+              {videoPolling
+                ? "Cenas ainda em processamento. Os vídeos aprovados aparecerão aqui assim que ficarem prontos."
+                : "Cada cena foi animada com lip sync via IA."}
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {videos
-                .filter((v) => typeof v.videoUrl === "string" && v.videoUrl.startsWith("http"))
-                .map((vid, i) => (
-                  <div key={i} className="rounded-lg overflow-hidden border border-viral-border/40">
-                    {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-                    <video controls src={vid.videoUrl} className="w-full aspect-[9/16] object-cover" preload="metadata" />
-                    <div className="p-2 bg-viral-bg/60 text-center">
-                      <span className="text-[10px] text-viral-muted uppercase">
-                        {vid.sceneType} · {(vid.durationMs / 1000).toFixed(1)}s
-                      </span>
-                    </div>
-                  </div>
-                ))}
-            </div>
-            {videos.filter((v) => typeof v.videoUrl === "string" && v.videoUrl.startsWith("http")).length === 0 && (
+            {videos.filter((v) => typeof v.videoUrl === "string" && v.videoUrl.startsWith("http")).length === 0 && !videoPolling && (
               <div className="text-center text-viral-muted py-8 space-y-3">
                 <p>Nenhum vídeo gerado ainda.</p>
                 <p className="text-[10px] text-viral-muted/70">
