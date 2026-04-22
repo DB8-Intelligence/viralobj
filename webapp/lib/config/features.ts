@@ -5,18 +5,22 @@
  * Ativar em .env.local (dev) ou Vercel Dashboard (prod).
  */
 
+// Tolera espaços/newlines acidentais em env vars (Vercel UI cola "true\n"
+// quando o usuário copia com line ending, e comparação strict quebra).
 function envBool(key: string, fallback = false): boolean {
-  const v = process.env[key];
-  if (v === undefined) return fallback;
-  return v === 'true' || v === '1';
+  const v = process.env[key]?.trim();
+  if (!v) return fallback;
+  const normalized = v.toLowerCase();
+  return normalized === 'true' || normalized === '1' || normalized === 'yes';
 }
 
 function envString<T extends string>(key: string, fallback: T): T {
-  return (process.env[key] as T) || fallback;
+  const v = process.env[key]?.trim();
+  return (v as T) || fallback;
 }
 
 function envInt(key: string, fallback: number): number {
-  const v = process.env[key];
+  const v = process.env[key]?.trim();
   if (!v) return fallback;
   const n = parseInt(v, 10);
   return Number.isNaN(n) ? fallback : n;

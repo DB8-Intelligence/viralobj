@@ -48,7 +48,11 @@ export default async function HistoryPage() {
               variations?: Array<{ title_pt?: string; title_en?: string; hook_pt?: string; hook_en?: string; objects?: string[]; description_pt?: string; description_en?: string; tone?: string }>;
             };
 
-            const sceneImages = (g as unknown as { scene_images?: Array<{ sceneId: string; imageUrl: string; sceneType: string }> | null }).scene_images;
+            const rawSceneImages = (g as unknown as { scene_images?: Array<{ sceneId: string; imageUrl: string; sceneType: string }> | null }).scene_images;
+            const approvedImages = (g as unknown as { approved_images?: string[] | null }).approved_images;
+            const sceneImages = Array.isArray(approvedImages) && approvedImages.length > 0
+              ? (rawSceneImages ?? []).filter((img) => approvedImages.includes(img.sceneId))
+              : rawSceneImages;
             const sceneAudios = (g as unknown as { scene_audios?: Array<{ sceneId: string; audioUrl: string; sceneType: string; objectId: string; durationMs: number }> | null }).scene_audios;
             const sceneVideos = (g as unknown as { scene_videos?: Array<{ sceneId: string; sceneType: string; videoUrl: string; durationMs: number }> | null }).scene_videos;
             const videoUrl = (g as unknown as { video_url?: string | null }).video_url;
