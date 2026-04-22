@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
         sceneId: `${charId}-audio`,
         sceneType: "dialogue",
         text: script,
+        generationId: generation_id,
       });
     }
 
@@ -79,6 +80,12 @@ export async function POST(req: NextRequest) {
     );
 
     const sceneAudios = await generateSceneAudios(audioInputs);
+    const uploadedCount = sceneAudios.filter((a) =>
+      typeof a.audioUrl === "string" && a.audioUrl.startsWith("http"),
+    ).length;
+    console.log(
+      `[generate-audio] ${uploadedCount}/${sceneAudios.length} áudios com URL pública (storage upload OK)`,
+    );
 
     // Salvar no banco
     await svc

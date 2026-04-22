@@ -4,6 +4,7 @@ import {
   TTS_PROVIDER,
   LOG_COSTS,
 } from "../config/features";
+import { uploadAudioToStorage } from "./storage";
 
 export type SceneType = "intro" | "dialogue" | "reaction" | "cta";
 export type AudioProvider = "mock" | "minimax" | "elevenlabs";
@@ -24,6 +25,9 @@ export interface GenerateSceneAudioInput {
   sceneId: string;
   sceneType: SceneType;
   text: string;
+  /** When provided, ElevenLabs audio is uploaded to Supabase Storage
+   *  instead of returned as a data: URI (required for Veo 3 image-to-video). */
+  generationId?: string;
 }
 
 export type SceneAudioInput = GenerateSceneAudioInput;
@@ -121,18 +125,24 @@ async function generateWithElevenLabs(input: GenerateSceneAudioInput): Promise<{
     throw new Error(`[TTS] ElevenLabs API error ${response.status}: ${errText}`);
   }
 
-  // ElevenLabs retorna audio binary — convertemos para data URL temporaria
-  // Em producao, fazer upload para Supabase Storage
   const audioBuffer = await response.arrayBuffer();
-  const base64 = Buffer.from(audioBuffer).toString('base64');
-  const audioUrl = `data:audio/mpeg;base64,${base64}`;
+
+  // Upload to Supabase Storage so downstream (Veo 3) gets an HTTP URL,
+  // not a data: URI that image-to-video providers reject.
+  const uploaded = await uploadAudioToStorage({
+    generationId: input.generationId ?? "standalone",
+    sceneId: input.sceneId,
+    buffer: audioBuffer,
+    contentType: "audio/mpeg",
+  });
 
   // Estimar duracao pelo tamanho (MP3 ~128kbps = 16KB/s)
-  const fileSizeBytes = audioBuffer.byteLength;
-  const estimatedDurationMs = Math.round((fileSizeBytes / 16000) * 1000);
+  const estimatedDurationMs = Math.round((uploaded.sizeBytes / 16000) * 1000);
 
-  console.log(`[TTS] ElevenLabs OK scene=${input.sceneId} size=${fileSizeBytes}b ~${Math.round(estimatedDurationMs / 1000)}s`);
-  return { url: audioUrl, durationMs: estimatedDurationMs || estimateDurationMs(input.text) };
+  console.log(
+    `[TTS] ElevenLabs OK scene=${input.sceneId} size=${uploaded.sizeBytes}b ~${Math.round(estimatedDurationMs / 1000)}s (storage=${uploaded.storedInBucket})`,
+  );
+  return { url: uploaded.url, durationMs: estimatedDurationMs || estimateDurationMs(input.text) };
 }
 
 export async function generateSceneAudio(

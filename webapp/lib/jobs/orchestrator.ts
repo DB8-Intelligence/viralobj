@@ -291,10 +291,15 @@ export class JobOrchestrator {
 
       await this.jobService.updateJob(jobId, { status: 'completed', progress: 100 });
     } catch (err: any) {
+      const errMsg = err?.message ?? String(err);
       await this.jobService
-        .updateJob(jobId, { status: 'failed' })
+        .updateJob(jobId, { status: 'failed', error: errMsg })
         .catch(() => {});
       console.error(`[JobOrchestrator] job ${jobId} failed:`, err);
+      // Propagar para a rota chamadora decidir como responder ao cliente.
+      // Antes: erro era silenciado e rota retornava 200 OK com job_status="failed",
+      // fazendo o wizard avançar para steps sem dados.
+      throw err;
     }
   }
 }

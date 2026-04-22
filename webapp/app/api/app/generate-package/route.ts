@@ -192,6 +192,7 @@ export async function POST(req: NextRequest) {
 
     let jobId: string | null = null;
     let jobStatus: string = "pending";
+    let jobError: string | null = null;
     let sceneImagesResult: unknown[] = [];
 
     try {
@@ -237,10 +238,31 @@ export async function POST(req: NextRequest) {
       }
     } catch (jobErr) {
       jobStatus = "failed";
+      jobError = jobErr instanceof Error ? jobErr.message : String(jobErr);
       console.error(`[generate-package ${reqId}] orchestrator failed:`, jobErr);
     }
 
-    // Atualizar pipeline_step se wizard mode
+    // Em modo wizard, falha do orchestrator é bloqueante — cliente precisa
+    // saber para não avançar o wizard para um step sem dados.
+    if (isWizardMode && jobStatus === "failed") {
+      await svc
+        .from("generations")
+        .update({ pipeline_step: "failed" })
+        .eq("id", saved.id)
+        .catch(() => {});
+      return NextResponse.json(
+        {
+          error: `Pipeline falhou: ${jobError ?? "erro desconhecido"}`,
+          reqId,
+          generation_id: saved.id,
+          job_id: jobId,
+          job_status: jobStatus,
+        },
+        { status: 500 },
+      );
+    }
+
+    // Atualizar pipeline_step se wizard mode (sucesso)
     if (isWizardMode) {
       await svc
         .from("generations")
@@ -253,6 +275,7 @@ export async function POST(req: NextRequest) {
       generation_id: saved.id,
       job_id: jobId,
       job_status: jobStatus,
+      job_error: jobError,
       scene_images: sceneImagesResult,
       usage: {
         used: used + 1,

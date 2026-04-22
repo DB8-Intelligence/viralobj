@@ -3,7 +3,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { renderVideo } from "@/lib/viral-objects/video-render.service";
 
 export const runtime = "nodejs";
-export const maxDuration = 300; // 5min para VEED Fabric
+export const maxDuration = 800; // Veo 3 Fast: ~1-2min/cena × 4 cenas + overhead; Vercel Pro permite até 800s
 
 /**
  * Gera vídeos com lip sync para imagens e áudios aprovados pelo usuário.
