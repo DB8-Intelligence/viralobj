@@ -61,7 +61,10 @@ export async function POST(req: NextRequest) {
     const chars = pkg.characters ?? [];
 
     for (const char of chars) {
-      const charId = char.id ?? char.name_pt ?? "";
+      // Normalizar: LLM pode retornar id como number (1) ou string ("Cacto-plantas").
+      // Sempre usar string para matching consistente com scene_images.objectId.
+      const rawId = char.id ?? char.name_pt ?? "";
+      const charId = typeof rawId === "string" ? rawId : String(rawId);
       const script = edited_scripts?.[charId] ?? char.voice_script_pt ?? "";
       if (!script) continue;
 
