@@ -17,13 +17,13 @@ export async function SiteShell({ children }: { children: React.ReactNode }) {
             <span>ViralObj</span>
           </Link>
           <div className="flex items-center gap-6 text-sm">
-            <Link href="/#how-it-works" className="hidden md:inline text-viral-muted hover:text-viral-text">
+            <Link href="/#how" className="hidden md:inline text-viral-muted hover:text-viral-text">
               Como funciona
             </Link>
             <Link href="/#pricing" className="hidden md:inline text-viral-muted hover:text-viral-text">
               Preços
             </Link>
-            <Link href="/#niches" className="hidden md:inline text-viral-muted hover:text-viral-text">
+            <Link href="/niches" className="hidden md:inline text-viral-muted hover:text-viral-text">
               Nichos
             </Link>
             <Link href="/#faq" className="hidden md:inline text-viral-muted hover:text-viral-text">

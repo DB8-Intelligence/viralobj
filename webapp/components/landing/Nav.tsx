@@ -11,9 +11,9 @@ export function Nav() {
         </Link>
 
         <div className="nav-links">
-          <a href="#features">Recursos</a>
-          <a href="#gallery">Personagens</a>
+          <a href="#how">Como funciona</a>
           <a href="#pricing">Preços</a>
+          <Link href="/niches">Nichos</Link>
           <a href="#faq">FAQ</a>
         </div>
 
