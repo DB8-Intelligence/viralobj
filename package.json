@@ -1,23 +1,35 @@
 {
   "name": "viralobj-mcp",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "ViralObj — Talking Object Viral Reel Generator · viralobj.com",
   "type": "module",
-  "main": "mcp/index.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node mcp/index.js",
-    "dev": "node --watch mcp/index.js",
-    "test": "node -e \"import('./mcp/tools/niches.js').then(m => m.listNiches()).then(r => console.log(r.content[0].text))\""
+    "start": "node server.js",
+    "start:mcp": "node mcp/index.js",
+    "dev": "node --watch server.js",
+    "dev:mcp": "node --watch mcp/index.js",
+    "test": "node -e \"import('./mcp/tools/niches.js').then(m => m.listNiches()).then(r => console.log(r.content[0].text))\"",
+    "test:bridge": "node -e \"import('./server.js').then(() => console.log('server.js loads OK'))\""
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",
     "@fal-ai/client": "^1.3.0",
-    "@modelcontextprotocol/sdk": "^1.0.0"
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.1"
   },
   "engines": {
     "node": ">=18.0.0"
   },
-  "keywords": ["talking-object", "viral-reels", "instagram", "ai-content", "viralobj"],
+  "keywords": [
+    "talking-object",
+    "viral-reels",
+    "instagram",
+    "ai-content",
+    "viralobj",
+    "gemini-enterprise"
+  ],
   "author": "ViralObj · viralobj.com",
   "license": "MIT"
 }
