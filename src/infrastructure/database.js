@@ -168,6 +168,65 @@ export async function ensureProfessional({ email, fullName = null, profession = 
   return rows[0];
 }
 
+// ─── videos: updates + queries ─────────────────────────────────────────────
+
+// Columns we allow to be patched via updateVideoByRequestId. Anything else
+// is silently dropped (defense against accidental SQL injection through
+// dynamic key names).
+const VIDEO_PATCH_COLUMNS = new Set([
+  "video_url",
+  "image_url",
+  "status",
+  "error",
+  "duration_ms",
+  "cost_usd",
+  "provider",
+]);
+
+/**
+ * Patch a videos row identified by its Fal queue request_id. Used by the
+ * /api/reel/:history_id/status polling to flip status pending → processing
+ * → completed and store the final GCS URL.
+ *
+ * @param {string} requestId
+ * @param {Partial<{video_url,image_url,status,error,duration_ms,cost_usd,provider}>} patch
+ * @returns {Promise<object|null>} the updated row, or null if no row matched
+ */
+export async function updateVideoByRequestId(requestId, patch) {
+  if (!requestId) throw new Error("updateVideoByRequestId: requestId required");
+  const entries = Object.entries(patch).filter(([k]) => VIDEO_PATCH_COLUMNS.has(k));
+  if (entries.length === 0) return null;
+
+  const sets = entries.map(([k], i) => `${k} = $${i + 2}`).join(", ");
+  const values = entries.map(([, v]) => v);
+  const { rows } = await query(
+    `UPDATE videos
+        SET ${sets}, updated_at = now()
+      WHERE request_id = $1
+      RETURNING id, generation_id, scene_id, scene_type, video_url, status, error, duration_ms, cost_usd, provider, request_id, created_at, updated_at`,
+    [requestId, ...values],
+  );
+  return rows[0] ?? null;
+}
+
+/**
+ * All video rows for a given generation (1 user_history row → N videos).
+ * Ordered by created_at so the UI shows them in submission order.
+ */
+export async function getVideosByGenerationId(generationId) {
+  if (!generationId) throw new Error("getVideosByGenerationId: generationId required");
+  const { rows } = await query(
+    `SELECT id, user_id, generation_id, scene_id, scene_type,
+            video_url, image_url, duration_ms, provider, request_id,
+            status, error, cost_usd, created_at, updated_at
+       FROM videos
+      WHERE generation_id = $1
+      ORDER BY created_at ASC`,
+    [generationId],
+  );
+  return rows;
+}
+
 // ─── niches ────────────────────────────────────────────────────────────────
 
 /**
@@ -331,6 +390,8 @@ export default {
   query,
   ping,
   saveVideo,
+  updateVideoByRequestId,
+  getVideosByGenerationId,
   getNiches,
   countNiches,
   bulkInsertNiches,

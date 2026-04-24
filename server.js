@@ -17,9 +17,32 @@
 import "dotenv/config";
 import express from "express";
 import { pathToFileURL } from "url";
+import { fal } from "@fal-ai/client";
 import { generatePackage } from "./mcp/tools/generate.js";
 import { listNiches, NICHES } from "./mcp/tools/niches.js";
 import db from "./src/infrastructure/database.js";
+import storage from "./src/infrastructure/storage.js";
+
+// Fal.ai Veo 3 model endpoint. Default is text-to-video ("fal-ai/veo3/fast")
+// so the bridge can render a reel from just the generated package without
+// needing a pre-generated image. Override to
+// "fal-ai/veo3/fast/image-to-video" if the caller supplies image URLs.
+const VEO_ENDPOINT = process.env.FAL_VIDEO_ENDPOINT || "fal-ai/veo3/fast";
+const VEO_DURATION = process.env.FAL_VIDEO_DURATION || "8s";
+const MAX_RENDER_SCENES = parseInt(process.env.FAL_VIDEO_MAX_SCENES || "4", 10);
+
+// Lazy Fal client config: credentials are read from FAL_KEY at first use,
+// trimmed defensively (Vercel / Railway occasionally paste values with
+// trailing newline, which breaks HTTP auth).
+let falConfigured = false;
+function configureFalOnce() {
+  if (falConfigured) return true;
+  const key = process.env.FAL_KEY?.trim();
+  if (!key) return false;
+  fal.config({ credentials: key });
+  falConfigured = true;
+  return true;
+}
 
 // Runtime flag tracking whether we've attempted the DB-empty → in-memory
 // seed during this process lifetime. Keeps us from stampeding seeds when
@@ -33,6 +56,34 @@ app.use(express.json({ limit: "1mb" }));
 const PORT = process.env.PORT || 3001;
 
 // ─── Middleware: auth via X-Gemini-Key ────────────────────────────────────
+
+/**
+ * Build a Veo 3 prompt from a character card in the generated package.
+ * Combines visual description (ai_prompt_midjourney) with first-person
+ * speech (voice_script_pt) and a scene direction derived from scene_type.
+ */
+function buildVeoPrompt({ character, sceneType, niche, tone }) {
+  const visual =
+    character.ai_prompt_midjourney ??
+    `Animated ${character.name_pt || character.name_en || "object"} character in Disney/Pixar 3D style`;
+  const speech = character.voice_script_pt?.trim() ?? "";
+  const direction =
+    sceneType === "intro"
+      ? "Static medium shot, looking directly at camera with confident expression"
+      : sceneType === "dialogue"
+        ? "Expressive gesturing while speaking, emotional emphasis"
+        : sceneType === "reaction"
+          ? "Strong facial reaction — shock, indignation, or realization"
+          : "Closing call-to-action with warm smile and inviting gesture";
+
+  const moodTag = tone ? ` ${tone} tone.` : "";
+  const setting = `Cozy Brazilian setting, warm golden hour cinematic lighting, 9:16 vertical, 8K.${moodTag}`;
+
+  if (speech) {
+    return `${visual}. ${direction}. The character speaks directly to camera in Brazilian Portuguese, saying: "${speech}". ${setting} Niche: ${niche}.`;
+  }
+  return `${visual}. ${direction}. Subtle idle animation — breathing, blinking, micro-expressions. ${setting} Niche: ${niche}.`;
+}
 
 function requireGeminiKey(req, res, next) {
   const expected = process.env.GEMINI_AGENT_TOKEN;
@@ -203,10 +254,8 @@ app.post("/api/generate-reel", requireGeminiKey, async (req, res) => {
     // Persist to DB best-effort. DB failure must NOT affect the API response —
     // the package was generated successfully and the user should receive it.
     let persisted = { saved: false, reason: null, id: null };
+    let professionalId = null;
     try {
-      // Resolve a professional id. If caller supplied user_email, upsert them.
-      // Otherwise fall back to a synthetic "system" professional so history
-      // is still recorded (useful for Gemini Agent calls without user context).
       const resolvedEmail = typeof user_email === "string" && user_email.trim()
         ? user_email.trim().toLowerCase()
         : "system@viralobj.bridge";
@@ -219,6 +268,7 @@ app.post("/api/generate-reel", requireGeminiKey, async (req, res) => {
         fullName: resolvedName,
         profession: niche,
       });
+      professionalId = professional.id;
 
       const historyRow = await db.saveUserHistory({
         userId: professional.id,
@@ -232,28 +282,127 @@ app.post("/api/generate-reel", requireGeminiKey, async (req, res) => {
 
       persisted = { saved: true, reason: null, id: historyRow.id };
     } catch (err) {
-      // Never throw from here. Log and attach reason to the response so the
-      // caller knows the package was generated but not recorded.
       const msg = err?.message ?? String(err);
       console.warn("[/api/generate-reel] persistence skipped:", msg);
       persisted = { saved: false, reason: msg, id: null };
     }
 
-    res.json({
+    // ── Video render pipeline ──────────────────────────────────────────
+    // Submit each character to the Fal queue asynchronously. We can ONLY
+    // do this when we have a history_id (FK from videos.generation_id);
+    // if persistence failed we return the text package without video jobs.
+    //
+    // Each submit takes <1s — no risk of Vercel/Cloud Run timeout. The
+    // Fal render itself (~1-3 min/scene) happens in Fal's workers and is
+    // retrieved asynchronously by the /api/reel/:id/status endpoint.
+    const historyId = persisted.id;
+    const falAvailable = configureFalOnce();
+    let videoJobs = [];
+    let renderSkipReason = null;
+
+    if (!historyId) {
+      renderSkipReason = "DB persistence failed — cannot link video rows (FK videos.generation_id)";
+    } else if (!falAvailable) {
+      renderSkipReason = "FAL_KEY not configured — video render disabled";
+    } else {
+      const characters = Array.isArray(result.package?.characters)
+        ? result.package.characters
+        : [];
+      const scenes = characters.slice(0, MAX_RENDER_SCENES);
+
+      videoJobs = await Promise.all(
+        scenes.map(async (character, idx) => {
+          const sceneType =
+            idx === 0
+              ? "intro"
+              : idx === scenes.length - 1 && scenes.length > 1
+                ? "cta"
+                : "dialogue";
+          const sceneId = `${historyId}:${idx}:${sceneType}`;
+          const prompt = buildVeoPrompt({ character, sceneType, niche, tone });
+
+          try {
+            const submitted = await fal.queue.submit(VEO_ENDPOINT, {
+              input: {
+                prompt,
+                aspect_ratio: "9:16",
+                duration: VEO_DURATION,
+                resolution: "720p",
+                generate_audio: true,
+              },
+            });
+
+            // Persist a "pending" video row so the status endpoint can
+            // track it even if this process restarts before the poll.
+            try {
+              await db.saveVideo({
+                userId: professionalId,
+                generationId: historyId,
+                sceneId,
+                sceneType,
+                videoUrl: null,
+                imageUrl: null,
+                provider: "fal",
+                requestId: submitted.request_id,
+                status: "pending",
+              });
+            } catch (dbErr) {
+              console.warn(
+                `[/api/generate-reel] saveVideo failed for ${sceneId}:`,
+                dbErr?.message ?? dbErr,
+              );
+            }
+
+            return {
+              scene_id: sceneId,
+              scene_type: sceneType,
+              request_id: submitted.request_id,
+              status: "pending",
+              prompt_preview: prompt.slice(0, 160),
+            };
+          } catch (err) {
+            const msg = err?.message ?? String(err);
+            console.warn(
+              `[/api/generate-reel] Fal submit failed for ${sceneId}:`,
+              msg,
+            );
+            return {
+              scene_id: sceneId,
+              scene_type: sceneType,
+              status: "submit_failed",
+              error: msg,
+            };
+          }
+        }),
+      );
+    }
+
+    const hasProcessing = videoJobs.some((j) => j.status === "pending");
+    const renderStatus = hasProcessing
+      ? "processing"
+      : videoJobs.length === 0
+        ? "text_only"
+        : "failed";
+
+    const pollUrl = hasProcessing && historyId
+      ? `/api/reel/${encodeURIComponent(historyId)}/status`
+      : null;
+
+    res.status(hasProcessing ? 202 : 200).json({
       success: true,
       elapsed_ms: Date.now() - startedAt,
       provider_used: result.result?.provider_used,
       package: result.package,
       summary: result.content?.[0]?.text,
-      // history_id doubles as generation_id and is what the caller uses
-      // to look up this row in user_history / videos later. null if DB
-      // persistence failed (persisted.saved === false).
-      history_id: persisted.id,
-      // video_url will be the durable GCS URL once the full render
-      // pipeline lands. Null today — the current endpoint only produces
-      // the text package; a future queue-backed step will populate this
-      // by streaming the Fal/Veo 3 output through uploadFromUrl().
+      history_id: historyId,
+      // video_url is null at this point. Poll /api/reel/{history_id}/status
+      // every ~10s; the first scene's durable GCS URL appears there once
+      // Fal finishes and the bridge mirrors the MP4 into gs://viralobj-assets.
       video_url: null,
+      render_status: renderStatus,
+      render_skip_reason: renderSkipReason,
+      video_jobs: videoJobs,
+      poll_url: pollUrl,
       persisted,
     });
   } catch (err) {
@@ -261,6 +410,190 @@ app.post("/api/generate-reel", requireGeminiKey, async (req, res) => {
     res.status(500).json({
       success: false,
       elapsed_ms: Date.now() - startedAt,
+      error: err?.message || String(err),
+    });
+  }
+});
+
+/**
+ * GET /api/reel/:history_id/status
+ *
+ * Polling endpoint the Gemini Agent (or any client) calls every ~10s after
+ * /api/generate-reel returns 202. For each videos row that is still
+ * pending/processing:
+ *
+ *   1. Ask Fal for the queue status (IN_QUEUE | IN_PROGRESS | COMPLETED | FAILED).
+ *   2. On COMPLETED: fetch the result, stream the Fal CDN URL straight into
+ *      gs://viralobj-assets/videos/<history_id>/<scene_id>.mp4 via
+ *      storage.uploadFromUrl(), then UPDATE the row with the durable GCS URL.
+ *   3. On FAILED: mark the row failed with the error message.
+ *
+ * The endpoint is idempotent — re-calling after completion just reads rows.
+ */
+app.get("/api/reel/:history_id/status", requireGeminiKey, async (req, res) => {
+  const { history_id } = req.params;
+  const startedAt = Date.now();
+
+  try {
+    // 1) Read current video rows.
+    let videos;
+    try {
+      videos = await db.getVideosByGenerationId(history_id);
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        error: "DB unavailable — cannot read video jobs",
+        detail: err?.message ?? String(err),
+      });
+    }
+    if (videos.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: `No video jobs for history_id=${history_id}`,
+      });
+    }
+
+    // 2) For each still-active row, advance status via Fal + upload to GCS.
+    const falReady = configureFalOnce();
+    const updated = await Promise.all(
+      videos.map(async (v) => {
+        // Terminal states short-circuit.
+        if (v.status === "completed" || v.status === "failed") return v;
+        if (!v.request_id) return v;
+        if (!falReady) return v; // no FAL_KEY — leave as pending
+
+        try {
+          const statusRes = await fal.queue.status(VEO_ENDPOINT, {
+            requestId: v.request_id,
+          });
+
+          // IN_QUEUE / IN_PROGRESS → flip to "processing" if not yet.
+          if (statusRes.status === "IN_QUEUE" || statusRes.status === "IN_PROGRESS") {
+            if (v.status !== "processing") {
+              try {
+                const row = await db.updateVideoByRequestId(v.request_id, {
+                  status: "processing",
+                });
+                return row ?? { ...v, status: "processing" };
+              } catch {
+                return { ...v, status: "processing" };
+              }
+            }
+            return v;
+          }
+
+          // COMPLETED → fetch result, upload to GCS, persist final URL.
+          if (statusRes.status === "COMPLETED") {
+            const result = await fal.queue.result(VEO_ENDPOINT, {
+              requestId: v.request_id,
+            });
+            const falUrl =
+              result?.data?.video?.url ??
+              result?.video?.url ??
+              null;
+
+            if (!falUrl) {
+              const row = await db.updateVideoByRequestId(v.request_id, {
+                status: "failed",
+                error: "Fal returned COMPLETED but no video URL in result",
+              });
+              return row ?? { ...v, status: "failed", error: "no_url" };
+            }
+
+            // Stream Fal → GCS. If GCS upload fails (bucket misconfig, quota,
+            // missing creds), fall back to the Fal URL — degraded but usable
+            // for ~7 days.
+            const destination = `videos/${history_id}/${encodeURIComponent(v.scene_id)}.mp4`;
+            let finalUrl = falUrl;
+            let gcsUploaded = false;
+            let gcsError = null;
+            try {
+              const uploaded = await storage.uploadFromUrl(falUrl, destination, {
+                contentType: "video/mp4",
+                metadata: {
+                  history_id,
+                  scene_id: v.scene_id,
+                  scene_type: v.scene_type,
+                  request_id: v.request_id,
+                },
+              });
+              finalUrl = uploaded.url;
+              gcsUploaded = true;
+            } catch (err) {
+              gcsError = err?.message ?? String(err);
+              console.warn(
+                `[/api/reel/${history_id}/status] GCS upload failed for ${v.scene_id}: ${gcsError}. Falling back to Fal URL.`,
+              );
+            }
+
+            const row = await db.updateVideoByRequestId(v.request_id, {
+              status: "completed",
+              video_url: finalUrl,
+              duration_ms: parseInt(VEO_DURATION, 10) * 1000, // "8s" → 8000
+              cost_usd: parseInt(VEO_DURATION, 10) * 0.15,     // Veo 3 Fast: $0.15/s
+              provider: gcsUploaded ? "fal" : "fal",
+            });
+            return row ?? { ...v, status: "completed", video_url: finalUrl };
+          }
+
+          // Any other status → treat as failed (FAILED, CANCELLED, etc.)
+          const errMsg = statusRes.error ?? `Fal status=${statusRes.status}`;
+          const row = await db.updateVideoByRequestId(v.request_id, {
+            status: "failed",
+            error: typeof errMsg === "string" ? errMsg : JSON.stringify(errMsg).slice(0, 300),
+          });
+          return row ?? { ...v, status: "failed", error: String(errMsg) };
+        } catch (err) {
+          // Fal poll itself threw — don't burn the row, let the next poll retry.
+          console.warn(
+            `[/api/reel/${history_id}/status] poll error for ${v.scene_id}:`,
+            err?.message ?? err,
+          );
+          return v;
+        }
+      }),
+    );
+
+    // 3) Aggregate + respond.
+    const completed = updated.filter((v) => v.status === "completed");
+    const pending = updated.filter((v) => v.status === "pending" || v.status === "processing");
+    const failed = updated.filter((v) => v.status === "failed");
+
+    const overall =
+      pending.length > 0
+        ? "processing"
+        : completed.length > 0
+          ? "completed"
+          : "failed";
+
+    res.json({
+      success: true,
+      elapsed_ms: Date.now() - startedAt,
+      history_id,
+      status: overall,
+      progress: {
+        completed: completed.length,
+        pending: pending.length,
+        failed: failed.length,
+        total: updated.length,
+      },
+      // First completed scene's durable URL — the headline result for the
+      // Gemini Agent to hand back to the user.
+      video_url: completed[0]?.video_url ?? null,
+      // Full per-scene breakdown.
+      scene_videos: updated.map((v) => ({
+        scene_id: v.scene_id,
+        scene_type: v.scene_type,
+        status: v.status,
+        video_url: v.video_url ?? null,
+        duration_ms: v.duration_ms,
+        error: v.error ?? null,
+      })),
+    });
+  } catch (err) {
+    console.error(`[/api/reel/${history_id}/status]`, err);
+    res.status(500).json({
+      success: false,
       error: err?.message || String(err),
     });
   }
@@ -370,56 +703,125 @@ function buildOpenApiSpec(baseUrl) {
             },
           },
         },
+        VideoJob: {
+          type: "object",
+          properties: {
+            scene_id: { type: "string", example: "<history_id>:0:intro" },
+            scene_type: { type: "string", enum: ["intro", "dialogue", "reaction", "cta"] },
+            request_id: { type: "string", nullable: true, description: "Fal queue request id." },
+            status: {
+              type: "string",
+              enum: ["pending", "processing", "completed", "failed", "submit_failed"],
+            },
+            prompt_preview: { type: "string", nullable: true },
+            error: { type: "string", nullable: true },
+          },
+        },
+        SceneVideo: {
+          type: "object",
+          properties: {
+            scene_id: { type: "string" },
+            scene_type: { type: "string", enum: ["intro", "dialogue", "reaction", "cta"] },
+            status: { type: "string", enum: ["pending", "processing", "completed", "failed"] },
+            video_url: {
+              type: "string",
+              format: "uri",
+              nullable: true,
+              description: "Durable GCS URL once status=completed.",
+            },
+            duration_ms: { type: "integer", nullable: true },
+            error: { type: "string", nullable: true },
+          },
+        },
         GenerateReelResponse: {
           type: "object",
+          description:
+            "ASYNC response. HTTP 202 when at least one scene was submitted to Fal "
+            + "(status='processing'); HTTP 200 when no render happened (status='text_only' "
+            + "or 'failed'). Poll GET /api/reel/{history_id}/status every ~10s to obtain "
+            + "the final GCS video_url.",
           properties: {
             success: { type: "boolean", example: true },
             elapsed_ms: { type: "integer", example: 8423 },
             provider_used: { type: "string", example: "anthropic" },
             package: {
               type: "object",
-              description:
-                "Full production package: meta, characters[], captions[], post_copy, variations[].",
+              description: "Full production package: meta, characters[], captions[], post_copy, variations[].",
             },
-            summary: { type: "string", description: "Human-readable summary." },
+            summary: { type: "string" },
             history_id: {
               type: "string",
               format: "uuid",
               nullable: true,
               description:
-                "UUID of the user_history row in Postgres. Doubles as generation_id. "
-                + "Use this to look up past generations (enabling the agent to "
-                + "memorize each professional's preferred niches and tones).",
+                "UUID of the user_history row. Doubles as generation_id. Persist this "
+                + "next to the professional's email for future 'memory'-style lookups.",
             },
             video_url: {
               type: "string",
               format: "uri",
               nullable: true,
               description:
-                "Durable Google Cloud Storage URL (gs://viralobj-assets/...) of the "
-                + "rendered reel video. Null while the render pipeline is still text-only; "
-                + "populated once Fal/Veo 3 output is streamed through the bridge's "
-                + "uploadFromUrl() and mirrored to GCS.",
+                "ALWAYS null at this stage — the render is async. Poll /api/reel/{history_id}/status "
+                + "to receive the durable GCS URL when the first scene completes.",
+            },
+            render_status: {
+              type: "string",
+              enum: ["processing", "text_only", "failed"],
+              description:
+                "processing=jobs submitted to Fal; text_only=no render (DB or FAL_KEY missing); failed=all submits failed.",
+            },
+            render_skip_reason: { type: "string", nullable: true },
+            video_jobs: {
+              type: "array",
+              items: { $ref: "#/components/schemas/VideoJob" },
+              description: "One entry per character in package.characters[] (max 4).",
+            },
+            poll_url: {
+              type: "string",
+              nullable: true,
+              description: "Relative URL the client/agent should GET every ~10s until status='completed'.",
             },
             persisted: {
               type: "object",
-              description:
-                "DB persistence status for this generation. Non-blocking: saved=false "
-                + "does not imply the overall call failed — the package is still returned.",
               properties: {
-                saved: { type: "boolean", example: true },
-                id: {
-                  type: "string",
-                  format: "uuid",
-                  nullable: true,
-                  description: "user_history.id of the persisted row; doubles as generation_id.",
-                },
-                reason: {
-                  type: "string",
-                  nullable: true,
-                  description: "When saved=false, the reason (e.g. 'DB connection refused').",
-                },
+                saved: { type: "boolean" },
+                id: { type: "string", format: "uuid", nullable: true },
+                reason: { type: "string", nullable: true },
               },
+            },
+          },
+        },
+        ReelStatusResponse: {
+          type: "object",
+          properties: {
+            success: { type: "boolean" },
+            elapsed_ms: { type: "integer" },
+            history_id: { type: "string", format: "uuid" },
+            status: {
+              type: "string",
+              enum: ["processing", "completed", "failed"],
+              description: "Aggregate: processing if any scene is still pending/processing; completed if >=1 scene succeeded and none is pending; failed if all scenes failed.",
+            },
+            progress: {
+              type: "object",
+              properties: {
+                completed: { type: "integer" },
+                pending: { type: "integer" },
+                failed: { type: "integer" },
+                total: { type: "integer" },
+              },
+            },
+            video_url: {
+              type: "string",
+              format: "uri",
+              nullable: true,
+              description:
+                "First completed scene's durable URL (GCS by default; Fal CDN fallback if GCS upload failed). This is the headline URL to hand back to the end user.",
+            },
+            scene_videos: {
+              type: "array",
+              items: { $ref: "#/components/schemas/SceneVideo" },
             },
           },
         },
@@ -534,11 +936,18 @@ function buildOpenApiSpec(baseUrl) {
       },
       "/api/generate-reel": {
         post: {
-          summary: "Generate a complete Talking Object reel package",
+          summary: "Generate package + submit video render jobs (async)",
           description:
-            "Calls Anthropic/OpenAI/Gemini (configurable fallback) to produce a bilingual (PT+EN) "
-            + "production package: scene-by-scene script, AI image prompts, voice script, captions "
-            + "timeline, post copy with hashtags, and 3 variations. Takes 5-20s depending on provider.",
+            "Two things happen synchronously:\n"
+            + "  1. LLM produces the bilingual production package (5-15s).\n"
+            + "  2. Each character is submitted to the Fal.ai Veo 3 queue (sub-second per submit).\n\n"
+            + "The actual video render (1-3 min per scene) runs on Fal's workers. When the "
+            + "call returns, video_url is null and status='processing' — the caller must poll "
+            + "GET /api/reel/{history_id}/status every ~10s. When Fal finishes each scene, "
+            + "the status endpoint streams the MP4 to gs://viralobj-assets/ and returns the "
+            + "durable GCS URL.\n\n"
+            + "HTTP status: 202 (accepted) when at least one scene was submitted, 200 when "
+            + "the render was skipped (text_only) because DB or FAL_KEY were unavailable.",
           tags: ["generation"],
           security: [{ GeminiKey: [] }],
           requestBody: {
@@ -551,7 +960,15 @@ function buildOpenApiSpec(baseUrl) {
           },
           responses: {
             "200": {
-              description: "Package generated",
+              description: "Package generated; no render jobs submitted (text_only / failed).",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/GenerateReelResponse" },
+                },
+              },
+            },
+            "202": {
+              description: "Package generated and render jobs submitted — poll /status.",
               content: {
                 "application/json": {
                   schema: { $ref: "#/components/schemas/GenerateReelResponse" },
@@ -561,25 +978,71 @@ function buildOpenApiSpec(baseUrl) {
             "400": {
               description: "Validation error",
               content: {
+                "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
+              },
+            },
+            "401": {
+              description: "Missing or invalid X-Gemini-Key",
+              content: {
+                "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
+              },
+            },
+            "500": {
+              description: "Generation failed (all LLM providers)",
+              content: {
+                "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
+              },
+            },
+          },
+        },
+      },
+      "/api/reel/{history_id}/status": {
+        get: {
+          summary: "Poll render progress; returns GCS URL when scenes complete",
+          description:
+            "Idempotent polling endpoint. For each videos row still pending/processing:\n"
+            + "  1. Fetches Fal queue status.\n"
+            + "  2. On COMPLETED: streams the MP4 from Fal CDN into gs://viralobj-assets/videos/{history_id}/{scene_id}.mp4 via uploadFromUrl(), then updates the row with the GCS URL.\n"
+            + "  3. On FAILED: stores the error in videos.error.\n\n"
+            + "Returns the full scene_videos[] breakdown plus a headline video_url (first "
+            + "completed scene). When GCS upload fails (bucket perms, quota), degrades "
+            + "gracefully to the Fal CDN URL — usable for ~7 days.",
+          tags: ["generation"],
+          security: [{ GeminiKey: [] }],
+          parameters: [
+            {
+              name: "history_id",
+              in: "path",
+              required: true,
+              schema: { type: "string", format: "uuid" },
+              description: "The history_id returned by POST /api/generate-reel.",
+            },
+          ],
+          responses: {
+            "200": {
+              description: "Current render state for the reel",
+              content: {
                 "application/json": {
-                  schema: { $ref: "#/components/schemas/ErrorResponse" },
+                  schema: { $ref: "#/components/schemas/ReelStatusResponse" },
                 },
               },
             },
             "401": {
               description: "Missing or invalid X-Gemini-Key",
               content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/ErrorResponse" },
-                },
+                "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
+              },
+            },
+            "404": {
+              description: "No video jobs found for this history_id",
+              content: {
+                "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
               },
             },
             "500": {
-              description: "Generation failed (all LLM providers)",
+              description: "DB or other server error",
               content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/ErrorResponse" },
-                },
+                "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
               },
             },
           },

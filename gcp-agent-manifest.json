@@ -2,26 +2,21 @@
   "openapi": "3.0.3",
   "info": {
     "title": "ViralObj Bridge — Gemini Enterprise Agent Manifest",
-    "version": "2.2.0",
-    "summary": "Portal de serviços para profissionais liberais — geração de reels virais Talking Object com memória de preferências.",
-    "description": "Este agente opera como o backend de conteúdo viral do ViralObj, servindo **profissionais liberais** (advogados, contadores, médicos, engenheiros, corretores, arquitetos, dentistas, psicólogos, nutricionistas, personal trainers, fisioterapeutas, veterinários, farmacêuticos, designers, programadores, professores, coaches e fotógrafos).\n\nO agente é capaz de **memorizar as preferências de nicho de cada profissional** baseando-se no `user_history` salvo no Postgres (Cloud SQL). Cada vez que um profissional chama `/api/generate-reel` com seu `user_email`, a Bridge:\n\n1. Faz upsert do profissional na tabela `professionals` (perfil persistente com email, nome e profissão).\n2. Gera o pacote (roteiro bilíngue PT+EN, prompts, voz, captions, hashtags, variações).\n3. Persiste o pacote em `user_history` com o `user_id` resolvido.\n4. Mirrora o vídeo renderizado (Fal.ai / Veo 3) para o bucket `viralobj-assets` no Google Cloud Storage e retorna uma URL durável (a URL direta do Fal expira em ~7 dias).\n5. Retorna `history_id` (uuid) para que o agente possa recuperar ou citar gerações anteriores em conversas futuras.\n\nCom o `history_id` acumulado, o agente constrói uma memória implícita: sabe que determinado advogado prefere tom dramático para pautas de direito de família, ou que uma nutricionista sempre pede reels educativos de 30s sobre suplementação — e pode propor variações consistentes com esse estilo sem perguntar tudo de novo.\n\nCatálogo: 36 nichos agrupados em duas categorias — `profissoes` (18 profissões liberais, cada uma com 3 objetos Pixar icônicos) e `lifestyle` (18 nichos do dia-a-dia: casa, plantas, financeiro, culinária, etc.).",
-    "contact": {
-      "name": "ViralObj / DB8 Intelligence",
-      "url": "https://viralobj.com"
-    },
-    "license": {
-      "name": "Proprietary"
-    }
+    "version": "2.3.0",
+    "summary": "Portal de serviços para profissionais liberais — geração de reels virais Talking Object com render assíncrono no Veo 3 e entrega hospedada no Google Cloud Storage.",
+    "description": "Este agente opera como o backend de conteúdo viral do ViralObj, servindo **profissionais liberais** (advogados, contadores, médicos, engenheiros, corretores, arquitetos, dentistas, psicólogos, nutricionistas, personal trainers, fisioterapeutas, veterinários, farmacêuticos, designers, programadores, professores, coaches e fotógrafos).\n\n## Fluxo assíncrono em duas etapas\n\n1. **POST /api/generate-reel** — gera o pacote textual (roteiro bilíngue PT+EN, prompts, voz, captions, hashtags, variações) e **dispara o render de vídeo no Fal.ai Veo 3**. Retorna **HTTP 202** imediatamente com `history_id`, `video_jobs[]` e `poll_url`. A resposta NÃO contém `video_url` ainda — o render leva 1-3 min por cena.\n\n2. **GET /api/reel/{history_id}/status** — o agente deve chamar este endpoint a cada ~10s após a chamada inicial. Quando o Fal termina cada cena, a Bridge **streama o MP4 para `gs://viralobj-assets/`** via `uploadFromUrl()` e retorna a **URL durável do Google Cloud Storage** — NUNCA a URL direta da Fal (que expira em ~7 dias). Quando `status='completed'`, entregue `video_url` e `scene_videos[]` ao usuário.\n\n## Memória de preferências por profissional\n\nO agente é capaz de **memorizar as preferências de nicho de cada profissional** baseando-se no `user_history` salvo no Postgres (Cloud SQL). Cada vez que um profissional chama `/api/generate-reel` com seu `user_email`, a Bridge:\n\n- Faz upsert do profissional na tabela `professionals` (perfil persistente).\n- Gera o pacote com LLM (Anthropic/OpenAI/Gemini em cascata).\n- Persiste o pacote em `user_history` e os jobs de vídeo em `videos` (um row por cena) com status inicial `pending`.\n- Atualiza cada row para `processing` → `completed` + URL GCS conforme o Fal termina.\n\nAo acumular `history_id`s, o agente constrói memória implícita: sabe que determinado advogado prefere tom dramático para pautas de direito de família, ou que uma nutricionista sempre pede reels educativos de 30s — e pode propor variações consistentes com esse estilo sem perguntar tudo de novo.\n\n## Catálogo\n\n36 nichos agrupados em `profissoes` (18 profissões liberais com 3 objetos Pixar canônicos cada) e `lifestyle` (18 nichos de dia-a-dia: casa, plantas, financeiro, culinária, etc.).",
+    "contact": { "name": "ViralObj / DB8 Intelligence", "url": "https://viralobj.com" },
+    "license": { "name": "Proprietary" }
   },
   "servers": [
     {
       "url": "https://viralobj-bridge-<hash>-uc.a.run.app",
-      "description": "Cloud Run (production). Replace <hash> with the actual deploy URL, or point to the app.yaml-deployed App Engine service."
+      "description": "Cloud Run (production). Substituir <hash> pelo hostname real do deploy."
     }
   ],
   "tags": [
     { "name": "catalog", "description": "Listagem de nichos e profissões disponíveis." },
-    { "name": "generation", "description": "Geração e renderização de reels Talking Object." },
+    { "name": "generation", "description": "Geração de pacote + render de vídeo (fluxo assíncrono)." },
     { "name": "meta", "description": "Health check e spec." }
   ],
   "components": {
@@ -30,7 +25,7 @@
         "type": "apiKey",
         "in": "header",
         "name": "X-Gemini-Key",
-        "description": "Token do agente (env GEMINI_AGENT_TOKEN na Bridge). Não é a chave do Gemini — é um segredo compartilhado entre o agente e a Bridge."
+        "description": "Token do agente (env GEMINI_AGENT_TOKEN na Bridge)."
       }
     },
     "schemas": {
@@ -41,43 +36,28 @@
           "key": { "type": "string", "example": "advogado" },
           "name": { "type": "string", "example": "Advocacia & Direito" },
           "emoji": { "type": "string", "example": "⚖️" },
-          "category": {
-            "type": "string",
-            "enum": ["profissoes", "lifestyle"],
-            "description": "'profissoes' = 18 profissões liberais; 'lifestyle' = 18 nichos de dia-a-dia."
-          },
+          "category": { "type": "string", "enum": ["profissoes", "lifestyle"] },
           "objects_count": { "type": "integer", "example": 3 },
           "tone_default": {
             "type": "string",
-            "enum": ["angry", "dramatic", "funny", "educational", "sarcastic", "motivational"],
-            "example": "dramatic"
+            "enum": ["angry", "dramatic", "funny", "educational", "sarcastic", "motivational"]
           },
-          "sample_objects": {
-            "type": "array",
-            "items": { "type": "string" },
-            "example": ["martelo do juiz", "balança da justiça", "código de leis"]
-          }
+          "sample_objects": { "type": "array", "items": { "type": "string" } }
         }
       },
       "GenerateReelRequest": {
         "type": "object",
         "required": ["niche", "objects", "topic"],
         "properties": {
-          "niche": {
-            "type": "string",
-            "description": "Chave do nicho (listada em /api/niches). Para profissionais, use a profissão como key (e.g. 'advogado', 'contador', 'medico').",
-            "example": "advogado"
-          },
+          "niche": { "type": "string", "example": "advogado" },
           "objects": {
             "type": "array",
             "items": { "type": "string" },
             "minItems": 1,
-            "description": "Objetos Pixar que farão a narração. Profissões já têm 3 objetos canônicos — use-os como default.",
             "example": ["martelo do juiz", "balança da justiça", "código de leis"]
           },
           "topic": {
             "type": "string",
-            "description": "Tema/mensagem central do reel.",
             "example": "3 erros comuns ao assinar contrato de aluguel"
           },
           "tone": {
@@ -85,17 +65,8 @@
             "enum": ["angry", "dramatic", "funny", "educational", "sarcastic", "motivational"],
             "default": "dramatic"
           },
-          "duration": {
-            "type": "integer",
-            "minimum": 10,
-            "maximum": 90,
-            "default": 30
-          },
-          "lang": {
-            "type": "string",
-            "enum": ["pt", "en", "both"],
-            "default": "both"
-          },
+          "duration": { "type": "integer", "minimum": 10, "maximum": 90, "default": 30 },
+          "lang": { "type": "string", "enum": ["pt", "en", "both"], "default": "both" },
           "provider": {
             "type": "string",
             "enum": ["auto", "anthropic", "openai", "gemini"],
@@ -104,43 +75,92 @@
           "user_email": {
             "type": "string",
             "format": "email",
-            "description": "**Passe sempre quando possível.** Vincula o reel ao profissional em `professionals` e a geração em `user_history`, alimentando a memória de preferências do agente. Quando o profissional voltar a conversar, consulte o histórico para propor variações consistentes.",
+            "description": "**Passe sempre quando possível.** Vincula a geração ao profissional em `professionals` e a `user_history`, alimentando a memória de preferências do agente.",
             "example": "dra.silva@escritorio.com.br"
           },
           "user_name": {
             "type": "string",
-            "description": "Nome completo. Usado apenas quando o profissional está sendo criado pela primeira vez.",
+            "description": "Usado apenas quando o profissional é criado pela primeira vez.",
             "example": "Dra. Maria Silva"
           }
         }
       },
+      "VideoJob": {
+        "type": "object",
+        "properties": {
+          "scene_id": { "type": "string" },
+          "scene_type": { "type": "string", "enum": ["intro", "dialogue", "reaction", "cta"] },
+          "request_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Fal queue request id (use para debug, não precisa pollar manualmente)."
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "processing", "completed", "failed", "submit_failed"]
+          },
+          "prompt_preview": { "type": "string", "nullable": true },
+          "error": { "type": "string", "nullable": true }
+        }
+      },
+      "SceneVideo": {
+        "type": "object",
+        "properties": {
+          "scene_id": { "type": "string" },
+          "scene_type": { "type": "string", "enum": ["intro", "dialogue", "reaction", "cta"] },
+          "status": { "type": "string", "enum": ["pending", "processing", "completed", "failed"] },
+          "video_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "URL durável no GCS quando status='completed'."
+          },
+          "duration_ms": { "type": "integer", "nullable": true },
+          "error": { "type": "string", "nullable": true }
+        }
+      },
       "GenerateReelResponse": {
         "type": "object",
-        "required": ["success", "package"],
+        "description": "Resposta ASSÍNCRONA. HTTP 202 quando jobs foram submetidos (status='processing'). Sempre pollar /api/reel/{history_id}/status em seguida.",
+        "required": ["success"],
         "properties": {
-          "success": { "type": "boolean", "example": true },
-          "elapsed_ms": { "type": "integer", "example": 8423 },
+          "success": { "type": "boolean" },
+          "elapsed_ms": { "type": "integer" },
           "provider_used": { "type": "string", "example": "anthropic" },
           "package": {
             "type": "object",
-            "description": "Pacote completo: meta, characters[], captions[], post_copy, variations[]. Apresente `voice_script_pt` e `caption_pt` verbatim ao usuário — não parafrasear."
+            "description": "Pacote textual completo: meta, characters[], captions[], post_copy, variations[]."
           },
           "summary": { "type": "string" },
           "history_id": {
             "type": "string",
             "format": "uuid",
             "nullable": true,
-            "description": "**ID da geração no Postgres.** Persista este id ao lado do email do profissional no contexto da conversa. Em interações futuras, use-o (ou consulte `user_history` via ferramenta administrativa) para recuperar o estilo e a preferência de nicho desse profissional."
+            "description": "**Salve isto no contexto da conversa.** É a chave para (a) pollar o status do render, (b) consultar o histórico do profissional em chamadas futuras, (c) alimentar a memória de preferências."
           },
           "video_url": {
             "type": "string",
             "format": "uri",
             "nullable": true,
-            "description": "**URL durável do vídeo no Google Cloud Storage** (`https://storage.googleapis.com/viralobj-assets/...`). Esta é a URL que o agente deve entregar ao usuário — NÃO o link direto da Fal.ai (que expira em ~7 dias). Quando null, o render ainda está em andamento ou o pipeline visual não foi executado; nesse caso informe que apenas o pacote de texto está pronto."
+            "description": "**Sempre null nesta resposta.** O render é assíncrono — use `poll_url` para obter a URL final do GCS."
+          },
+          "render_status": {
+            "type": "string",
+            "enum": ["processing", "text_only", "failed"],
+            "description": "processing = jobs submetidos, agente deve pollar. text_only = render pulado (DB ou FAL_KEY indisponíveis). failed = todos os submits falharam."
+          },
+          "render_skip_reason": { "type": "string", "nullable": true },
+          "video_jobs": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/VideoJob" }
+          },
+          "poll_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL relativa a pollar (ex: `/api/reel/<uuid>/status`). Null quando render_status != 'processing'."
           },
           "persisted": {
             "type": "object",
-            "description": "Status de persistência. `saved:false` não significa falha geral — o pacote foi gerado; apenas o histórico não pôde ser gravado.",
             "properties": {
               "saved": { "type": "boolean" },
               "id": { "type": "string", "format": "uuid", "nullable": true },
@@ -149,11 +169,42 @@
           }
         }
       },
+      "ReelStatusResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "elapsed_ms": { "type": "integer" },
+          "history_id": { "type": "string", "format": "uuid" },
+          "status": {
+            "type": "string",
+            "enum": ["processing", "completed", "failed"]
+          },
+          "progress": {
+            "type": "object",
+            "properties": {
+              "completed": { "type": "integer" },
+              "pending": { "type": "integer" },
+              "failed": { "type": "integer" },
+              "total": { "type": "integer" }
+            }
+          },
+          "video_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "**URL final hospedada no Google Cloud Storage** (`https://storage.googleapis.com/viralobj-assets/...`). É a URL que o agente deve entregar ao usuário. Null enquanto nenhuma cena terminou."
+          },
+          "scene_videos": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SceneVideo" }
+          }
+        }
+      },
       "ErrorResponse": {
         "type": "object",
         "required": ["success", "error"],
         "properties": {
-          "success": { "type": "boolean", "example": false },
+          "success": { "type": "boolean" },
           "error": { "type": "string" }
         }
       }
@@ -164,7 +215,6 @@
       "get": {
         "tags": ["meta"],
         "summary": "Liveness check (sem auth)",
-        "description": "Use para validar que a Bridge está online antes de chamadas críticas.",
         "responses": {
           "200": {
             "description": "Serviço online",
@@ -189,7 +239,7 @@
       "get": {
         "tags": ["catalog"],
         "summary": "Lista os 36 nichos (18 profissões + 18 lifestyle)",
-        "description": "**Chame PRIMEIRO** quando o profissional não especificou nicho, ou para validar uma chave antes de gerar. Use `?category=profissoes` para restringir ao catálogo profissional (caso principal do portal).",
+        "description": "Chame **antes** de /api/generate-reel quando o profissional não especificou um nicho ou para validar a chave.",
         "security": [{ "GeminiKey": [] }],
         "parameters": [
           {
@@ -201,8 +251,7 @@
             "name": "category",
             "in": "query",
             "required": false,
-            "schema": { "type": "string", "enum": ["profissoes", "lifestyle"] },
-            "description": "Filtro por categoria. Omitir para listar tudo."
+            "schema": { "type": "string", "enum": ["profissoes", "lifestyle"] }
           }
         ],
         "responses": {
@@ -214,13 +263,9 @@
                   "type": "object",
                   "properties": {
                     "success": { "type": "boolean" },
-                    "source": {
-                      "type": "string",
-                      "enum": ["db", "memory"],
-                      "description": "'db' = servido do Postgres (Cloud SQL). 'memory' = fallback pelo catálogo in-memory; acontece quando o DB está vazio ou inacessível."
-                    },
-                    "count": { "type": "integer", "example": 18 },
-                    "category": { "type": "string", "enum": ["all", "profissoes", "lifestyle"] },
+                    "source": { "type": "string", "enum": ["db", "memory"] },
+                    "count": { "type": "integer" },
+                    "category": { "type": "string" },
                     "categories": { "type": "array", "items": { "type": "string" } },
                     "niches": {
                       "type": "array",
@@ -232,10 +277,8 @@
             }
           },
           "401": {
-            "description": "Token X-Gemini-Key ausente ou inválido",
-            "content": {
-              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
-            }
+            "description": "Token ausente/inválido",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
           }
         }
       }
@@ -243,43 +286,75 @@
     "/api/generate-reel": {
       "post": {
         "tags": ["generation"],
-        "summary": "Gera pacote de reel + renderiza vídeo + publica no GCS",
-        "description": "Fluxo completo: (1) chama Anthropic/OpenAI/Gemini para produzir o pacote bilíngue, (2) persiste em `user_history` vinculado ao profissional (upsert em `professionals` via `user_email`), (3) quando o pipeline visual está ativo, renderiza via Fal.ai Veo 3 e mirra o MP4 para `gs://viralobj-assets/`, retornando a URL durável do GCS.\n\n**Para o agente:** sempre inclua `user_email` quando disponível — isso habilita a memória de preferências do profissional. Salve o `history_id` retornado no contexto da conversa para poder referenciar gerações anteriores ou consultar o estilo preferido do profissional.",
+        "summary": "Gera pacote + submete render (retorna 202, async)",
+        "description": "**Fluxo em duas etapas.** Passo 1 aqui: gera pacote textual com LLM (~10s), persiste em user_history, submete cada personagem ao Fal.ai Veo 3 queue (sub-segundo). Retorna 202 com `history_id`, `video_jobs[]` e `poll_url`.\n\n**Passo 2 obrigatório:** o agente deve pollar `GET /api/reel/{history_id}/status` a cada ~10s até `status='completed'`. Só aí a `video_url` do GCS estará disponível.\n\n**Sempre passe `user_email`** — sem ele a memória de preferências do profissional não é alimentada.\n\n**Salve o `history_id`** no contexto da conversa: (a) é necessário para pollar o status; (b) permite referenciar gerações anteriores; (c) identifica a memória desse profissional em chamadas futuras.",
         "security": [{ "GeminiKey": [] }],
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/GenerateReelRequest" }
-            }
+            "application/json": { "schema": { "$ref": "#/components/schemas/GenerateReelRequest" } }
           }
         },
         "responses": {
           "200": {
-            "description": "Pacote gerado. Veja `history_id` e `video_url` para persistir e entregar ao usuário.",
+            "description": "Pacote gerado, mas render foi pulado (render_status='text_only' ou 'failed').",
             "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/GenerateReelResponse" }
-              }
+              "application/json": { "schema": { "$ref": "#/components/schemas/GenerateReelResponse" } }
+            }
+          },
+          "202": {
+            "description": "Pacote gerado e jobs de vídeo submetidos. **Pollar poll_url imediatamente.**",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/GenerateReelResponse" } }
             }
           },
           "400": {
             "description": "Validação (niche/objects/topic faltantes)",
-            "content": {
-              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
-            }
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
           },
           "401": {
-            "description": "Token X-Gemini-Key ausente ou inválido",
-            "content": {
-              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
-            }
+            "description": "Token ausente/inválido",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
           },
           "500": {
             "description": "Falha em todos os provedores de LLM",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          }
+        }
+      }
+    },
+    "/api/reel/{history_id}/status": {
+      "get": {
+        "tags": ["generation"],
+        "summary": "Poll do render — retorna URL GCS quando completed",
+        "description": "**Cadência recomendada: a cada 10 segundos** após o POST /api/generate-reel retornar 202. A cada chamada a Bridge:\n\n1. Consulta o status de cada cena no Fal.\n2. Para cenas COMPLETED, baixa o MP4 do Fal e sobe para `gs://viralobj-assets/videos/{history_id}/{scene_id}.mp4` via `uploadFromUrl()`.\n3. Atualiza a row em `videos` com a URL durável do GCS.\n\nQuando `status='completed'`, use `video_url` (URL do GCS) para entregar ao usuário. **NUNCA use a URL direta da Fal** — ela expira.\n\nSe `status='failed'`, informe o usuário e sugira regerar com outro nicho/tom.",
+        "security": [{ "GeminiKey": [] }],
+        "parameters": [
+          {
+            "name": "history_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado atual do render. Quando status=completed, video_url é a URL final do GCS.",
             "content": {
-              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+              "application/json": { "schema": { "$ref": "#/components/schemas/ReelStatusResponse" } }
             }
+          },
+          "401": {
+            "description": "Token ausente/inválido",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          },
+          "404": {
+            "description": "Nenhum video job encontrado para este history_id",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          },
+          "500": {
+            "description": "Erro interno (DB indisponível, etc.)",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
           }
         }
       }
@@ -287,13 +362,22 @@
   },
   "x-gemini-agent": {
     "grounding_files": ["GEMINI_KNOWLEDGE.md"],
+    "async_flow": {
+      "initial_call": "POST /api/generate-reel",
+      "initial_response_status": 202,
+      "follow_up_call": "GET /api/reel/{history_id}/status",
+      "follow_up_interval_seconds": 10,
+      "terminal_states": ["completed", "failed"],
+      "final_url_field": "video_url",
+      "final_url_host_pattern": "storage.googleapis.com/viralobj-assets"
+    },
     "memory_strategy": {
       "source_table": "user_history",
       "key_column": "user_id",
       "linked_table": "professionals",
       "linked_column": "email",
-      "summary": "Ao receber um user_email, o agente deve (1) propor nichos previamente usados por esse email, (2) aplicar o `tone` mais frequente nas últimas 5 gerações do mesmo niche, (3) sugerir reaproveitamento do formato quando o tema for próximo."
+      "summary": "Ao receber um user_email, o agente deve (1) propor nichos previamente usados por esse email, (2) aplicar o `tone` mais frequente nas últimas 5 gerações do mesmo niche, (3) reutilizar history_ids anteriores quando o tema for próximo."
     },
-    "recommended_system_instructions": "Você é o assistente ViralObj para profissionais liberais. Ao iniciar uma conversa, peça o email do profissional. Use /api/niches?category=profissoes para oferecer nichos quando não estiver claro. Ao gerar um reel, sempre passe user_email e user_name (se soubermos). Salve o history_id retornado para poder referenciar gerações anteriores. Entregue o video_url do GCS verbatim ao usuário — nunca o link direto da Fal."
+    "recommended_system_instructions": "Você é o assistente ViralObj para profissionais liberais. ### Ao iniciar conversa: peça o email do profissional. ### Ao escolher nicho: chame GET /api/niches?category=profissoes quando não estiver claro. ### Ao gerar um reel: sempre passe user_email e user_name. Salve o history_id retornado no contexto. ### Após POST /api/generate-reel retornar 202: informe o usuário que o vídeo está sendo renderizado (~2-4 min). Pollar GET /api/reel/{history_id}/status a cada 10 segundos até status='completed'. ### Ao entregar: use a video_url do GCS (storage.googleapis.com/viralobj-assets/...) — NUNCA o link direto da Fal. ### Ao encontrar um email conhecido: consulte o histórico via user_history e proponha variações consistentes com o estilo anterior."
   }
 }
