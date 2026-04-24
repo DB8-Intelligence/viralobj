@@ -140,6 +140,34 @@ export async function saveVideo({
   return rows[0];
 }
 
+// ─── professionals ────────────────────────────────────────────────────────
+
+/**
+ * Upsert a professional by email. Used by the Bridge when an incoming
+ * generate-reel call carries `user_email` — we don't want to require a
+ * separate signup endpoint just to record history.
+ *
+ * @param {object} params
+ * @param {string}      params.email
+ * @param {string|null} [params.fullName]
+ * @param {string|null} [params.profession]  — should match niches.key when possible
+ * @returns {Promise<{ id: string, email: string, full_name: string|null, profession: string|null }>}
+ */
+export async function ensureProfessional({ email, fullName = null, profession = null }) {
+  if (!email) throw new Error("ensureProfessional: email is required");
+  const { rows } = await query(
+    `INSERT INTO professionals (email, full_name, profession)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (email) DO UPDATE SET
+       full_name  = COALESCE(EXCLUDED.full_name, professionals.full_name),
+       profession = COALESCE(EXCLUDED.profession, professionals.profession),
+       updated_at = now()
+     RETURNING id, email, full_name, profession`,
+    [email, fullName, profession],
+  );
+  return rows[0];
+}
+
 // ─── niches ────────────────────────────────────────────────────────────────
 
 /**
@@ -168,6 +196,73 @@ export async function getNiches({ category = null, includeInactive = false } = {
   `;
   const { rows } = await query(sql, params);
   return rows;
+}
+
+/**
+ * Count niches in the table. Used by /api/niches to decide whether to
+ * trigger a fire-and-forget auto-seed on first request after deploy.
+ */
+export async function countNiches() {
+  const { rows } = await query(`SELECT COUNT(*)::int AS n FROM niches`);
+  return rows[0]?.n ?? 0;
+}
+
+/**
+ * Bulk-upsert niches into the DB. Used for the initial seed from the
+ * in-memory NICHES constant in mcp/tools/niches.js.
+ *
+ * Accepts the memory format: { key, category, name_pt, name_en, emoji,
+ * tone_default, objects, prompts_base }. Missing fields default sanely.
+ *
+ * Runs inside a single transaction so the table is either fully seeded
+ * or unchanged.
+ *
+ * @param {Array<object>} niches
+ * @returns {Promise<{ inserted: number }>}
+ */
+export async function bulkInsertNiches(niches) {
+  if (!Array.isArray(niches) || niches.length === 0) {
+    return { inserted: 0 };
+  }
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    let inserted = 0;
+    for (const n of niches) {
+      if (!n?.key) continue;
+      const res = await client.query(
+        `INSERT INTO niches (key, category, name_pt, name_en, emoji, tone_default, objects, prompts_base)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         ON CONFLICT (key) DO UPDATE SET
+           category     = EXCLUDED.category,
+           name_pt      = EXCLUDED.name_pt,
+           name_en      = EXCLUDED.name_en,
+           emoji        = EXCLUDED.emoji,
+           tone_default = EXCLUDED.tone_default,
+           objects      = EXCLUDED.objects,
+           prompts_base = EXCLUDED.prompts_base,
+           updated_at   = now()`,
+        [
+          n.key,
+          n.category ?? "lifestyle",
+          n.name_pt ?? n.key,
+          n.name_en ?? n.key,
+          n.emoji ?? null,
+          n.tone_default ?? "educational",
+          JSON.stringify(n.objects ?? []),
+          n.prompts_base ?? null,
+        ],
+      );
+      inserted += res.rowCount ?? 0;
+    }
+    await client.query("COMMIT");
+    return { inserted };
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 // ─── user_history ──────────────────────────────────────────────────────────
@@ -237,6 +332,9 @@ export default {
   ping,
   saveVideo,
   getNiches,
+  countNiches,
+  bulkInsertNiches,
+  ensureProfessional,
   saveUserHistory,
   closePool,
 };

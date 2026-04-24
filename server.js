@@ -18,7 +18,13 @@ import "dotenv/config";
 import express from "express";
 import { pathToFileURL } from "url";
 import { generatePackage } from "./mcp/tools/generate.js";
-import { listNiches } from "./mcp/tools/niches.js";
+import { listNiches, NICHES } from "./mcp/tools/niches.js";
+import db from "./src/infrastructure/database.js";
+
+// Runtime flag tracking whether we've attempted the DB-empty → in-memory
+// seed during this process lifetime. Keeps us from stampeding seeds when
+// many /api/niches calls hit an empty DB in parallel.
+let seedAttempted = false;
 
 const app = express();
 app.disable("x-powered-by");
@@ -72,17 +78,80 @@ app.get("/api/niches", requireGeminiKey, async (req, res) => {
       ? rawCategory
       : null;
 
-    const result = await listNiches({ lang, category });
+    // 1) Try DB first. If it returns rows, use them.
+    let dbRows = null;
+    let dbError = null;
+    try {
+      dbRows = await db.getNiches({ category });
+    } catch (err) {
+      dbError = err?.message ?? String(err);
+      console.warn("[/api/niches] DB lookup failed, falling back to memory:", dbError);
+    }
+
+    if (Array.isArray(dbRows) && dbRows.length > 0) {
+      // Shape DB rows to match the in-memory listNiches response.
+      const niches = dbRows.map((n) => ({
+        key: n.key,
+        name: lang === "en" ? n.name_en : n.name_pt,
+        emoji: n.emoji,
+        category: n.category,
+        objects_count: Array.isArray(n.objects) ? n.objects.length : 0,
+        tone_default: n.tone_default,
+        sample_objects: (Array.isArray(n.objects) ? n.objects.slice(0, 3) : [])
+          .map((o) => lang === "en" ? (o.en || o.id || o.pt) : (o.pt || o.id || o.en)),
+      }));
+      const categories = [...new Set(niches.map((n) => n.category))];
+      return res.json({
+        success: true,
+        source: "db",
+        count: niches.length,
+        category: category ?? "all",
+        categories,
+        niches,
+      });
+    }
+
+    // 2) Fall back to in-memory. Use this path when:
+    //    - DB errored (connection refused, auth, etc.)
+    //    - DB connected but returned 0 rows (fresh install before seed)
+    const memoryResult = await listNiches({ lang, category });
+
+    // 3) If DB was reachable but empty, fire-and-forget auto-seed so the
+    //    next request can serve from DB. Never awaits — response stays fast.
+    if (!seedAttempted && dbError === null && (dbRows?.length ?? 0) === 0) {
+      seedAttempted = true;
+      const allNiches = Object.entries(NICHES).map(([key, n]) => ({
+        key,
+        category: n.category ?? "lifestyle",
+        name_pt: n.name_pt,
+        name_en: n.name_en,
+        emoji: n.emoji,
+        tone_default: n.tone_default,
+        objects: n.objects ?? [],
+        prompts_base: n.prompts_base ?? null,
+      }));
+      db.bulkInsertNiches(allNiches)
+        .then((r) => console.log(`[/api/niches] auto-seeded ${r.inserted} niches into DB`))
+        .catch((err) => {
+          console.warn("[/api/niches] auto-seed failed:", err?.message ?? err);
+          seedAttempted = false; // allow retry on next call
+        });
+    }
+
     res.json({
       success: true,
-      count: result.niches.length,
+      source: "memory",
+      db_error: dbError,
+      count: memoryResult.niches.length,
       category: category ?? "all",
-      categories: result.categories,
-      niches: result.niches,
-      summary: result.content?.[0]?.text,
+      categories: memoryResult.categories,
+      niches: memoryResult.niches,
+      summary: memoryResult.content?.[0]?.text,
     });
   } catch (err) {
-    console.error("[/api/niches]", err);
+    // Only hits if BOTH DB AND memory fail — memory failing should be impossible,
+    // but we still guard against it.
+    console.error("[/api/niches] catastrophic:", err);
     res.status(500).json({
       success: false,
       error: err?.message || String(err),
@@ -102,6 +171,8 @@ app.post("/api/generate-reel", requireGeminiKey, async (req, res) => {
       lang = "both",
       provider = "auto",
       analysis = null,
+      user_email = null,
+      user_name = null,
     } = req.body || {};
 
     // Validation
@@ -129,12 +200,52 @@ app.post("/api/generate-reel", requireGeminiKey, async (req, res) => {
       analysis,
     });
 
+    // Persist to DB best-effort. DB failure must NOT affect the API response —
+    // the package was generated successfully and the user should receive it.
+    let persisted = { saved: false, reason: null, id: null };
+    try {
+      // Resolve a professional id. If caller supplied user_email, upsert them.
+      // Otherwise fall back to a synthetic "system" professional so history
+      // is still recorded (useful for Gemini Agent calls without user context).
+      const resolvedEmail = typeof user_email === "string" && user_email.trim()
+        ? user_email.trim().toLowerCase()
+        : "system@viralobj.bridge";
+      const resolvedName = resolvedEmail === "system@viralobj.bridge"
+        ? "Bridge system user"
+        : (user_name ?? null);
+
+      const professional = await db.ensureProfessional({
+        email: resolvedEmail,
+        fullName: resolvedName,
+        profession: niche,
+      });
+
+      const historyRow = await db.saveUserHistory({
+        userId: professional.id,
+        niche,
+        topic,
+        tone,
+        duration,
+        packageData: result.package,
+        providerUsed: result.result?.provider_used ?? null,
+      });
+
+      persisted = { saved: true, reason: null, id: historyRow.id };
+    } catch (err) {
+      // Never throw from here. Log and attach reason to the response so the
+      // caller knows the package was generated but not recorded.
+      const msg = err?.message ?? String(err);
+      console.warn("[/api/generate-reel] persistence skipped:", msg);
+      persisted = { saved: false, reason: msg, id: null };
+    }
+
     res.json({
       success: true,
       elapsed_ms: Date.now() - startedAt,
       provider_used: result.result?.provider_used,
       package: result.package,
       summary: result.content?.[0]?.text,
+      persisted,
     });
   } catch (err) {
     console.error("[/api/generate-reel]", err);
@@ -234,6 +345,20 @@ function buildOpenApiSpec(baseUrl) {
               default: "auto",
               description: "LLM provider. 'auto' uses VIRALOBJ_PROVIDER_ORDER fallback chain.",
             },
+            user_email: {
+              type: "string",
+              format: "email",
+              description:
+                "Optional email of the professional making the request. When present, "
+                + "the row is upserted into professionals and user_history is linked to "
+                + "that id. When absent, history is saved under a synthetic system user.",
+              example: "advogado@escritorio.com.br",
+            },
+            user_name: {
+              type: "string",
+              description: "Optional full name; only used when creating a new professional row.",
+              example: "Dra. Maria Silva",
+            },
           },
         },
         GenerateReelResponse: {
@@ -248,6 +373,26 @@ function buildOpenApiSpec(baseUrl) {
                 "Full production package: meta, characters[], captions[], post_copy, variations[].",
             },
             summary: { type: "string", description: "Human-readable summary." },
+            persisted: {
+              type: "object",
+              description:
+                "DB persistence status for this generation. Non-blocking: saved=false "
+                + "does not imply the overall call failed — the package is still returned.",
+              properties: {
+                saved: { type: "boolean", example: true },
+                id: {
+                  type: "string",
+                  format: "uuid",
+                  nullable: true,
+                  description: "user_history.id of the persisted row; doubles as generation_id.",
+                },
+                reason: {
+                  type: "string",
+                  nullable: true,
+                  description: "When saved=false, the reason (e.g. 'DB connection refused').",
+                },
+              },
+            },
           },
         },
         ErrorResponse: {
@@ -323,7 +468,21 @@ function buildOpenApiSpec(baseUrl) {
                     type: "object",
                     properties: {
                       success: { type: "boolean" },
+                      source: {
+                        type: "string",
+                        enum: ["db", "memory"],
+                        description:
+                          "'db' when served from Cloud SQL. 'memory' when DB is unreachable "
+                          + "or empty — in the latter case an async auto-seed is dispatched.",
+                      },
+                      db_error: {
+                        type: "string",
+                        nullable: true,
+                        description: "Populated when source='memory' due to a DB error.",
+                      },
                       count: { type: "integer" },
+                      category: { type: "string", enum: ["all", "profissoes", "lifestyle"] },
+                      categories: { type: "array", items: { type: "string" } },
                       niches: {
                         type: "array",
                         items: { $ref: "#/components/schemas/NicheSummary" },
