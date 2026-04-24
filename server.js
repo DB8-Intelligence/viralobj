@@ -67,10 +67,17 @@ app.get("/openapi.json", (req, res) => {
 app.get("/api/niches", requireGeminiKey, async (req, res) => {
   try {
     const lang = (req.query.lang === "en" ? "en" : "pt");
-    const result = await listNiches({ lang });
+    const rawCategory = typeof req.query.category === "string" ? req.query.category : null;
+    const category = rawCategory && ["profissoes", "lifestyle"].includes(rawCategory)
+      ? rawCategory
+      : null;
+
+    const result = await listNiches({ lang, category });
     res.json({
       success: true,
       count: result.niches.length,
+      category: category ?? "all",
+      categories: result.categories,
       niches: result.niches,
       summary: result.content?.[0]?.text,
     });
@@ -166,11 +173,19 @@ function buildOpenApiSpec(baseUrl) {
         NicheSummary: {
           type: "object",
           properties: {
-            key: { type: "string", example: "casa" },
-            name: { type: "string", example: "Casa & Limpeza" },
-            emoji: { type: "string", example: "🏠" },
-            objects_count: { type: "integer", example: 12 },
-            tone_default: { type: "string", example: "angry" },
+            key: { type: "string", example: "advogado" },
+            name: { type: "string", example: "Advocacia & Direito" },
+            emoji: { type: "string", example: "⚖️" },
+            category: {
+              type: "string",
+              enum: ["profissoes", "lifestyle"],
+              description:
+                "'profissoes' = professional services (advogado, contador, médico, …). "
+                + "'lifestyle' = daily-life niches (casa, plantas, financeiro, …).",
+              example: "profissoes",
+            },
+            objects_count: { type: "integer", example: 3 },
+            tone_default: { type: "string", example: "dramatic" },
             sample_objects: { type: "array", items: { type: "string" } },
           },
         },
@@ -271,9 +286,14 @@ function buildOpenApiSpec(baseUrl) {
       },
       "/api/niches": {
         get: {
-          summary: "List all 18 niches with object samples",
+          summary: "List all niches with object samples, grouped by category",
           description:
-            "Returns keys, names, emojis, object counts and 3 sample objects per niche. Useful for the agent to pick a niche before generating.",
+            "Returns all available niches organized in two categories: "
+            + "'profissoes' (professional services — advogado, contador, médico, …) "
+            + "and 'lifestyle' (daily-life — casa, plantas, financeiro, …). "
+            + "Each niche lists key, name, emoji, category, object_count, tone_default, "
+            + "and 3 sample_objects. Always call this first when the user hasn't "
+            + "specified a niche, or to validate a niche before generating.",
           tags: ["catalog"],
           security: [{ GeminiKey: [] }],
           parameters: [
@@ -282,6 +302,16 @@ function buildOpenApiSpec(baseUrl) {
               in: "query",
               schema: { type: "string", enum: ["pt", "en"], default: "pt" },
               description: "Language of names and samples.",
+            },
+            {
+              name: "category",
+              in: "query",
+              required: false,
+              schema: { type: "string", enum: ["profissoes", "lifestyle"] },
+              description:
+                "Filter by category. Omit to list all. Use 'profissoes' when the user "
+                + "is a professional (advogado, dentista, coach, …) looking to produce "
+                + "service-marketing reels; use 'lifestyle' for general consumer content.",
             },
           ],
           responses: {

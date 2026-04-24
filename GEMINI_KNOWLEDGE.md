@@ -1,65 +1,106 @@
-# ViralObj — Grounding Document for Gemini Enterprise
+# ViralObj — Portal de Serviços para Profissionais Liberais
 
-> This file is the authoritative brief uploaded to Gemini Agent's **Grounding** so the LLM understands how ViralObj works before invoking the bridge API. Keep it concise: Gemini's context window is shared with user conversation.
-
----
-
-## Product in one line
-
-ViralObj generates **Talking Object** viral reels — animated 3D objects (Pixar/Disney style) that speak in first person about everyday mistakes. Output: complete production package (script, AI prompts, voice, captions, hashtags, variations) bilingual PT-BR + EN.
+> Grounding doc para o Gemini Agent. O foco **atual** do ViralObj é virar um **portal de serviços para profissionais liberais** (advogados, contadores, médicos, engenheiros, corretores, arquitetos, dentistas, psicólogos, nutricionistas, personal trainers, fisioterapeutas, veterinários, farmacêuticos, designers, programadores, professores, coaches, fotógrafos). O agente deve tratar o usuário como um profissional buscando produzir conteúdo de marketing/educação para captar e fidelizar clientes. O catálogo lifestyle (casa, plantas, finanças, etc.) continua disponível, mas como secundário.
 
 ---
 
-## What the agent can do via the Bridge API
+## O que o Agent faz
 
-Base URL: configured in Gemini Agent via OpenAPI spec at `GET /openapi.json`.
-Auth: every request must carry header `X-Gemini-Key: <GEMINI_AGENT_TOKEN>`.
+Gera pacotes completos de **Talking Object reels** — objetos 3D estilo Pixar que falam em primeira pessoa. Saída: roteiro bilíngue PT-BR + EN com voz, legendas, prompts de imagem, post copy, hashtags e 3 variações. O profissional usa isso pra produzir reels educativos ou de captação no Instagram.
 
-| Method | Path | Purpose |
+---
+
+## Bridge API
+
+Base URL configurada via OpenAPI em `GET /openapi.json`. Todas as rotas protegidas exigem header `X-Gemini-Key`.
+
+| Método | Rota | Uso |
 |---|---|---|
-| `GET` | `/api/niches` | List the 18 supported niches with sample objects. **Use this first** whenever the user hasn't specified a niche, or to validate a niche before generating. |
-| `POST` | `/api/generate-reel` | Generate a full production package. 5–20s latency depending on LLM provider. |
-
-Both routes return `{ success: boolean, ... }`. On failure, `success: false` + `error: string`.
-
----
-
-## How to pick niche, objects, tone
-
-### 1. Niche (`niche` field)
-18 niches available. Fetch live list via `GET /api/niches`. Examples:
-`casa`, `plantas`, `financeiro`, `culinaria`, `natureza`, `saude`, `pets`, `fitness`, `maternidade`, `saude-mental`, `skincare-natural`, `espiritualidade-rituais`, `saude-feminina`, `imoveis`, `viagem`, `chas-funcionais`, `saude-receitas`, `gastronomia`.
-
-### 2. Objects (`objects` field — array)
-Pick 2–5 objects that **belong to the niche**. The niche response includes `sample_objects` — prefer those. If the user names a custom object, include it but keep it thematically coherent.
-
-**Do NOT** mix objects across niches. A reel is about one niche at a time.
-
-### 3. Tone (`tone` field)
-Each niche has a `tone_default`. Use it unless the user asks for something else. Valid values:
-- `angry` — frustrated/indignant (works best for `casa`, `plantas`, `financeiro`)
-- `dramatic` — serious, emotionally charged
-- `funny` — light humor (works for `culinaria`, `pets`)
-- `educational` — calm instructor (works for `saude`, `natureza`, `skincare-natural`)
-- `sarcastic` — dry wit
-- `motivational` — uplifting call-to-action
+| `GET` | `/api/niches?category=profissoes` | **Chame PRIMEIRO** quando o profissional não especificou nicho. Retorna 18 profissões com 3 objetos Pixar cada. |
+| `GET` | `/api/niches?category=lifestyle` | Catálogo secundário (casa, plantas, finanças, etc.) — use só se o usuário pedir explicitamente conteúdo não-profissional. |
+| `GET` | `/api/niches` | Lista tudo agrupado por categoria. |
+| `POST` | `/api/generate-reel` | Gera o pacote. 5-20s de latência. |
 
 ---
 
-## Visual / production patterns (validated from 47 real viral reels)
+## Categorias disponíveis
 
-These come from `training-data/dataset.json`. Gemini doesn't need to apply them — the `/api/generate-reel` endpoint bakes them into the LLM prompt. Listed here so the agent can explain the output to the user.
+### 1. `profissoes` — Profissões Liberais (principal)
 
-- **Format A (MULTI-STUB)**: Multiple objects with stub arms, no legs, human doing the mistake in the background. Used by `@coisadecasa.ia`. Best for casa/plantas/financeiro.
-- **Format B (SINGLE-FULL)**: One character with full body (torso + legs), walks and demonstrates. Best for tutorials, anatomy (saude), ingredient reels (culinaria).
-- **Format C (DRESSED-CHAR)**: Object as head on a dressed human body (chef, doctor, professional). Includes animal-chef variants.
-- **Expression arc "FUR-3"** (most common — 75% frequency): angry → furious → resigned. Drives retention.
-- **Caption style "alpha"**: hard-cut bold yellow text, single line, centered bottom.
-- **Duration sweet-spot**: 25–35 seconds (most viral references).
+18 profissões com 3 objetos Pixar icônicos cada. Todas têm `category: "profissoes"`.
+
+| key | Profissão | Tom padrão | 3 objetos Pixar |
+|---|---|---|---|
+| `advogado` | Advocacia & Direito | dramatic | Martelo do juiz · Balança da justiça · Código de leis |
+| `contador` | Contabilidade & Fiscal | sarcastic | Calculadora · Nota fiscal · Carimbo do CNPJ |
+| `medico` | Medicina & Clínica | educational | Estetoscópio · Seringa · Prontuário |
+| `engenheiro-civil` | Engenharia Civil | educational | Capacete · Trena laser · Planta baixa |
+| `corretor-imoveis` | Corretor de Imóveis | motivational | Chave · Plaquinha vende-se · Maquete |
+| `arquiteto` | Arquitetura & Projetos | educational | Régua T · Lápis 6B · Maquete em escala |
+| `dentista` | Odontologia | funny | Escova elétrica · Broca · Dente molar sorridente |
+| `psicologo` | Psicologia & Terapia | educational | Bloco de notas · Divã · Ampulheta 50min |
+| `nutricionista` | Nutrição & Dietas | educational | Balança de alimentos · Prato colorido · Fita métrica |
+| `personal-trainer` | Personal & Academia | motivational | Halter 10kg · Cronômetro HIIT · Coqueteleira |
+| `fisioterapeuta` | Fisioterapia | educational | Bolinha de massagem · Elástico · Maca |
+| `veterinario` | Veterinária & Pet | funny | Termômetro · Saco de ração · Coleira anti-pulga |
+| `farmaceutico` | Farmácia & Medicamentos | educational | Cápsula · Almofariz · Frasco de xarope |
+| `designer-grafico` | Design Gráfico & UX | sarcastic | Paleta de cores · Mouse · Prancheta digital |
+| `programador` | Programação & Dev | funny | Teclado mecânico · Caneca de café · Bug |
+| `professor` | Educação & Ensino | educational | Giz · Lousa · Caderneta de chamada |
+| `coach` | Coach & Mentoria | motivational | Moleskine · Lâmpada · Cronômetro 90 dias |
+| `fotografo` | Fotografia Profissional | educational | Câmera DSLR · Lente zoom · Rebatedor |
+
+Cada profissão tem 3 objetos só — não precisa perguntar ao usuário quais objetos usar na maioria dos casos. Use os 3 por padrão.
+
+### 2. `lifestyle` — secundário
+
+Nichos do dia-a-dia: `casa`, `plantas`, `financeiro`, `culinaria`, `natureza`, `saude`, `pets`, `fitness`, `maternidade`, `saude-mental`, `skincare-natural`, `espiritualidade-rituais`, `saude-feminina`, `imoveis`, `viagem`, `chas-funcionais`, `saude-receitas`, `gastronomia`. Estes têm 8-28 objetos cada e servem quando o profissional quer fazer conteúdo fora do ofício (ex: dentista falando sobre alimentação saudável usa `saude` ou `nutricionista`).
 
 ---
 
-## Output schema (what `/api/generate-reel` returns in `package`)
+## Como conduzir a conversa
+
+### Fluxo ideal (profissional liberal)
+
+1. **Identifique a profissão.** Se o usuário disse "sou advogada" ou "minha clínica odontológica" → já tem o `niche`.
+2. **Se ainda não sabe**, pergunte: *"Qual é sua profissão? Temos catálogo específico para advogados, contadores, médicos, engenheiros, corretores, dentistas, psicólogos, nutricionistas, personal trainers, fisioterapeutas, veterinários, farmacêuticos, designers, programadores, professores, coaches e fotógrafos."*
+3. **Chame `GET /api/niches?category=profissoes&lang=pt`** e escolha a key que bateu.
+4. **Pergunte o tema do reel.** Exemplos:
+   - Advogado: *"Erros ao assinar contrato de aluguel"* / *"3 mitos sobre pensão alimentícia"*
+   - Contador: *"Quando emitir nota fiscal como MEI"*
+   - Personal: *"Por que seu treino não rende"*
+5. **Use os 3 objetos padrão da profissão**. Só pergunte quais objetos se o usuário quiser customizar.
+6. **Tom**: use o `tone_default` da profissão a menos que o usuário peça outro.
+7. **Chame `POST /api/generate-reel`** com:
+   ```json
+   {
+     "niche": "<key da profissão>",
+     "objects": ["<obj 1>", "<obj 2>", "<obj 3>"],
+     "topic": "<tema do usuário>",
+     "tone": "<tone_default>",
+     "duration": 30,
+     "lang": "both"
+   }
+   ```
+8. **Apresente o resultado verbatim** (não parafraseie): mostre `voice_script_pt` de cada personagem, `caption_pt` do post, lista de `hashtags_pt`, e as 3 `variations`.
+
+### Exemplo de chamada (advogado)
+
+```json
+POST /api/generate-reel
+{
+  "niche": "advogado",
+  "objects": ["martelo do juiz", "balança da justiça", "código de leis"],
+  "topic": "3 erros comuns ao assinar contrato de aluguel",
+  "tone": "dramatic",
+  "duration": 30,
+  "lang": "both"
+}
+```
+
+---
+
+## Output schema (`package` retornado)
 
 ```json
 {
@@ -76,8 +117,8 @@ These come from `training-data/dataset.json`. Gemini doesn't need to apply them 
   "captions": [ { "time", "text", "character", "style" } ],
   "post_copy": {
     "caption_pt", "caption_en",
-    "hashtags_pt": ["...", "..."],
-    "hashtags_en": ["...", "..."]
+    "hashtags_pt": [...],
+    "hashtags_en": [...]
   },
   "variations": [
     { "title_pt", "hook_pt", "objects": [...], "description_pt", "tone" }
@@ -85,47 +126,41 @@ These come from `training-data/dataset.json`. Gemini doesn't need to apply them 
 }
 ```
 
-The agent should **quote `voice_script_pt` / `hashtags_pt`** verbatim to the user, not paraphrase.
+Quote `voice_script_pt` e `hashtags_pt` **exatamente como vieram**. O profissional vai copiar pra produção.
 
 ---
 
-## Error handling guidance
+## Tons disponíveis
 
-- **`401 Unauthorized`** → bridge misconfigured; inform user the operator should check `GEMINI_AGENT_TOKEN`.
-- **`400`** → invalid input. Common causes: empty `objects` array, missing `topic`, niche key not in the list from `/api/niches`.
-- **`500`** with message `"All LLM providers failed"` → rare; suggest retry in 30s. Bridge tries Anthropic → OpenAI → Gemini in that order by default.
-
----
-
-## Good user flow (example)
-
-1. User: *"Quero um reel sobre culinária brasileira."*
-2. Agent calls `GET /api/niches?lang=pt` → sees `culinaria` exists with sample objects `["Feijão", "Arroz", "Cebola"]` and `tone_default: "funny"`.
-3. Agent asks user: *"Quais objetos/ingredientes você quer como personagens? (sugestões: feijão, arroz, cebola)"*
-4. User: *"feijão, arroz e panela, falando sobre os erros ao cozinhar feijão."*
-5. Agent calls `POST /api/generate-reel` with:
-   ```json
-   {
-     "niche": "culinaria",
-     "objects": ["Feijão", "Arroz", "Panela"],
-     "topic": "Erros comuns ao cozinhar feijão",
-     "tone": "funny",
-     "duration": 30,
-     "lang": "both"
-   }
-   ```
-6. Agent presents the `package.characters[].voice_script_pt` and `package.post_copy.caption_pt` to the user.
+| Tom | Quando usar |
+|---|---|
+| `educational` | Default para técnicos (médico, engenheiro, arquiteto, nutricionista, fisioterapeuta, farmacêutico, professor, fotógrafo). Calmo, instrutivo. |
+| `motivational` | Coach, personal trainer, corretor. Uplifting, call-to-action. |
+| `dramatic` | Advogado. Serious, gravidade da causa. |
+| `sarcastic` | Contador, designer. Ironia profissional ("ah tá, vai fazer sem nota fiscal de novo?"). |
+| `funny` | Dentista, veterinário, programador. Humor leve do ofício. |
+| `angry` | Raro em profissões — usar só se o tema for crítica direta (ex: "3 atitudes que acabam com sua consulta"). |
 
 ---
 
-## Out of scope for the bridge (don't attempt)
+## Erros e fallbacks
 
-The bridge only does `listNiches` and `generatePackage`. These tools exist in `mcp/tools/` but are **not exposed** via REST (yet): `analyzeVideo`, `generateVideo` (Fal.ai render), `exportArtifacts`, `postToInstagram`, `downloadReel`. Do not invent endpoints for them.
+- **`401 Unauthorized`** — bridge misconfigured no lado do operador. Avise: "Há um problema de configuração no servidor; por favor contate o administrador."
+- **`400`** — validation error. Causas comuns: `objects` vazio, `topic` em branco, `niche` não existe no catálogo.
+  - Mitigação: **sempre valide a `niche` contra `/api/niches` antes de chamar `generate-reel`**.
+- **`500` com `"All LLM providers failed"`** — raro, tipicamente network blip. Sugira retry em 30s. A bridge tenta Anthropic → OpenAI → Gemini em ordem.
 
 ---
 
-## Technical contact
+## Fora do escopo
 
-Repo: `https://github.com/DB8-Intelligence/viralobj`
-Bridge deploy: Railway (env `GEMINI_AGENT_TOKEN` required)
-Main web app: `viralobj.com`
+A bridge expõe **apenas** `listNiches` + `generatePackage`. Não invente endpoints para análise de vídeo, render Fal.ai, publicação no Instagram, etc. — essas ferramentas existem em `mcp/tools/` mas não estão disponíveis via REST nesta versão.
+
+---
+
+## Contato técnico
+
+- Repo: `https://github.com/DB8-Intelligence/viralobj`
+- Deploy bridge: Railway (env `GEMINI_AGENT_TOKEN` obrigatória)
+- Produto web: `viralobj.com`
+- Versão catálogo: **v2.1.0** (adiciona categoria `profissoes`)

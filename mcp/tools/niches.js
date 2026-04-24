@@ -1530,6 +1530,264 @@ export const NICHES = {
     correlated_niches: ["saude", "saude-receitas", "plantas", "espiritualidade"],
     prompts_base: "Brazilian kitchen to bedroom gradient, ceramic/glass cups with hot tea, steam rising, warm golden lighting transitioning to moonlight blue, cozy home setting, Disney/Pixar 3D render, 9:16 vertical, 8K",
   },
+
+  // ══════════════════════════════════════════════════════════════════════
+  // CATEGORIA: PROFISSÕES LIBERAIS (v2.1.0 — portal de serviços)
+  // Cada profissão é um nicho com 3 objetos Pixar icônicos do ofício.
+  // Uso típico: profissional gera reels educativos / captação para clientes.
+  // ══════════════════════════════════════════════════════════════════════
+
+  advogado: {
+    category: "profissoes",
+    name_pt: "Advocacia & Direito",
+    name_en: "Law & Legal Services",
+    emoji: "⚖️",
+    tone_default: "dramatic",
+    objects: [
+      { pt: "martelo do juiz", en: "gavel", emoji: "🔨", personality: "autoritário, decisivo, bate a sentença com convicção" },
+      { pt: "balança da justiça", en: "scales of justice", emoji: "⚖️", personality: "ponderada, imparcial, sempre buscando equilíbrio" },
+      { pt: "código de leis", en: "law book", emoji: "📕", personality: "antigo, sábio, cita artigo por artigo com orgulho" },
+    ],
+    prompts_base: "Brazilian law firm or courtroom, dark wood paneling, leather books, warm amber lighting, lawyer in suit at background, Disney/Pixar 3D render, 9:16 vertical, 8K",
+  },
+
+  contador: {
+    category: "profissoes",
+    name_pt: "Contabilidade & Fiscal",
+    name_en: "Accounting & Tax",
+    emoji: "🧮",
+    tone_default: "sarcastic",
+    objects: [
+      { pt: "calculadora financeira", en: "financial calculator", emoji: "🧮", personality: "rápida, precisa, se irrita com contas mal feitas" },
+      { pt: "nota fiscal", en: "tax invoice", emoji: "🧾", personality: "rigorosa, se sente ignorada quando não é emitida" },
+      { pt: "carimbo do CNPJ", en: "company stamp", emoji: "🔖", personality: "orgulhoso, oficial, adora bater em papel" },
+    ],
+    prompts_base: "Brazilian accounting office, stacks of paperwork, green ledger books, spreadsheets on monitor, accountant in glasses at background, cool fluorescent lighting, Disney/Pixar 3D render, 9:16 vertical, 8K",
+  },
+
+  medico: {
+    category: "profissoes",
+    name_pt: "Medicina & Clínica",
+    name_en: "Medicine & Clinical",
+    emoji: "🩺",
+    tone_default: "educational",
+    objects: [
+      { pt: "estetoscópio", en: "stethoscope", emoji: "🩺", personality: "atento, ouve tudo, cuidadoso com cada paciente" },
+      { pt: "seringa de vacina", en: "vaccine syringe", emoji: "💉", personality: "corajosa, determinada, tenta ser simpática apesar do medo que causa" },
+      { pt: "prontuário médico", en: "medical chart", emoji: "📋", personality: "organizado, memória de elefante, guarda todo o histórico" },
+    ],
+    prompts_base: "Brazilian medical clinic, white walls, examination table with paper, doctor in white coat at background, soft cool lighting, Disney/Pixar 3D render, 9:16 vertical, 8K",
+  },
+
+  "engenheiro-civil": {
+    category: "profissoes",
+    name_pt: "Engenharia Civil",
+    name_en: "Civil Engineering",
+    emoji: "🏗️",
+    tone_default: "educational",
+    objects: [
+      { pt: "capacete de obra", en: "hard hat", emoji: "⛑️", personality: "protetor, sério, grita por segurança em canteiro" },
+      { pt: "trena laser", en: "laser measuring tape", emoji: "📏", personality: "precisa, obcecada por milímetros, corrige todo mundo" },
+      { pt: "planta baixa", en: "blueprint roll", emoji: "📐", personality: "técnica, paciente, explica cada detalhe do projeto" },
+    ],
+    prompts_base: "Brazilian construction site or engineering office, blueprints on desk, safety cones, rebar and concrete visible, engineer in vest at background, bright daylight, Disney/Pixar 3D render, 9:16 vertical, 8K",
+  },
+
+  "corretor-imoveis": {
+    category: "profissoes",
+    name_pt: "Corretor de Imóveis",
+    name_en: "Real Estate Broker",
+    emoji: "🏠",
+    tone_default: "motivational",
+    objects: [
+      { pt: "chave da casa nova", en: "new home key", emoji: "🔑", personality: "entusiasmada, brilhante, simboliza sonho realizado" },
+      { pt: "plaquinha vende-se", en: "for sale sign", emoji: "🪧", personality: "esperançosa, balança ao vento, fica feliz quando vira VENDIDO" },
+      { pt: "maquete de casa", en: "house miniature", emoji: "🏡", personality: "orgulhosa, detalhista, mostra cada cômodo com charme" },
+    ],
+    prompts_base: "Brazilian upscale living room or apartment façade, for-sale sign, real estate broker in blazer at background, golden hour light through windows, Disney/Pixar 3D render, 9:16 vertical, 8K",
+  },
+
+  arquiteto: {
+    category: "profissoes",
+    name_pt: "Arquitetura & Projetos",
+    name_en: "Architecture & Design",
+    emoji: "📐",
+    tone_default: "educational",
+    objects: [
+      { pt: "régua paralela T", en: "T-square ruler", emoji: "📐", personality: "metódica, linha reta perfeita, impaciente com improviso" },
+      { pt: "lápis 6B", en: "6B pencil", emoji: "✏️", personality: "criativo, gestual, rascunha com paixão e apaga sem dó" },
+      { pt: "maquete em escala", en: "architectural model", emoji: "🏢", personality: "orgulhosa, delicada, cada detalhe conta uma história" },
+    ],
+    prompts_base: "Brazilian architecture studio, scale models on shelves, drafting table with blueprints, designer lamp, architect in minimalist outfit at background, neutral warm lighting, Disney/Pixar 3D render, 9:16 vertical, 8K",
+  },
+
+  dentista: {
+    category: "profissoes",
+    name_pt: "Odontologia",
+    name_en: "Dentistry",
+    emoji: "🦷",
+    tone_default: "funny",
+    objects: [
+      { pt: "escova de dentes elétrica", en: "electric toothbrush", emoji: "🪥", personality: "vibrante, orgulhosa, julga as manuais com desdém" },
+      { pt: "broca odontológica", en: "dental drill", emoji: "🛠️", personality: "intimidante mas do bem, zumbe alto, quer ajudar" },
+      { pt: "dente molar sorridente", en: "smiling molar", emoji: "🦷", personality: "alegre, saudável, mascote da prevenção" },
+    ],
+    prompts_base: "Brazilian dental clinic, teal chair, bright overhead light, instruments on tray, dentist in mask at background, sterile white lighting, Disney/Pixar 3D render, 9:16 vertical, 8K",
+  },
+
+  psicologo: {
+    category: "profissoes",
+    name_pt: "Psicologia & Terapia",
+    name_en: "Psychology & Therapy",
+    emoji: "🧠",
+    tone_default: "educational",
+    objects: [
+      { pt: "bloco de anotações", en: "therapy notebook", emoji: "📓", personality: "discreto, escuta sem julgar, guarda todos os segredos" },
+      { pt: "divã de terapia", en: "therapy couch", emoji: "🛋️", personality: "acolhedor, veludo macio, acolhe qualquer história" },
+      { pt: "ampulheta dos 50 min", en: "therapy hourglass", emoji: "⏳", personality: "paciente, marca cada segundo com respeito" },
+    ],
+    prompts_base: "Brazilian psychologist office, warm beige tones, plants, cozy armchair and couch, soft diffused lighting, therapist with notepad at background, Disney/Pixar 3D render, 9:16 vertical, 8K",
+  },
+
+  nutricionista: {
+    category: "profissoes",
+    name_pt: "Nutrição & Dietas",
+    name_en: "Nutrition & Diet",
+    emoji: "🥗",
+    tone_default: "educational",
+    objects: [
+      { pt: "balança de alimentos", en: "food scale", emoji: "⚖️", personality: "precisa, gramas contam, se irrita com estimativas" },
+      { pt: "prato colorido", en: "colorful plate", emoji: "🍽️", personality: "alegre, orgulhoso da variedade, odeia monocromia" },
+      { pt: "fita métrica corporal", en: "body measuring tape", emoji: "📏", personality: "honesta, sem filtro, mede sem drama" },
+    ],
+    prompts_base: "Brazilian nutrition consultation room, kitchen counter with fresh produce, glass water bottle, nutritionist in white coat at background, bright natural light, Disney/Pixar 3D render, 9:16 vertical, 8K",
+  },
+
+  "personal-trainer": {
+    category: "profissoes",
+    name_pt: "Personal Trainer & Academia",
+    name_en: "Personal Trainer & Fitness",
+    emoji: "💪",
+    tone_default: "motivational",
+    objects: [
+      { pt: "halter de 10kg", en: "10kg dumbbell", emoji: "🏋️", personality: "pesado, firme, odeia quando largam ele no chão" },
+      { pt: "cronômetro de hiit", en: "hiit timer", emoji: "⏱️", personality: "implacável, conta cada segundo, vilão querido" },
+      { pt: "coqueteleira de whey", en: "protein shaker", emoji: "🥤", personality: "barulhenta, balança com empolgação, cheia de grumos" },
+    ],
+    prompts_base: "Brazilian gym interior, rubber floor, mirrors, weight racks, fit trainer with stopwatch at background, motivational neon accent lighting, Disney/Pixar 3D render, 9:16 vertical, 8K",
+  },
+
+  fisioterapeuta: {
+    category: "profissoes",
+    name_pt: "Fisioterapia",
+    name_en: "Physical Therapy",
+    emoji: "🦴",
+    tone_default: "educational",
+    objects: [
+      { pt: "bolinha de massagem", en: "massage ball", emoji: "🔴", personality: "insistente, aperta nos nós, dói mas faz bem" },
+      { pt: "elástico de exercício", en: "resistance band", emoji: "〰️", personality: "esticado, resiliente, parece leve mas judia" },
+      { pt: "maca de atendimento", en: "treatment table", emoji: "🛏️", personality: "paciente, conforta costas de todos, sempre acolhendo" },
+    ],
+    prompts_base: "Brazilian physical therapy clinic, treatment tables, exercise bands on wall, anatomical posters, physiotherapist in polo at background, clean bright lighting, Disney/Pixar 3D render, 9:16 vertical, 8K",
+  },
+
+  veterinario: {
+    category: "profissoes",
+    name_pt: "Veterinária & Pet",
+    name_en: "Veterinary & Pet Care",
+    emoji: "🐾",
+    tone_default: "funny",
+    objects: [
+      { pt: "termômetro digital", en: "digital thermometer", emoji: "🌡️", personality: "envergonhado do onde entra, mas profissional" },
+      { pt: "saco de ração premium", en: "premium pet food bag", emoji: "🥣", personality: "orgulhoso, rico em proteína, julga marcas genéricas" },
+      { pt: "coleira anti-pulga", en: "flea collar", emoji: "🪢", personality: "guerreira, invisível, protege heroicamente" },
+    ],
+    prompts_base: "Brazilian veterinary clinic, stainless exam table, pet scale, paw prints on wall, vet in scrubs at background with dog, bright clinical light, Disney/Pixar 3D render, 9:16 vertical, 8K",
+  },
+
+  farmaceutico: {
+    category: "profissoes",
+    name_pt: "Farmácia & Medicamentos",
+    name_en: "Pharmacy & Medication",
+    emoji: "💊",
+    tone_default: "educational",
+    objects: [
+      { pt: "cápsula de cápsula", en: "medicine capsule", emoji: "💊", personality: "dividida entre ajudar e assustar, explica efeitos colaterais" },
+      { pt: "almofariz e pistilo", en: "mortar and pestle", emoji: "🧪", personality: "artesanal, tradicional, orgulhoso do ofício antigo" },
+      { pt: "frasco de xarope", en: "syrup bottle", emoji: "🍯", personality: "viscoso, doce mas enjoativo, todos fazem careta ao tomar" },
+    ],
+    prompts_base: "Brazilian pharmacy counter, shelves of medicine boxes, white and green color scheme, pharmacist in lab coat at background, clean bright retail lighting, Disney/Pixar 3D render, 9:16 vertical, 8K",
+  },
+
+  "designer-grafico": {
+    category: "profissoes",
+    name_pt: "Design Gráfico & UX",
+    name_en: "Graphic & UX Design",
+    emoji: "🎨",
+    tone_default: "sarcastic",
+    objects: [
+      { pt: "paleta de cores", en: "color palette", emoji: "🎨", personality: "dramática, briga quando cliente pede 'mais vibrante'" },
+      { pt: "mouse de design", en: "design mouse", emoji: "🖱️", personality: "cansado, clica mil vezes por dia, dedo dolorido" },
+      { pt: "prancheta digital", en: "drawing tablet", emoji: "✒️", personality: "sensível à pressão, artista na alma" },
+    ],
+    prompts_base: "Brazilian design studio, dual monitors with colorful layouts, Pantone swatches on wall, stylish designer at background, neon accent lighting, Disney/Pixar 3D render, 9:16 vertical, 8K",
+  },
+
+  programador: {
+    category: "profissoes",
+    name_pt: "Programação & Dev",
+    name_en: "Programming & Developer",
+    emoji: "💻",
+    tone_default: "funny",
+    objects: [
+      { pt: "teclado mecânico", en: "mechanical keyboard", emoji: "⌨️", personality: "barulhento, orgulhoso do clack-clack, acorda a família" },
+      { pt: "caneca de café", en: "coffee mug", emoji: "☕", personality: "cansada, terceira recarga do dia, mancha sempre em código" },
+      { pt: "bug do código", en: "code bug", emoji: "🐛", personality: "vilão maldoso, reaparece em produção, nunca em dev" },
+    ],
+    prompts_base: "Brazilian developer home office, dual 4K monitors with code editors, RGB lighting, energy drink cans, dev in hoodie at background, moody dark ambiance, Disney/Pixar 3D render, 9:16 vertical, 8K",
+  },
+
+  professor: {
+    category: "profissoes",
+    name_pt: "Educação & Ensino",
+    name_en: "Education & Teaching",
+    emoji: "📚",
+    tone_default: "educational",
+    objects: [
+      { pt: "giz branco", en: "white chalk", emoji: "✏️", personality: "corajoso, sabe que vai virar pó, ensina até o fim" },
+      { pt: "lousa verde", en: "green chalkboard", emoji: "📋", personality: "paciente, acumula conhecimento, nunca apagada de verdade" },
+      { pt: "caderneta de chamada", en: "attendance book", emoji: "📓", personality: "justa, anota faltas sem drama, memória longa" },
+    ],
+    prompts_base: "Brazilian classroom, wooden desks, world map on wall, teacher in cardigan at front, bright fluorescent light, Disney/Pixar 3D render, 9:16 vertical, 8K",
+  },
+
+  coach: {
+    category: "profissoes",
+    name_pt: "Coach & Mentoria",
+    name_en: "Coaching & Mentoring",
+    emoji: "🎯",
+    tone_default: "motivational",
+    objects: [
+      { pt: "moleskine de metas", en: "goal notebook", emoji: "📔", personality: "focado, checklist viva, risca quando alcança" },
+      { pt: "lâmpada da ideia", en: "idea lightbulb", emoji: "💡", personality: "elétrica, acende de repente, iluminadora" },
+      { pt: "cronômetro de 90 dias", en: "90-day timer", emoji: "⏰", personality: "implacável, toca quando acaba, sem pena" },
+    ],
+    prompts_base: "Brazilian modern coaching office, whiteboard with goals, motivational quotes framed, coach in smart casual at background, warm optimistic lighting, Disney/Pixar 3D render, 9:16 vertical, 8K",
+  },
+
+  fotografo: {
+    category: "profissoes",
+    name_pt: "Fotografia Profissional",
+    name_en: "Professional Photography",
+    emoji: "📸",
+    tone_default: "educational",
+    objects: [
+      { pt: "câmera dslr", en: "dslr camera", emoji: "📷", personality: "pesada, precisa, tira uma e já sabe se está boa" },
+      { pt: "lente zoom 70-200", en: "zoom lens 70-200", emoji: "🔭", personality: "aproxima o distante, vê o que ninguém vê" },
+      { pt: "rebatedor de luz", en: "light reflector", emoji: "☀️", personality: "espalhafatosa, prateada, ilumina o óbvio" },
+    ],
+    prompts_base: "Brazilian photography studio, softboxes and backdrops, tripods, photographer in black at background reviewing shots, controlled studio lighting, Disney/Pixar 3D render, 9:16 vertical, 8K",
+  },
 };
 
 // ─── ANALYSIS OUTPUT PROMPT TEMPLATE ────────────────────────────────────────
@@ -1819,28 +2077,61 @@ export async function loadNicheData(niche) {
   return data;
 }
 
-export async function listNiches({ lang = "pt" } = {}) {
-  const list = Object.entries(NICHES).map(([key, n]) => ({
+export async function listNiches({ lang = "pt", category = null } = {}) {
+  let entries = Object.entries(NICHES);
+
+  // Filtro opcional por categoria. "lifestyle" agrupa os nichos sem category
+  // explícita (legado antes da v2.1.0); "profissoes" é a nova categoria.
+  if (category) {
+    const wantLifestyle = category === "lifestyle";
+    entries = entries.filter(([, n]) => {
+      const cat = n.category ?? "lifestyle";
+      return cat === category || (wantLifestyle && !n.category);
+    });
+  }
+
+  const list = entries.map(([key, n]) => ({
     key,
     name: lang === "en" ? n.name_en : n.name_pt,
     emoji: n.emoji,
+    category: n.category ?? "lifestyle",
     objects_count: n.objects.length,
     tone_default: n.tone_default,
     sample_objects: n.objects.slice(0, 3).map(o => lang === "en" ? (o.en || o.id) : (o.pt || o.id)),
   }));
 
-  const text = lang === "en"
-    ? `🎭 ViralObj — Available Niches (${list.length} total)\n\n` +
-      list.map(n =>
-        `${n.emoji} ${n.key.padEnd(18)} | ${n.name.padEnd(28)} | ${n.objects_count} objects | tone: ${n.tone_default}\n   Objects: ${n.sample_objects.join(", ")}...`
-      ).join("\n\n")
-    : `🎭 ViralObj — Nichos Disponíveis (${list.length} total)\n\n` +
-      list.map(n =>
-        `${n.emoji} ${n.key.padEnd(18)} | ${n.name.padEnd(28)} | ${n.objects_count} objetos | tom: ${n.tone_default}\n   Objetos: ${n.sample_objects.join(", ")}...`
-      ).join("\n\n");
+  // Agrupar por categoria pro texto legível
+  const byCategory = list.reduce((acc, n) => {
+    (acc[n.category] ??= []).push(n);
+    return acc;
+  }, {});
+
+  const catLabel = {
+    profissoes: lang === "en" ? "Professional Services" : "Profissões Liberais",
+    lifestyle: lang === "en" ? "Lifestyle & Daily Life" : "Dia a Dia & Lifestyle",
+  };
+
+  const sections = Object.entries(byCategory).map(([cat, items]) => {
+    const header = lang === "en"
+      ? `━━ ${catLabel[cat] ?? cat.toUpperCase()} (${items.length}) ━━`
+      : `━━ ${catLabel[cat] ?? cat.toUpperCase()} (${items.length}) ━━`;
+    const rows = items.map(n =>
+      lang === "en"
+        ? `${n.emoji} ${n.key.padEnd(22)} | ${n.name.padEnd(32)} | ${n.objects_count} objects | tone: ${n.tone_default}\n   Objects: ${n.sample_objects.join(", ")}`
+        : `${n.emoji} ${n.key.padEnd(22)} | ${n.name.padEnd(32)} | ${n.objects_count} objetos | tom: ${n.tone_default}\n   Objetos: ${n.sample_objects.join(", ")}`
+    ).join("\n\n");
+    return `${header}\n\n${rows}`;
+  });
+
+  const title = lang === "en"
+    ? `🎭 ViralObj — Available Niches (${list.length} total${category ? ` · filtered by category="${category}"` : ""})`
+    : `🎭 ViralObj — Nichos Disponíveis (${list.length} total${category ? ` · filtrado por categoria="${category}"` : ""})`;
+
+  const text = `${title}\n\n${sections.join("\n\n")}`;
 
   return {
     content: [{ type: "text", text }],
     niches: list,
+    categories: Object.keys(byCategory),
   };
 }
