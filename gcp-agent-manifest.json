@@ -1,0 +1,299 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "ViralObj Bridge — Gemini Enterprise Agent Manifest",
+    "version": "2.2.0",
+    "summary": "Portal de serviços para profissionais liberais — geração de reels virais Talking Object com memória de preferências.",
+    "description": "Este agente opera como o backend de conteúdo viral do ViralObj, servindo **profissionais liberais** (advogados, contadores, médicos, engenheiros, corretores, arquitetos, dentistas, psicólogos, nutricionistas, personal trainers, fisioterapeutas, veterinários, farmacêuticos, designers, programadores, professores, coaches e fotógrafos).\n\nO agente é capaz de **memorizar as preferências de nicho de cada profissional** baseando-se no `user_history` salvo no Postgres (Cloud SQL). Cada vez que um profissional chama `/api/generate-reel` com seu `user_email`, a Bridge:\n\n1. Faz upsert do profissional na tabela `professionals` (perfil persistente com email, nome e profissão).\n2. Gera o pacote (roteiro bilíngue PT+EN, prompts, voz, captions, hashtags, variações).\n3. Persiste o pacote em `user_history` com o `user_id` resolvido.\n4. Mirrora o vídeo renderizado (Fal.ai / Veo 3) para o bucket `viralobj-assets` no Google Cloud Storage e retorna uma URL durável (a URL direta do Fal expira em ~7 dias).\n5. Retorna `history_id` (uuid) para que o agente possa recuperar ou citar gerações anteriores em conversas futuras.\n\nCom o `history_id` acumulado, o agente constrói uma memória implícita: sabe que determinado advogado prefere tom dramático para pautas de direito de família, ou que uma nutricionista sempre pede reels educativos de 30s sobre suplementação — e pode propor variações consistentes com esse estilo sem perguntar tudo de novo.\n\nCatálogo: 36 nichos agrupados em duas categorias — `profissoes` (18 profissões liberais, cada uma com 3 objetos Pixar icônicos) e `lifestyle` (18 nichos do dia-a-dia: casa, plantas, financeiro, culinária, etc.).",
+    "contact": {
+      "name": "ViralObj / DB8 Intelligence",
+      "url": "https://viralobj.com"
+    },
+    "license": {
+      "name": "Proprietary"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://viralobj-bridge-<hash>-uc.a.run.app",
+      "description": "Cloud Run (production). Replace <hash> with the actual deploy URL, or point to the app.yaml-deployed App Engine service."
+    }
+  ],
+  "tags": [
+    { "name": "catalog", "description": "Listagem de nichos e profissões disponíveis." },
+    { "name": "generation", "description": "Geração e renderização de reels Talking Object." },
+    { "name": "meta", "description": "Health check e spec." }
+  ],
+  "components": {
+    "securitySchemes": {
+      "GeminiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Gemini-Key",
+        "description": "Token do agente (env GEMINI_AGENT_TOKEN na Bridge). Não é a chave do Gemini — é um segredo compartilhado entre o agente e a Bridge."
+      }
+    },
+    "schemas": {
+      "NicheSummary": {
+        "type": "object",
+        "required": ["key", "name", "category", "objects_count"],
+        "properties": {
+          "key": { "type": "string", "example": "advogado" },
+          "name": { "type": "string", "example": "Advocacia & Direito" },
+          "emoji": { "type": "string", "example": "⚖️" },
+          "category": {
+            "type": "string",
+            "enum": ["profissoes", "lifestyle"],
+            "description": "'profissoes' = 18 profissões liberais; 'lifestyle' = 18 nichos de dia-a-dia."
+          },
+          "objects_count": { "type": "integer", "example": 3 },
+          "tone_default": {
+            "type": "string",
+            "enum": ["angry", "dramatic", "funny", "educational", "sarcastic", "motivational"],
+            "example": "dramatic"
+          },
+          "sample_objects": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["martelo do juiz", "balança da justiça", "código de leis"]
+          }
+        }
+      },
+      "GenerateReelRequest": {
+        "type": "object",
+        "required": ["niche", "objects", "topic"],
+        "properties": {
+          "niche": {
+            "type": "string",
+            "description": "Chave do nicho (listada em /api/niches). Para profissionais, use a profissão como key (e.g. 'advogado', 'contador', 'medico').",
+            "example": "advogado"
+          },
+          "objects": {
+            "type": "array",
+            "items": { "type": "string" },
+            "minItems": 1,
+            "description": "Objetos Pixar que farão a narração. Profissões já têm 3 objetos canônicos — use-os como default.",
+            "example": ["martelo do juiz", "balança da justiça", "código de leis"]
+          },
+          "topic": {
+            "type": "string",
+            "description": "Tema/mensagem central do reel.",
+            "example": "3 erros comuns ao assinar contrato de aluguel"
+          },
+          "tone": {
+            "type": "string",
+            "enum": ["angry", "dramatic", "funny", "educational", "sarcastic", "motivational"],
+            "default": "dramatic"
+          },
+          "duration": {
+            "type": "integer",
+            "minimum": 10,
+            "maximum": 90,
+            "default": 30
+          },
+          "lang": {
+            "type": "string",
+            "enum": ["pt", "en", "both"],
+            "default": "both"
+          },
+          "provider": {
+            "type": "string",
+            "enum": ["auto", "anthropic", "openai", "gemini"],
+            "default": "auto"
+          },
+          "user_email": {
+            "type": "string",
+            "format": "email",
+            "description": "**Passe sempre quando possível.** Vincula o reel ao profissional em `professionals` e a geração em `user_history`, alimentando a memória de preferências do agente. Quando o profissional voltar a conversar, consulte o histórico para propor variações consistentes.",
+            "example": "dra.silva@escritorio.com.br"
+          },
+          "user_name": {
+            "type": "string",
+            "description": "Nome completo. Usado apenas quando o profissional está sendo criado pela primeira vez.",
+            "example": "Dra. Maria Silva"
+          }
+        }
+      },
+      "GenerateReelResponse": {
+        "type": "object",
+        "required": ["success", "package"],
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "elapsed_ms": { "type": "integer", "example": 8423 },
+          "provider_used": { "type": "string", "example": "anthropic" },
+          "package": {
+            "type": "object",
+            "description": "Pacote completo: meta, characters[], captions[], post_copy, variations[]. Apresente `voice_script_pt` e `caption_pt` verbatim ao usuário — não parafrasear."
+          },
+          "summary": { "type": "string" },
+          "history_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "**ID da geração no Postgres.** Persista este id ao lado do email do profissional no contexto da conversa. Em interações futuras, use-o (ou consulte `user_history` via ferramenta administrativa) para recuperar o estilo e a preferência de nicho desse profissional."
+          },
+          "video_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "**URL durável do vídeo no Google Cloud Storage** (`https://storage.googleapis.com/viralobj-assets/...`). Esta é a URL que o agente deve entregar ao usuário — NÃO o link direto da Fal.ai (que expira em ~7 dias). Quando null, o render ainda está em andamento ou o pipeline visual não foi executado; nesse caso informe que apenas o pacote de texto está pronto."
+          },
+          "persisted": {
+            "type": "object",
+            "description": "Status de persistência. `saved:false` não significa falha geral — o pacote foi gerado; apenas o histórico não pôde ser gravado.",
+            "properties": {
+              "saved": { "type": "boolean" },
+              "id": { "type": "string", "format": "uuid", "nullable": true },
+              "reason": { "type": "string", "nullable": true }
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["success", "error"],
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "error": { "type": "string" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["meta"],
+        "summary": "Liveness check (sem auth)",
+        "description": "Use para validar que a Bridge está online antes de chamadas críticas.",
+        "responses": {
+          "200": {
+            "description": "Serviço online",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "ok" },
+                    "service": { "type": "string", "example": "viralobj-bridge" },
+                    "version": { "type": "string" },
+                    "uptime_seconds": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/niches": {
+      "get": {
+        "tags": ["catalog"],
+        "summary": "Lista os 36 nichos (18 profissões + 18 lifestyle)",
+        "description": "**Chame PRIMEIRO** quando o profissional não especificou nicho, ou para validar uma chave antes de gerar. Use `?category=profissoes` para restringir ao catálogo profissional (caso principal do portal).",
+        "security": [{ "GeminiKey": [] }],
+        "parameters": [
+          {
+            "name": "lang",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["pt", "en"], "default": "pt" }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["profissoes", "lifestyle"] },
+            "description": "Filtro por categoria. Omitir para listar tudo."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de nichos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "source": {
+                      "type": "string",
+                      "enum": ["db", "memory"],
+                      "description": "'db' = servido do Postgres (Cloud SQL). 'memory' = fallback pelo catálogo in-memory; acontece quando o DB está vazio ou inacessível."
+                    },
+                    "count": { "type": "integer", "example": 18 },
+                    "category": { "type": "string", "enum": ["all", "profissoes", "lifestyle"] },
+                    "categories": { "type": "array", "items": { "type": "string" } },
+                    "niches": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/NicheSummary" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token X-Gemini-Key ausente ou inválido",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/generate-reel": {
+      "post": {
+        "tags": ["generation"],
+        "summary": "Gera pacote de reel + renderiza vídeo + publica no GCS",
+        "description": "Fluxo completo: (1) chama Anthropic/OpenAI/Gemini para produzir o pacote bilíngue, (2) persiste em `user_history` vinculado ao profissional (upsert em `professionals` via `user_email`), (3) quando o pipeline visual está ativo, renderiza via Fal.ai Veo 3 e mirra o MP4 para `gs://viralobj-assets/`, retornando a URL durável do GCS.\n\n**Para o agente:** sempre inclua `user_email` quando disponível — isso habilita a memória de preferências do profissional. Salve o `history_id` retornado no contexto da conversa para poder referenciar gerações anteriores ou consultar o estilo preferido do profissional.",
+        "security": [{ "GeminiKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/GenerateReelRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pacote gerado. Veja `history_id` e `video_url` para persistir e entregar ao usuário.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GenerateReelResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Validação (niche/objects/topic faltantes)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          },
+          "401": {
+            "description": "Token X-Gemini-Key ausente ou inválido",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          },
+          "500": {
+            "description": "Falha em todos os provedores de LLM",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
+        }
+      }
+    }
+  },
+  "x-gemini-agent": {
+    "grounding_files": ["GEMINI_KNOWLEDGE.md"],
+    "memory_strategy": {
+      "source_table": "user_history",
+      "key_column": "user_id",
+      "linked_table": "professionals",
+      "linked_column": "email",
+      "summary": "Ao receber um user_email, o agente deve (1) propor nichos previamente usados por esse email, (2) aplicar o `tone` mais frequente nas últimas 5 gerações do mesmo niche, (3) sugerir reaproveitamento do formato quando o tema for próximo."
+    },
+    "recommended_system_instructions": "Você é o assistente ViralObj para profissionais liberais. Ao iniciar uma conversa, peça o email do profissional. Use /api/niches?category=profissoes para oferecer nichos quando não estiver claro. Ao gerar um reel, sempre passe user_email e user_name (se soubermos). Salve o history_id retornado para poder referenciar gerações anteriores. Entregue o video_url do GCS verbatim ao usuário — nunca o link direto da Fal."
+  }
+}

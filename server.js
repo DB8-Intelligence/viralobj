@@ -245,6 +245,15 @@ app.post("/api/generate-reel", requireGeminiKey, async (req, res) => {
       provider_used: result.result?.provider_used,
       package: result.package,
       summary: result.content?.[0]?.text,
+      // history_id doubles as generation_id and is what the caller uses
+      // to look up this row in user_history / videos later. null if DB
+      // persistence failed (persisted.saved === false).
+      history_id: persisted.id,
+      // video_url will be the durable GCS URL once the full render
+      // pipeline lands. Null today — the current endpoint only produces
+      // the text package; a future queue-backed step will populate this
+      // by streaming the Fal/Veo 3 output through uploadFromUrl().
+      video_url: null,
       persisted,
     });
   } catch (err) {
@@ -373,6 +382,25 @@ function buildOpenApiSpec(baseUrl) {
                 "Full production package: meta, characters[], captions[], post_copy, variations[].",
             },
             summary: { type: "string", description: "Human-readable summary." },
+            history_id: {
+              type: "string",
+              format: "uuid",
+              nullable: true,
+              description:
+                "UUID of the user_history row in Postgres. Doubles as generation_id. "
+                + "Use this to look up past generations (enabling the agent to "
+                + "memorize each professional's preferred niches and tones).",
+            },
+            video_url: {
+              type: "string",
+              format: "uri",
+              nullable: true,
+              description:
+                "Durable Google Cloud Storage URL (gs://viralobj-assets/...) of the "
+                + "rendered reel video. Null while the render pipeline is still text-only; "
+                + "populated once Fal/Veo 3 output is streamed through the bridge's "
+                + "uploadFromUrl() and mirrored to GCS.",
+            },
             persisted: {
               type: "object",
               description:
