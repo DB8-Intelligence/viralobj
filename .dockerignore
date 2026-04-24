@@ -1,0 +1,45 @@
+# VCS and CI
+.git
+.github
+.gitignore
+.gitattributes
+
+# Secrets & env
+.env
+.env.*
+!.env.example
+
+# Node modules (rebuilt inside container via npm ci)
+node_modules
+
+# Next.js webapp (separate deploy on Vercel — not part of the bridge image)
+webapp
+
+# Build artifacts / caches
+*.log
+.DS_Store
+.vscode
+.idea
+.claude
+.next
+dist
+build
+coverage
+
+# Supabase CLI temp
+supabase/.temp
+
+# Local-only assets (docs, prebuilt zips, session handoffs)
+docs
+downloads
+outputs
+*.zip
+
+# Docker/Cloud configs that shouldn't be inside the image
+Dockerfile
+.dockerignore
+app.yaml
+
+# MCP training data is large and not needed by the HTTP bridge;
+# remove this line if the bridge ever reads from training-data/ at runtime.
+training-data

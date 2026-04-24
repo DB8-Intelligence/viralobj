@@ -1,0 +1,59 @@
+# Google App Engine (Standard) — ViralObj Bridge
+# Deploy: gcloud app deploy app.yaml
+#
+# Using nodejs20 (current LTS on App Engine Standard). The Dockerfile uses
+# node:18-slim; when App Engine Standard builds this app it ignores the
+# Dockerfile and uses its managed Node 20 runtime instead. For Cloud Run
+# (Docker-based) deploys, the Dockerfile is authoritative.
+
+runtime: nodejs20
+service: viralobj-bridge
+
+# F2 = 512MB RAM / 1.2GHz. F1 is enough for tests; F2 gives headroom for
+# concurrent LLM calls (Anthropic/OpenAI/Gemini SDK in generate-reel).
+instance_class: F2
+
+# Scale to zero when idle to avoid billing; scale up on traffic bursts.
+automatic_scaling:
+  min_instances: 0
+  max_instances: 5
+  target_cpu_utilization: 0.65
+  max_concurrent_requests: 20
+
+# Package.json already declares "start": "node server.js" — App Engine
+# runs that automatically, no explicit entrypoint required.
+# Uncomment to override:
+# entrypoint: npm start
+
+# Non-secret defaults. Real credentials MUST come from Secret Manager
+# (see instructions below), not this file. Anyone with repo access can
+# read app.yaml, so treat it as public.
+env_variables:
+  NODE_ENV: "production"
+  # PUBLIC_URL is optional — populated by App Engine as the service URL
+  # automatically once deployed. Uncomment only if you want openapi.json
+  # to advertise a custom domain:
+  # PUBLIC_URL: "https://viralobj-bridge-dot-<your-project>.appspot.com"
+
+# Force HTTPS on every route (App Engine redirects HTTP → HTTPS when 'always').
+handlers:
+  - url: /.*
+    script: auto
+    secure: always
+
+# ─── Secret Manager wiring (apply via gcloud, not committed here) ─────────
+# After first deploy:
+#   gcloud secrets create GEMINI_AGENT_TOKEN --data-file=-
+#   gcloud secrets create ANTHROPIC_API_KEY --data-file=-
+#   gcloud secrets create OPENAI_API_KEY --data-file=-
+#   gcloud secrets create GEMINI_API_KEY --data-file=-
+# Grant the App Engine service account access:
+#   gcloud secrets add-iam-policy-binding GEMINI_AGENT_TOKEN \
+#     --member=serviceAccount:<project-id>@appspot.gserviceaccount.com \
+#     --role=roles/secretmanager.secretAccessor
+# Expose them to the runtime:
+#   gcloud app deploy --set-env-vars \
+#     GEMINI_AGENT_TOKEN=$(gcloud secrets versions access latest --secret=GEMINI_AGENT_TOKEN),\
+#     ANTHROPIC_API_KEY=$(gcloud secrets versions access latest --secret=ANTHROPIC_API_KEY),\
+#     OPENAI_API_KEY=$(gcloud secrets versions access latest --secret=OPENAI_API_KEY),\
+#     GEMINI_API_KEY=$(gcloud secrets versions access latest --secret=GEMINI_API_KEY)
