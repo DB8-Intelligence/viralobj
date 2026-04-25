@@ -2,9 +2,9 @@
   "openapi": "3.0.3",
   "info": {
     "title": "ViralObj Bridge — Gemini Enterprise Agent Manifest",
-    "version": "2.3.0",
-    "summary": "Portal de serviços para profissionais liberais — geração de reels virais Talking Object com render assíncrono no Veo 3 e entrega hospedada no Google Cloud Storage.",
-    "description": "Este agente opera como o backend de conteúdo viral do ViralObj, servindo **profissionais liberais** (advogados, contadores, médicos, engenheiros, corretores, arquitetos, dentistas, psicólogos, nutricionistas, personal trainers, fisioterapeutas, veterinários, farmacêuticos, designers, programadores, professores, coaches e fotógrafos).\n\n## Fluxo assíncrono em duas etapas\n\n1. **POST /api/generate-reel** — gera o pacote textual (roteiro bilíngue PT+EN, prompts, voz, captions, hashtags, variações) e **dispara o render de vídeo no Fal.ai Veo 3**. Retorna **HTTP 202** imediatamente com `history_id`, `video_jobs[]` e `poll_url`. A resposta NÃO contém `video_url` ainda — o render leva 1-3 min por cena.\n\n2. **GET /api/reel/{history_id}/status** — o agente deve chamar este endpoint a cada ~10s após a chamada inicial. Quando o Fal termina cada cena, a Bridge **streama o MP4 para `gs://viralobj-assets/`** via `uploadFromUrl()` e retorna a **URL durável do Google Cloud Storage** — NUNCA a URL direta da Fal (que expira em ~7 dias). Quando `status='completed'`, entregue `video_url` e `scene_videos[]` ao usuário.\n\n## Memória de preferências por profissional\n\nO agente é capaz de **memorizar as preferências de nicho de cada profissional** baseando-se no `user_history` salvo no Postgres (Cloud SQL). Cada vez que um profissional chama `/api/generate-reel` com seu `user_email`, a Bridge:\n\n- Faz upsert do profissional na tabela `professionals` (perfil persistente).\n- Gera o pacote com LLM (Anthropic/OpenAI/Gemini em cascata).\n- Persiste o pacote em `user_history` e os jobs de vídeo em `videos` (um row por cena) com status inicial `pending`.\n- Atualiza cada row para `processing` → `completed` + URL GCS conforme o Fal termina.\n\nAo acumular `history_id`s, o agente constrói memória implícita: sabe que determinado advogado prefere tom dramático para pautas de direito de família, ou que uma nutricionista sempre pede reels educativos de 30s — e pode propor variações consistentes com esse estilo sem perguntar tudo de novo.\n\n## Catálogo\n\n36 nichos agrupados em `profissoes` (18 profissões liberais com 3 objetos Pixar canônicos cada) e `lifestyle` (18 nichos de dia-a-dia: casa, plantas, financeiro, culinária, etc.).",
+    "version": "3.0.0",
+    "summary": "Portal de serviços para profissionais liberais — pipeline Google-Cloud-only (Vertex AI Gemini 1.5 Pro + Veo) com render assíncrono e entrega no Cloud Storage.",
+    "description": "Este agente opera como o backend de conteúdo viral do ViralObj, servindo **profissionais liberais** (advogados, contadores, médicos, engenheiros, corretores, arquitetos, dentistas, psicólogos, nutricionistas, personal trainers, fisioterapeutas, veterinários, farmacêuticos, designers, programadores, professores, coaches e fotógrafos).\n\n## Stack 100% Google Cloud (sem chaves de API externas)\n\n- **Texto**: Vertex AI **Gemini 1.5 Pro** com `systemInstruction` nativo + `responseMimeType=application/json`.\n- **Vídeo**: Vertex AI **Veo** (`predictLongRunning`) escrevendo o MP4 direto em `gs://viralobj-assets/` via `storageUri`.\n- **Auth**: Application Default Credentials (ADC) — service account do Cloud Run com `roles/aiplatform.user` + `roles/storage.objectAdmin`.\n- **Único secret externo**: `GEMINI_AGENT_TOKEN` (HMAC compartilhado com o Agent).\n\n## Fluxo assíncrono em duas etapas\n\n1. **POST /api/generate-reel** — Gemini 1.5 Pro produz o pacote textual bilíngue PT+EN (5–15s) e cada personagem é submetido ao Veo como long-running operation (sub-segundo por submit). Retorna **HTTP 202** com `history_id`, `video_jobs[]` (com o operation name como `request_id`), `poll_url`. `video_url` é null nesta resposta.\n\n2. **GET /api/reel/{history_id}/status** — chame a cada ~10s. Para cada cena, a Bridge consulta a operation no Vertex; quando concluída, lê o `gs://` URI que o Veo já escreveu no bucket, converte para URL pública `https://storage.googleapis.com/viralobj-assets/...` e atualiza a row. **Não há etapa de download/upload** — o Veo grava direto no nosso bucket. Quando `status='completed'`, entregue `video_url` ao usuário.\n\n## Memória de preferências por profissional\n\nO agente memoriza preferências baseando-se em `user_history` (Cloud SQL Postgres). Cada chamada com `user_email`:\n\n- Upsert em `professionals` (perfil persistente).\n- Gera pacote com Gemini 1.5 Pro.\n- Persiste em `user_history` e cria rows em `videos` (uma por cena, status inicial `pending`).\n- O endpoint de status atualiza cada row para `processing` → `completed` (com URL GCS) à medida que o Veo termina.\n\nCom `history_id`s acumulados, o agente sabe que determinado advogado prefere tom dramático, ou que uma nutricionista sempre pede reels educativos de 30s — e pode propor variações consistentes sem perguntar tudo de novo.\n\n## Catálogo\n\n36 nichos: `profissoes` (18 profissões liberais com 3 objetos Pixar canônicos cada) e `lifestyle` (18 nichos do dia-a-dia).",
     "contact": { "name": "ViralObj / DB8 Intelligence", "url": "https://viralobj.com" },
     "license": { "name": "Proprietary" }
   },
@@ -69,7 +69,7 @@
           "lang": { "type": "string", "enum": ["pt", "en", "both"], "default": "both" },
           "provider": {
             "type": "string",
-            "enum": ["auto", "anthropic", "openai", "gemini"],
+            "enum": ["auto", "vertex"],
             "default": "auto"
           },
           "user_email": {
@@ -93,7 +93,7 @@
           "request_id": {
             "type": "string",
             "nullable": true,
-            "description": "Fal queue request id (use para debug, não precisa pollar manualmente)."
+            "description": "Vertex AI Veo long-running operation name (use para debug, não precisa pollar manualmente)."
           },
           "status": {
             "type": "string",
@@ -126,7 +126,7 @@
         "properties": {
           "success": { "type": "boolean" },
           "elapsed_ms": { "type": "integer" },
-          "provider_used": { "type": "string", "example": "anthropic" },
+          "provider_used": { "type": "string", "example": "vertex/gemini-1.5-pro" },
           "package": {
             "type": "object",
             "description": "Pacote textual completo: meta, characters[], captions[], post_copy, variations[]."
@@ -147,7 +147,7 @@
           "render_status": {
             "type": "string",
             "enum": ["processing", "text_only", "failed"],
-            "description": "processing = jobs submetidos, agente deve pollar. text_only = render pulado (DB ou FAL_KEY indisponíveis). failed = todos os submits falharam."
+            "description": "processing = jobs submetidos ao Vertex AI Veo, agente deve pollar. text_only = render pulado (DB ou GCP_PROJECT_ID indisponíveis). failed = todos os submits falharam."
           },
           "render_skip_reason": { "type": "string", "nullable": true },
           "video_jobs": {
@@ -287,7 +287,7 @@
       "post": {
         "tags": ["generation"],
         "summary": "Gera pacote + submete render (retorna 202, async)",
-        "description": "**Fluxo em duas etapas.** Passo 1 aqui: gera pacote textual com LLM (~10s), persiste em user_history, submete cada personagem ao Fal.ai Veo 3 queue (sub-segundo). Retorna 202 com `history_id`, `video_jobs[]` e `poll_url`.\n\n**Passo 2 obrigatório:** o agente deve pollar `GET /api/reel/{history_id}/status` a cada ~10s até `status='completed'`. Só aí a `video_url` do GCS estará disponível.\n\n**Sempre passe `user_email`** — sem ele a memória de preferências do profissional não é alimentada.\n\n**Salve o `history_id`** no contexto da conversa: (a) é necessário para pollar o status; (b) permite referenciar gerações anteriores; (c) identifica a memória desse profissional em chamadas futuras.",
+        "description": "**Fluxo em duas etapas.** Passo 1 aqui: Vertex AI Gemini 1.5 Pro gera o pacote textual (~10s), persiste em user_history, e cada personagem é submetido a Vertex AI Veo como long-running operation (sub-segundo por submit). Retorna 202 com `history_id`, `video_jobs[]` e `poll_url`.\n\n**Passo 2 obrigatório:** o agente deve pollar `GET /api/reel/{history_id}/status` a cada ~10s até `status='completed'`. Só aí a `video_url` do GCS estará disponível.\n\n**Sempre passe `user_email`** — sem ele a memória de preferências do profissional não é alimentada.\n\n**Salve o `history_id`** no contexto da conversa: (a) é necessário para pollar o status; (b) permite referenciar gerações anteriores; (c) identifica a memória desse profissional em chamadas futuras.",
         "security": [{ "GeminiKey": [] }],
         "requestBody": {
           "required": true,
@@ -317,7 +317,7 @@
             "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
           },
           "500": {
-            "description": "Falha em todos os provedores de LLM",
+            "description": "Falha no Vertex AI Gemini (auth, quota, ou conteúdo bloqueado)",
             "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
           }
         }
@@ -327,7 +327,7 @@
       "get": {
         "tags": ["generation"],
         "summary": "Poll do render — retorna URL GCS quando completed",
-        "description": "**Cadência recomendada: a cada 10 segundos** após o POST /api/generate-reel retornar 202. A cada chamada a Bridge:\n\n1. Consulta o status de cada cena no Fal.\n2. Para cenas COMPLETED, baixa o MP4 do Fal e sobe para `gs://viralobj-assets/videos/{history_id}/{scene_id}.mp4` via `uploadFromUrl()`.\n3. Atualiza a row em `videos` com a URL durável do GCS.\n\nQuando `status='completed'`, use `video_url` (URL do GCS) para entregar ao usuário. **NUNCA use a URL direta da Fal** — ela expira.\n\nSe `status='failed'`, informe o usuário e sugira regerar com outro nicho/tom.",
+        "description": "**Cadência recomendada: a cada 10 segundos** após o POST /api/generate-reel retornar 202. A cada chamada a Bridge:\n\n1. Consulta o status da long-running operation de cada cena no Vertex AI.\n2. Para operations concluídas, lê o `gs://` URI que o Veo já escreveu no bucket via `storageUri` (sem etapa de download/upload — o vídeo já está no nosso bucket) e converte para URL pública.\n3. Atualiza a row em `videos` com `status='completed'` e a URL final.\n\nQuando `status='completed'`, use `video_url` para entregar ao usuário. Se `status='failed'`, informe o usuário (pode ter sido bloqueado pelo filtro RAI do Vertex AI) e sugira regerar com outro nicho/tom.",
         "security": [{ "GeminiKey": [] }],
         "parameters": [
           {
@@ -378,6 +378,6 @@
       "linked_column": "email",
       "summary": "Ao receber um user_email, o agente deve (1) propor nichos previamente usados por esse email, (2) aplicar o `tone` mais frequente nas últimas 5 gerações do mesmo niche, (3) reutilizar history_ids anteriores quando o tema for próximo."
     },
-    "recommended_system_instructions": "Você é o assistente ViralObj para profissionais liberais. ### Ao iniciar conversa: peça o email do profissional. ### Ao escolher nicho: chame GET /api/niches?category=profissoes quando não estiver claro. ### Ao gerar um reel: sempre passe user_email e user_name. Salve o history_id retornado no contexto. ### Após POST /api/generate-reel retornar 202: informe o usuário que o vídeo está sendo renderizado (~2-4 min). Pollar GET /api/reel/{history_id}/status a cada 10 segundos até status='completed'. ### Ao entregar: use a video_url do GCS (storage.googleapis.com/viralobj-assets/...) — NUNCA o link direto da Fal. ### Ao encontrar um email conhecido: consulte o histórico via user_history e proponha variações consistentes com o estilo anterior."
+    "recommended_system_instructions": "Você é o assistente ViralObj para profissionais liberais. ### Ao iniciar conversa: peça o email do profissional. ### Ao escolher nicho: chame GET /api/niches?category=profissoes quando não estiver claro. ### Ao gerar um reel: sempre passe user_email e user_name. Salve o history_id retornado no contexto. ### Após POST /api/generate-reel retornar 202: informe o usuário que o vídeo está sendo renderizado (~2-4 min). Pollar GET /api/reel/{history_id}/status a cada 10 segundos até status='completed'. ### Ao entregar: use a video_url do GCS (storage.googleapis.com/viralobj-assets/...) — esta é a única URL durável; o vídeo é gravado direto no bucket pelo Vertex AI Veo. ### Ao encontrar um email conhecido: consulte o histórico via user_history e proponha variações consistentes com o estilo anterior."
   }
 }

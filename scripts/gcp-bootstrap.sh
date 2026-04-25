@@ -14,10 +14,8 @@
 # Idempotent: every step checks existence first. Safe to re-run after
 # tweaking env vars — it'll rotate secrets, add IAM bindings, redeploy.
 #
-# Usage (set PROJECT_ID at minimum; rest has sane defaults):
+# Usage (set PROJECT_ID + the agent token; AI services use ADC, no API keys):
 #   export PROJECT_ID=my-gcp-project
-#   export ANTHROPIC_API_KEY=sk-ant-…   # or answer the prompt
-#   export FAL_KEY=…                    # or answer the prompt
 #   export GEMINI_AGENT_TOKEN=$(openssl rand -hex 32)
 #   bash scripts/gcp-bootstrap.sh
 #
@@ -102,8 +100,9 @@ gcloud services enable \
   storage.googleapis.com \
   secretmanager.googleapis.com \
   iam.googleapis.com \
+  aiplatform.googleapis.com \
   --project="$PROJECT_ID"
-ok "APIs enabled"
+ok "APIs enabled (Cloud Run, Cloud Build, AR, SQL, Storage, Secret Manager, IAM, Vertex AI)"
 
 # ─── 2. Cloud SQL ────────────────────────────────────────────────────────────
 
@@ -190,9 +189,11 @@ fi
 
 log "Step 4b: granting IAM roles"
 
-# Project-wide roles: SQL client (Cloud SQL Auth Proxy in Cloud Run uses this),
-# Secret Manager accessor (for --set-secrets below).
-for role in roles/cloudsql.client roles/secretmanager.secretAccessor; do
+# Project-wide roles:
+#   roles/cloudsql.client            — Cloud SQL Auth Proxy in Cloud Run
+#   roles/secretmanager.secretAccessor — read GEMINI_AGENT_TOKEN + DB_PASS
+#   roles/aiplatform.user            — Vertex AI Gemini + Veo (predict + LRO)
+for role in roles/cloudsql.client roles/secretmanager.secretAccessor roles/aiplatform.user; do
   gcloud projects add-iam-policy-binding "$PROJECT_ID" \
     --member="serviceAccount:${SA_EMAIL}" \
     --role="$role" \
@@ -201,7 +202,8 @@ for role in roles/cloudsql.client roles/secretmanager.secretAccessor; do
   ok "$role"
 done
 
-# Bucket-scoped role: write access to viralobj-assets only (tighter than project-wide).
+# Bucket-scoped role: Veo writes MP4s here via storageUri, and the bridge
+# also reads/writes audio + image artifacts.
 gcloud storage buckets add-iam-policy-binding "gs://$BUCKET_NAME" \
   --member="serviceAccount:${SA_EMAIL}" \
   --role='roles/storage.objectAdmin' \
@@ -211,31 +213,18 @@ ok "roles/storage.objectAdmin on gs://$BUCKET_NAME"
 # ─── 5. Secret Manager ───────────────────────────────────────────────────────
 
 log "Step 5: Secret Manager"
+# Only TWO secrets are stored: GEMINI_AGENT_TOKEN (HMAC for X-Gemini-Key)
+# and DB_PASS (Postgres password). All AI services authenticate via ADC
+# using the runtime service account roles granted above.
 
-prompt_secret ANTHROPIC_API_KEY  "ANTHROPIC_API_KEY (sk-ant-…)"
-prompt_secret FAL_KEY            "FAL_KEY (uuid:hex)"
 prompt_secret GEMINI_AGENT_TOKEN "GEMINI_AGENT_TOKEN (shared HMAC token for the Gemini Agent)"
 
-ensure_secret ANTHROPIC_API_KEY  "$ANTHROPIC_API_KEY"
-ensure_secret FAL_KEY            "$FAL_KEY"
 ensure_secret GEMINI_AGENT_TOKEN "$GEMINI_AGENT_TOKEN"
 ensure_secret DB_PASS            "$DB_PASS"
-
-# Optional — only if you want fallback LLM providers. Skip silently when unset.
-[ -n "${OPENAI_API_KEY:-}" ]  && ensure_secret OPENAI_API_KEY  "$OPENAI_API_KEY"  || true
-[ -n "${GEMINI_API_KEY:-}" ]  && ensure_secret GEMINI_API_KEY  "$GEMINI_API_KEY"  || true
 
 # ─── 6. Cloud Run deploy ─────────────────────────────────────────────────────
 
 log "Step 6: Cloud Run deploy (from source — Cloud Build will pack the Dockerfile)"
-
-# NOTE on the ^@@^ prefix in --set-env-vars: it redefines the delimiter
-# from "," to "@@" so we can embed commas in VIRALOBJ_PROVIDER_ORDER.
-
-# Build the optional-secrets string so we only map what was actually set.
-OPTIONAL_SECRETS=""
-[ -n "${OPENAI_API_KEY:-}" ]  && OPTIONAL_SECRETS="${OPTIONAL_SECRETS},OPENAI_API_KEY=OPENAI_API_KEY:latest"
-[ -n "${GEMINI_API_KEY:-}" ]  && OPTIONAL_SECRETS="${OPTIONAL_SECRETS},GEMINI_API_KEY=GEMINI_API_KEY:latest"
 
 gcloud run deploy "$SERVICE_NAME" \
   --project="$PROJECT_ID" \
@@ -251,8 +240,8 @@ gcloud run deploy "$SERVICE_NAME" \
   --min-instances=0 \
   --max-instances=5 \
   --timeout=300 \
-  --set-env-vars="^@@^NODE_ENV=production@@DB_HOST=/cloudsql/${SQL_CONN}@@DB_USER=${SQL_DB_USER}@@DB_NAME=${SQL_DB_NAME}@@DB_PORT=5432@@DB_SSL=disable@@GCS_BUCKET_NAME=${BUCKET_NAME}@@VIRALOBJ_PROVIDER_ORDER=anthropic,openai,gemini@@GCP_PROJECT_ID=${PROJECT_ID}" \
-  --set-secrets="ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest,FAL_KEY=FAL_KEY:latest,GEMINI_AGENT_TOKEN=GEMINI_AGENT_TOKEN:latest,DB_PASS=DB_PASS:latest${OPTIONAL_SECRETS}"
+  --set-env-vars="NODE_ENV=production,DB_HOST=/cloudsql/${SQL_CONN},DB_USER=${SQL_DB_USER},DB_NAME=${SQL_DB_NAME},DB_PORT=5432,DB_SSL=disable,GCS_BUCKET_NAME=${BUCKET_NAME},GCP_PROJECT_ID=${PROJECT_ID},VERTEX_LOCATION=${REGION},VERTEX_MODEL=gemini-1.5-pro,VEO_MODEL=veo-2.0-generate-001" \
+  --set-secrets="GEMINI_AGENT_TOKEN=GEMINI_AGENT_TOKEN:latest,DB_PASS=DB_PASS:latest"
 
 SERVICE_URL=$(gcloud run services describe "$SERVICE_NAME" \
   --project="$PROJECT_ID" --region="$REGION" \
@@ -312,8 +301,12 @@ Next:
      - Grounding:     GEMINI_KNOWLEDGE.md
      - Auth header:   X-Gemini-Key  =  <your GEMINI_AGENT_TOKEN>
 
-  4. To rotate any secret later:
-     echo -n 'NEW_VALUE' | gcloud secrets versions add ANTHROPIC_API_KEY --data-file=-
-     gcloud run services update $SERVICE_NAME --region=$REGION --service-account=$SA_EMAIL
+  4. To rotate the agent token later:
+     openssl rand -hex 32 | gcloud secrets versions add GEMINI_AGENT_TOKEN --data-file=-
+     gcloud run services update $SERVICE_NAME --region=$REGION
+     # Then update the same value in the Gemini Agent Builder connector.
+
+  5. AI services need NO API keys — Vertex AI Gemini and Veo authenticate
+     via the runtime service account (roles/aiplatform.user).
 
 EOF

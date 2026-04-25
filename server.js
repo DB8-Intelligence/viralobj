@@ -17,31 +17,25 @@
 import "dotenv/config";
 import express from "express";
 import { pathToFileURL } from "url";
-import { fal } from "@fal-ai/client";
 import { generatePackage } from "./mcp/tools/generate.js";
 import { listNiches, NICHES } from "./mcp/tools/niches.js";
 import db from "./src/infrastructure/database.js";
 import storage from "./src/infrastructure/storage.js";
+import veo from "./src/infrastructure/veo.js";
 
-// Fal.ai Veo 3 model endpoint. Default is text-to-video ("fal-ai/veo3/fast")
-// so the bridge can render a reel from just the generated package without
-// needing a pre-generated image. Override to
-// "fal-ai/veo3/fast/image-to-video" if the caller supplies image URLs.
-const VEO_ENDPOINT = process.env.FAL_VIDEO_ENDPOINT || "fal-ai/veo3/fast";
-const VEO_DURATION = process.env.FAL_VIDEO_DURATION || "8s";
-const MAX_RENDER_SCENES = parseInt(process.env.FAL_VIDEO_MAX_SCENES || "4", 10);
+// Render config — Veo 2/3 on Vertex AI. No more Fal.ai or external API keys;
+// auth is Application Default Credentials (the runtime service account on
+// Cloud Run / App Engine, or GOOGLE_APPLICATION_CREDENTIALS locally).
+const VEO_DURATION_SEC = parseInt(process.env.VEO_DURATION_SECONDS || "8", 10);
+const MAX_RENDER_SCENES = parseInt(process.env.VEO_MAX_SCENES || "4", 10);
+const RENDER_BUCKET = process.env.GCS_BUCKET_NAME || "viralobj-assets";
 
-// Lazy Fal client config: credentials are read from FAL_KEY at first use,
-// trimmed defensively (Vercel / Railway occasionally paste values with
-// trailing newline, which breaks HTTP auth).
-let falConfigured = false;
-function configureFalOnce() {
-  if (falConfigured) return true;
-  const key = process.env.FAL_KEY?.trim();
-  if (!key) return false;
-  fal.config({ credentials: key });
-  falConfigured = true;
-  return true;
+// Veo render is unconditionally available when GCP_PROJECT_ID is set and
+// the runtime SA has roles/aiplatform.user — there's no "API key" to
+// verify upfront. We use an env presence check just to skip the submit
+// path with a friendly skip_reason in dev environments without ADC.
+function veoAvailable() {
+  return Boolean(process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT);
 }
 
 // Runtime flag tracking whether we've attempted the DB-empty → in-memory
@@ -288,22 +282,22 @@ app.post("/api/generate-reel", requireGeminiKey, async (req, res) => {
     }
 
     // ── Video render pipeline ──────────────────────────────────────────
-    // Submit each character to the Fal queue asynchronously. We can ONLY
-    // do this when we have a history_id (FK from videos.generation_id);
-    // if persistence failed we return the text package without video jobs.
+    // Submit each character to Vertex AI Veo as a long-running operation.
+    // We can ONLY do this when we have a history_id (FK from
+    // videos.generation_id); if persistence failed we return the text
+    // package without video jobs.
     //
-    // Each submit takes <1s — no risk of Vercel/Cloud Run timeout. The
+    // Each submit takes <1s — no risk of Cloud Run timeout. The
     // Fal render itself (~1-3 min/scene) happens in Fal's workers and is
     // retrieved asynchronously by the /api/reel/:id/status endpoint.
     const historyId = persisted.id;
-    const falAvailable = configureFalOnce();
     let videoJobs = [];
     let renderSkipReason = null;
 
     if (!historyId) {
       renderSkipReason = "DB persistence failed — cannot link video rows (FK videos.generation_id)";
-    } else if (!falAvailable) {
-      renderSkipReason = "FAL_KEY not configured — video render disabled";
+    } else if (!veoAvailable()) {
+      renderSkipReason = "GCP_PROJECT_ID not set — Vertex AI Veo render disabled";
     } else {
       const characters = Array.isArray(result.package?.characters)
         ? result.package.characters
@@ -320,20 +314,21 @@ app.post("/api/generate-reel", requireGeminiKey, async (req, res) => {
                 : "dialogue";
           const sceneId = `${historyId}:${idx}:${sceneType}`;
           const prompt = buildVeoPrompt({ character, sceneType, niche, tone });
+          // Veo writes the MP4 directly into this folder — no
+          // download-and-reupload step. Trailing slash is intentional.
+          const outputGcsUri = `gs://${RENDER_BUCKET}/videos/${historyId}/${encodeURIComponent(sceneId)}/`;
 
           try {
-            const submitted = await fal.queue.submit(VEO_ENDPOINT, {
-              input: {
-                prompt,
-                aspect_ratio: "9:16",
-                duration: VEO_DURATION,
-                resolution: "720p",
-                generate_audio: true,
-              },
+            const submitted = await veo.submitVeoJob({
+              prompt,
+              outputGcsUri,
+              aspectRatio: "9:16",
+              durationSeconds: VEO_DURATION_SEC,
+              generateAudio: true,
             });
 
-            // Persist a "pending" video row so the status endpoint can
-            // track it even if this process restarts before the poll.
+            // Persist a "pending" row keyed by Veo operation name so the
+            // status endpoint can resume polling after a process restart.
             try {
               await db.saveVideo({
                 userId: professionalId,
@@ -342,8 +337,8 @@ app.post("/api/generate-reel", requireGeminiKey, async (req, res) => {
                 sceneType,
                 videoUrl: null,
                 imageUrl: null,
-                provider: "fal",
-                requestId: submitted.request_id,
+                provider: "vertex-veo",
+                requestId: submitted.operationName,
                 status: "pending",
               });
             } catch (dbErr) {
@@ -356,14 +351,15 @@ app.post("/api/generate-reel", requireGeminiKey, async (req, res) => {
             return {
               scene_id: sceneId,
               scene_type: sceneType,
-              request_id: submitted.request_id,
+              request_id: submitted.operationName,
               status: "pending",
               prompt_preview: prompt.slice(0, 160),
+              output_gcs_uri: outputGcsUri,
             };
           } catch (err) {
             const msg = err?.message ?? String(err);
             console.warn(
-              `[/api/generate-reel] Fal submit failed for ${sceneId}:`,
+              `[/api/generate-reel] Veo submit failed for ${sceneId}:`,
               msg,
             );
             return {
@@ -422,11 +418,11 @@ app.post("/api/generate-reel", requireGeminiKey, async (req, res) => {
  * /api/generate-reel returns 202. For each videos row that is still
  * pending/processing:
  *
- *   1. Ask Fal for the queue status (IN_QUEUE | IN_PROGRESS | COMPLETED | FAILED).
- *   2. On COMPLETED: fetch the result, stream the Fal CDN URL straight into
- *      gs://viralobj-assets/videos/<history_id>/<scene_id>.mp4 via
- *      storage.uploadFromUrl(), then UPDATE the row with the durable GCS URL.
- *   3. On FAILED: mark the row failed with the error message.
+ *   1. Ask Vertex AI for the long-running operation status.
+ *   2. On done: read the gs:// URI Veo wrote into the bucket, convert
+ *      it to a public https URL via veo.gcsUriToPublicUrl(), and UPDATE
+ *      the row with status='completed' + the durable GCS URL.
+ *   3. On error / RAI-blocked: mark the row failed with the message.
  *
  * The endpoint is idempotent — re-calling after completion just reads rows.
  */
@@ -453,22 +449,21 @@ app.get("/api/reel/:history_id/status", requireGeminiKey, async (req, res) => {
       });
     }
 
-    // 2) For each still-active row, advance status via Fal + upload to GCS.
-    const falReady = configureFalOnce();
+    // 2) For each still-active row, advance status via Vertex AI Veo.
+    // The MP4 is already in GCS — Veo wrote it there at submit time.
+    const veoReady = veoAvailable();
     const updated = await Promise.all(
       videos.map(async (v) => {
         // Terminal states short-circuit.
         if (v.status === "completed" || v.status === "failed") return v;
         if (!v.request_id) return v;
-        if (!falReady) return v; // no FAL_KEY — leave as pending
+        if (!veoReady) return v; // no GCP_PROJECT_ID — leave as pending
 
         try {
-          const statusRes = await fal.queue.status(VEO_ENDPOINT, {
-            requestId: v.request_id,
-          });
+          const op = await veo.fetchVeoOperation(v.request_id);
 
-          // IN_QUEUE / IN_PROGRESS → flip to "processing" if not yet.
-          if (statusRes.status === "IN_QUEUE" || statusRes.status === "IN_PROGRESS") {
+          // Still rendering → flip to "processing" on first detection.
+          if (!op.done) {
             if (v.status !== "processing") {
               try {
                 const row = await db.updateVideoByRequestId(v.request_id, {
@@ -482,71 +477,50 @@ app.get("/api/reel/:history_id/status", requireGeminiKey, async (req, res) => {
             return v;
           }
 
-          // COMPLETED → fetch result, upload to GCS, persist final URL.
-          if (statusRes.status === "COMPLETED") {
-            const result = await fal.queue.result(VEO_ENDPOINT, {
-              requestId: v.request_id,
-            });
-            const falUrl =
-              result?.data?.video?.url ??
-              result?.video?.url ??
-              null;
-
-            if (!falUrl) {
-              const row = await db.updateVideoByRequestId(v.request_id, {
-                status: "failed",
-                error: "Fal returned COMPLETED but no video URL in result",
-              });
-              return row ?? { ...v, status: "failed", error: "no_url" };
-            }
-
-            // Stream Fal → GCS. If GCS upload fails (bucket misconfig, quota,
-            // missing creds), fall back to the Fal URL — degraded but usable
-            // for ~7 days.
-            const destination = `videos/${history_id}/${encodeURIComponent(v.scene_id)}.mp4`;
-            let finalUrl = falUrl;
-            let gcsUploaded = false;
-            let gcsError = null;
-            try {
-              const uploaded = await storage.uploadFromUrl(falUrl, destination, {
-                contentType: "video/mp4",
-                metadata: {
-                  history_id,
-                  scene_id: v.scene_id,
-                  scene_type: v.scene_type,
-                  request_id: v.request_id,
-                },
-              });
-              finalUrl = uploaded.url;
-              gcsUploaded = true;
-            } catch (err) {
-              gcsError = err?.message ?? String(err);
-              console.warn(
-                `[/api/reel/${history_id}/status] GCS upload failed for ${v.scene_id}: ${gcsError}. Falling back to Fal URL.`,
-              );
-            }
-
+          // RAI safety filter blocked the render — terminal failure.
+          if (op.blocked) {
             const row = await db.updateVideoByRequestId(v.request_id, {
-              status: "completed",
-              video_url: finalUrl,
-              duration_ms: parseInt(VEO_DURATION, 10) * 1000, // "8s" → 8000
-              cost_usd: parseInt(VEO_DURATION, 10) * 0.15,     // Veo 3 Fast: $0.15/s
-              provider: gcsUploaded ? "fal" : "fal",
+              status: "failed",
+              error: `RAI blocked: ${op.raiReason}`,
             });
-            return row ?? { ...v, status: "completed", video_url: finalUrl };
+            return row ?? { ...v, status: "failed", error: op.raiReason };
           }
 
-          // Any other status → treat as failed (FAILED, CANCELLED, etc.)
-          const errMsg = statusRes.error ?? `Fal status=${statusRes.status}`;
+          // Operation errored on the Vertex side.
+          if (op.error) {
+            const row = await db.updateVideoByRequestId(v.request_id, {
+              status: "failed",
+              error: op.error.slice(0, 500),
+            });
+            return row ?? { ...v, status: "failed", error: op.error };
+          }
+
+          // Done + has a gcsUri. Veo already wrote the MP4 into our bucket;
+          // we just convert gs://... → public https URL and persist.
+          const publicUrl = veo.gcsUriToPublicUrl(op.gcsUri);
+          if (!publicUrl) {
+            const row = await db.updateVideoByRequestId(v.request_id, {
+              status: "failed",
+              error: `Invalid gcsUri returned: ${op.gcsUri}`,
+            });
+            return row ?? { ...v, status: "failed", error: "bad_gcs_uri" };
+          }
+
           const row = await db.updateVideoByRequestId(v.request_id, {
-            status: "failed",
-            error: typeof errMsg === "string" ? errMsg : JSON.stringify(errMsg).slice(0, 300),
+            status: "completed",
+            video_url: publicUrl,
+            duration_ms: VEO_DURATION_SEC * 1000,
+            // Veo 2 base pricing — adjust when Veo 3 GA / quotas change.
+            cost_usd: VEO_DURATION_SEC * 0.50,
+            provider: "vertex-veo",
           });
-          return row ?? { ...v, status: "failed", error: String(errMsg) };
+          return row ?? { ...v, status: "completed", video_url: publicUrl };
         } catch (err) {
-          // Fal poll itself threw — don't burn the row, let the next poll retry.
+          // Vertex poll itself threw — don't burn the row, let the
+          // next 10s poll retry. Common transient: rate limit, ADC
+          // token refresh.
           console.warn(
-            `[/api/reel/${history_id}/status] poll error for ${v.scene_id}:`,
+            `[/api/reel/${history_id}/status] Veo poll error for ${v.scene_id}:`,
             err?.message ?? err,
           );
           return v;
@@ -683,9 +657,9 @@ function buildOpenApiSpec(baseUrl) {
             },
             provider: {
               type: "string",
-              enum: ["auto", "anthropic", "openai", "gemini"],
+              enum: ["auto", "vertex"],
               default: "auto",
-              description: "LLM provider. 'auto' uses VIRALOBJ_PROVIDER_ORDER fallback chain.",
+              description: "LLM provider. Only 'vertex' (Gemini 1.5 Pro on Vertex AI) is supported; other values are ignored for backward compatibility.",
             },
             user_email: {
               type: "string",
@@ -708,7 +682,7 @@ function buildOpenApiSpec(baseUrl) {
           properties: {
             scene_id: { type: "string", example: "<history_id>:0:intro" },
             scene_type: { type: "string", enum: ["intro", "dialogue", "reaction", "cta"] },
-            request_id: { type: "string", nullable: true, description: "Fal queue request id." },
+            request_id: { type: "string", nullable: true, description: "Vertex AI Veo long-running operation name." },
             status: {
               type: "string",
               enum: ["pending", "processing", "completed", "failed", "submit_failed"],
@@ -743,7 +717,7 @@ function buildOpenApiSpec(baseUrl) {
           properties: {
             success: { type: "boolean", example: true },
             elapsed_ms: { type: "integer", example: 8423 },
-            provider_used: { type: "string", example: "anthropic" },
+            provider_used: { type: "string", example: "vertex/gemini-1.5-pro" },
             package: {
               type: "object",
               description: "Full production package: meta, characters[], captions[], post_copy, variations[].",
@@ -769,7 +743,7 @@ function buildOpenApiSpec(baseUrl) {
               type: "string",
               enum: ["processing", "text_only", "failed"],
               description:
-                "processing=jobs submitted to Fal; text_only=no render (DB or FAL_KEY missing); failed=all submits failed.",
+                "processing=jobs submitted to Vertex AI Veo; text_only=no render (DB or GCP_PROJECT_ID missing); failed=all submits failed.",
             },
             render_skip_reason: { type: "string", nullable: true },
             video_jobs: {
@@ -817,7 +791,7 @@ function buildOpenApiSpec(baseUrl) {
               format: "uri",
               nullable: true,
               description:
-                "First completed scene's durable URL (GCS by default; Fal CDN fallback if GCS upload failed). This is the headline URL to hand back to the end user.",
+                "First completed scene's durable URL on Google Cloud Storage. Veo writes the MP4 directly into gs://viralobj-assets/videos/{history_id}/{scene_id}/ — no extra upload step.",
             },
             scene_videos: {
               type: "array",
@@ -939,15 +913,17 @@ function buildOpenApiSpec(baseUrl) {
           summary: "Generate package + submit video render jobs (async)",
           description:
             "Two things happen synchronously:\n"
-            + "  1. LLM produces the bilingual production package (5-15s).\n"
-            + "  2. Each character is submitted to the Fal.ai Veo 3 queue (sub-second per submit).\n\n"
-            + "The actual video render (1-3 min per scene) runs on Fal's workers. When the "
-            + "call returns, video_url is null and status='processing' — the caller must poll "
-            + "GET /api/reel/{history_id}/status every ~10s. When Fal finishes each scene, "
-            + "the status endpoint streams the MP4 to gs://viralobj-assets/ and returns the "
-            + "durable GCS URL.\n\n"
-            + "HTTP status: 202 (accepted) when at least one scene was submitted, 200 when "
-            + "the render was skipped (text_only) because DB or FAL_KEY were unavailable.",
+            + "  1. Vertex AI Gemini 1.5 Pro produces the bilingual production package (5-15s).\n"
+            + "  2. Each character is submitted to Vertex AI Veo as a long-running operation (sub-second per submit).\n\n"
+            + "The actual video render (30s-3min per scene) runs on Google's side. Veo writes the MP4 "
+            + "directly into gs://viralobj-assets/videos/{history_id}/{scene_id}/ via storageUri — no "
+            + "download/upload roundtrip. When the call returns, video_url is null and status='processing'; "
+            + "the caller must poll GET /api/reel/{history_id}/status every ~10s. When the operation "
+            + "completes, the status endpoint converts the gs:// URI to a public https URL and returns it.\n\n"
+            + "Auth: Application Default Credentials (no API keys). On Cloud Run / App Engine the runtime "
+            + "service account is used; locally, set GOOGLE_APPLICATION_CREDENTIALS.\n\n"
+            + "HTTP status: 202 (accepted) when at least one scene was submitted, 200 when the render "
+            + "was skipped (text_only) because DB or GCP_PROJECT_ID were unavailable.",
           tags: ["generation"],
           security: [{ GeminiKey: [] }],
           requestBody: {
@@ -1001,12 +977,13 @@ function buildOpenApiSpec(baseUrl) {
           summary: "Poll render progress; returns GCS URL when scenes complete",
           description:
             "Idempotent polling endpoint. For each videos row still pending/processing:\n"
-            + "  1. Fetches Fal queue status.\n"
-            + "  2. On COMPLETED: streams the MP4 from Fal CDN into gs://viralobj-assets/videos/{history_id}/{scene_id}.mp4 via uploadFromUrl(), then updates the row with the GCS URL.\n"
-            + "  3. On FAILED: stores the error in videos.error.\n\n"
+            + "  1. Fetches the Vertex AI Veo long-running operation status.\n"
+            + "  2. On done: reads the gs:// URI Veo wrote into the bucket "
+            + "(no extra upload — Veo writes directly via storageUri), converts to a public https "
+            + "URL, and updates the row with status='completed' + video_url.\n"
+            + "  3. On error / RAI-blocked: stores the message in videos.error.\n\n"
             + "Returns the full scene_videos[] breakdown plus a headline video_url (first "
-            + "completed scene). When GCS upload fails (bucket perms, quota), degrades "
-            + "gracefully to the Fal CDN URL — usable for ~7 days.",
+            + "completed scene).",
           tags: ["generation"],
           security: [{ GeminiKey: [] }],
           parameters: [
