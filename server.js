@@ -125,12 +125,18 @@ app.get("/api/niches", requireGeminiKey, async (req, res) => {
 
     // 1) Try DB first. If it returns rows, use them.
     let dbRows = null;
+    let dbFailed = false;
     let dbError = null;
     try {
       dbRows = await db.getNiches({ category });
     } catch (err) {
-      dbError = err?.message ?? String(err);
-      console.warn("[/api/niches] DB lookup failed, falling back to memory:", dbError);
+      dbFailed = true;
+      // Some pg errors arrive with an empty .message — fall through to
+      // String(err) and finally to null so the JSON body is always either
+      // a meaningful string or null, never "".
+      const msg = err?.message?.trim() || String(err)?.trim();
+      dbError = msg && msg !== "[object Object]" ? msg : null;
+      console.warn("[/api/niches] DB lookup failed, falling back to memory:", err);
     }
 
     if (Array.isArray(dbRows) && dbRows.length > 0) {
@@ -163,7 +169,7 @@ app.get("/api/niches", requireGeminiKey, async (req, res) => {
 
     // 3) If DB was reachable but empty, fire-and-forget auto-seed so the
     //    next request can serve from DB. Never awaits — response stays fast.
-    if (!seedAttempted && dbError === null && (dbRows?.length ?? 0) === 0) {
+    if (!seedAttempted && !dbFailed && (dbRows?.length ?? 0) === 0) {
       seedAttempted = true;
       const allNiches = Object.entries(NICHES).map(([key, n]) => ({
         key,
