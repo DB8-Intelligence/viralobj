@@ -45,6 +45,11 @@ let seedAttempted = false;
 
 const app = express();
 app.disable("x-powered-by");
+// Cloud Run terminates TLS at the proxy and forwards via X-Forwarded-Proto.
+// Without trust proxy, req.protocol always reports "http" — which then
+// shows up as broken http:// links inside /agent-manifest.json and
+// /openapi.json's servers[].url. Trust the front-end to tell us the truth.
+app.set("trust proxy", true);
 app.use(express.json({ limit: "1mb" }));
 
 const PORT = process.env.PORT || 3001;
