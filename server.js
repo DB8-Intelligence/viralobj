@@ -107,10 +107,87 @@ app.get("/health", (_req, res) => {
   });
 });
 
+// Extended health probe with real liveness checks for the Cloud Run revision.
+// Exposed unauthenticated so platform monitors can hit it; never calls
+// Gemini or Veo (those are paid). DB check is a sub-millisecond SELECT 1.
+app.get("/healthz", async (_req, res) => {
+  const checks = { server: "ok", database: "unknown", storage: "unknown", vertex: "unknown" };
+  const failures = [];
+
+  // Database: real SELECT 1 against Cloud SQL.
+  try {
+    const { elapsedMs } = await db.ping();
+    checks.database = `ok (${elapsedMs}ms)`;
+  } catch (err) {
+    checks.database = `fail: ${err?.message?.trim() || "unknown"}`;
+    failures.push("database");
+  }
+
+  // Storage: env presence — we don't HEAD the bucket here to avoid a
+  // round-trip on every probe. The Cloud Run SA either has access or it
+  // doesn't, and a real upload would surface the failure loud and fast.
+  if (process.env.GCS_BUCKET_NAME) {
+    checks.storage = `configured (${process.env.GCS_BUCKET_NAME})`;
+  } else {
+    checks.storage = "fail: GCS_BUCKET_NAME not set";
+    failures.push("storage");
+  }
+
+  // Vertex: env presence only. Listing models would be a paid API call.
+  const project = process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT;
+  const model = process.env.VERTEX_MODEL || "gemini-1.5-pro";
+  if (project) {
+    checks.vertex = `configured (project=${project}, model=${model})`;
+  } else {
+    checks.vertex = "fail: GCP_PROJECT_ID not set";
+    failures.push("vertex");
+  }
+
+  const ok = failures.length === 0;
+  res.status(ok ? 200 : 503).json({
+    ok,
+    service: "viralobj-bridge",
+    version: "cloud-run",
+    checks,
+    failed: failures,
+  });
+});
+
 app.get("/openapi.json", (req, res) => {
   const baseUrl = process.env.PUBLIC_URL
     || `${req.protocol}://${req.get("host")}`;
   res.json(buildOpenApiSpec(baseUrl));
+});
+
+// Compact JSON manifest for Gemini Agent Builder. Mirrors the full
+// gcp-agent-manifest.json (which is a richer OpenAPI extension) but with
+// just the fields a connector needs to bootstrap. URLs are resolved at
+// request time so the manifest always reports the live Cloud Run host.
+app.get("/agent-manifest.json", (req, res) => {
+  const baseUrl =
+    process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`;
+  const veoEnabled = process.env.ENABLE_VEO_GENERATION === "true";
+  res.json({
+    name: "ViralObj Bridge",
+    description:
+      "Google Cloud native API for generating viral talking object reel packages.",
+    base_url: baseUrl,
+    openapi_url: `${baseUrl}/openapi.json`,
+    health_url: `${baseUrl}/healthz`,
+    auth: {
+      type: "apiKey",
+      header: "X-Gemini-Key",
+    },
+    capabilities: [
+      "list_niches",
+      "generate_reel_package_dry_run",
+      "generate_reel_package_with_veo_when_enabled",
+    ],
+    safety: {
+      veo_default_enabled: veoEnabled,
+      dry_run_supported: true,
+    },
+  });
 });
 
 // ─── Protected routes (require X-Gemini-Key) ──────────────────────────────
@@ -775,26 +852,50 @@ function buildOpenApiSpec(baseUrl) {
         GenerateReelResponse: {
           type: "object",
           description:
-            "ASYNC response. HTTP 202 when at least one scene was submitted to Fal "
-            + "(status='processing'); HTTP 200 when no render happened (status='text_only' "
-            + "or 'failed'). Poll GET /api/reel/{history_id}/status every ~10s to obtain "
-            + "the final GCS video_url.",
+            "Three-shape response keyed off `mode` and HTTP status:\n"
+            + "  • HTTP 200 + mode='dry_run' — Gemini ran, Veo skipped, videos:[] and cost_guard populated.\n"
+            + "  • HTTP 202 + render_status='processing' — Veo jobs submitted, poll /api/reel/{id}/status.\n"
+            + "  • HTTP 200 + render_status='text_only' — render skipped (DB or GCP_PROJECT_ID missing).",
           properties: {
+            ok: { type: "boolean", example: true, description: "Mirror of success — added for agent-style boolean checks." },
             success: { type: "boolean", example: true },
+            mode: {
+              type: "string",
+              enum: ["dry_run", "live"],
+              nullable: true,
+              description: "Present only on dry_run responses. Absent on live runs.",
+            },
             elapsed_ms: { type: "integer", example: 8423 },
-            provider_used: { type: "string", example: "vertex/gemini-1.5-pro" },
+            provider_used: { type: "string", example: "vertex/gemini-2.5-flash" },
+            niche: { type: "string", nullable: true, description: "Echo of the request niche (dry_run only)." },
             package: {
               type: "object",
               description: "Full production package: meta, characters[], captions[], post_copy, variations[].",
             },
             summary: { type: "string" },
+            videos: {
+              type: "array",
+              items: { type: "object" },
+              description: "Always [] on dry_run. On live runs, the same content as video_jobs[] mirrored for convenience.",
+            },
+            cost_guard: {
+              type: "object",
+              description: "Present on dry_run; reports what a live run would cost before any billing happens.",
+              properties: {
+                veo_called: { type: "boolean", example: false },
+                veo_enabled: { type: "boolean", example: false },
+                estimated_veo_cost: { type: "number", example: 16, description: "USD. scenes × VEO_DURATION_SECONDS × 0.50." },
+                scenes_skipped: { type: "integer", example: 4 },
+              },
+            },
             history_id: {
               type: "string",
               format: "uuid",
               nullable: true,
               description:
                 "UUID of the user_history row. Doubles as generation_id. Persist this "
-                + "next to the professional's email for future 'memory'-style lookups.",
+                + "next to the professional's email for future 'memory'-style lookups. "
+                + "Absent on dry_run (nothing is persisted in that mode).",
             },
             video_url: {
               type: "string",
@@ -871,12 +972,70 @@ function buildOpenApiSpec(baseUrl) {
             error: { type: "string" },
           },
         },
+        VeoDisabledError: {
+          type: "object",
+          description:
+            "Returned with HTTP 403 when ENABLE_VEO_GENERATION is not 'true' and the caller did not pass dry_run=true.",
+          properties: {
+            ok: { type: "boolean", example: false },
+            success: { type: "boolean", example: false },
+            error: { type: "string", example: "VEO_DISABLED" },
+            message: {
+              type: "string",
+              example:
+                "Veo generation is disabled by ENABLE_VEO_GENERATION=false. Use dry_run=true for text-only validation.",
+            },
+          },
+        },
+        HealthzResponse: {
+          type: "object",
+          properties: {
+            ok: { type: "boolean", example: true },
+            service: { type: "string", example: "viralobj-bridge" },
+            version: { type: "string", example: "cloud-run" },
+            checks: {
+              type: "object",
+              properties: {
+                server: { type: "string", example: "ok" },
+                database: { type: "string", example: "ok (3ms)" },
+                storage: { type: "string", example: "configured (viralobj-assets)" },
+                vertex: { type: "string", example: "configured (project=viralreel-ai-493701, model=gemini-2.5-flash)" },
+              },
+            },
+            failed: { type: "array", items: { type: "string" } },
+          },
+        },
+        AgentManifest: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            description: { type: "string" },
+            base_url: { type: "string", format: "uri" },
+            openapi_url: { type: "string", format: "uri" },
+            health_url: { type: "string", format: "uri" },
+            auth: {
+              type: "object",
+              properties: {
+                type: { type: "string", example: "apiKey" },
+                header: { type: "string", example: "X-Gemini-Key" },
+              },
+            },
+            capabilities: { type: "array", items: { type: "string" } },
+            safety: {
+              type: "object",
+              properties: {
+                veo_default_enabled: { type: "boolean" },
+                dry_run_supported: { type: "boolean" },
+              },
+            },
+          },
+        },
       },
     },
     paths: {
       "/health": {
         get: {
-          summary: "Health check (unauthenticated)",
+          summary: "Liveness probe (unauthenticated, no dependencies)",
           tags: ["meta"],
           responses: {
             "200": {
@@ -892,6 +1051,48 @@ function buildOpenApiSpec(baseUrl) {
                       uptime_seconds: { type: "integer" },
                     },
                   },
+                },
+              },
+            },
+          },
+        },
+      },
+      "/healthz": {
+        get: {
+          summary: "Readiness probe (unauthenticated, real DB + env checks)",
+          description:
+            "Exercises the database (SELECT 1) and verifies storage and Vertex env presence. Returns 503 if any check fails. Never calls Gemini or Veo (zero cost).",
+          tags: ["meta"],
+          responses: {
+            "200": {
+              description: "All checks passing",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/HealthzResponse" },
+                },
+              },
+            },
+            "503": {
+              description: "At least one check failed (db/storage/vertex)",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/HealthzResponse" },
+                },
+              },
+            },
+          },
+        },
+      },
+      "/agent-manifest.json": {
+        get: {
+          summary: "Compact connector manifest for Gemini Agent Builder",
+          tags: ["meta"],
+          responses: {
+            "200": {
+              description: "Connector manifest with live URLs",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/AgentManifest" },
                 },
               },
             },
@@ -978,19 +1179,30 @@ function buildOpenApiSpec(baseUrl) {
           summary: "Generate package + submit video render jobs (async)",
           description:
             "Two things happen synchronously:\n"
-            + "  1. Vertex AI Gemini 1.5 Pro produces the bilingual production package (5-15s).\n"
+            + "  1. Vertex AI Gemini produces the bilingual production package (5-15s).\n"
             + "  2. Each character is submitted to Vertex AI Veo as a long-running operation (sub-second per submit).\n\n"
             + "The actual video render (30s-3min per scene) runs on Google's side. Veo writes the MP4 "
             + "directly into gs://viralobj-assets/videos/{history_id}/{scene_id}/ via storageUri — no "
             + "download/upload roundtrip. When the call returns, video_url is null and status='processing'; "
             + "the caller must poll GET /api/reel/{history_id}/status every ~10s. When the operation "
             + "completes, the status endpoint converts the gs:// URI to a public https URL and returns it.\n\n"
+            + "Cost guards: pass `?dry_run=true` (or { dry_run: true } in the body) to run only the Gemini "
+            + "package generation and skip Veo entirely. When the deployment has ENABLE_VEO_GENERATION!='true', "
+            + "non-dry_run calls are rejected with HTTP 403 VEO_DISABLED before paying the Gemini call.\n\n"
             + "Auth: Application Default Credentials (no API keys). On Cloud Run / App Engine the runtime "
-            + "service account is used; locally, set GOOGLE_APPLICATION_CREDENTIALS.\n\n"
-            + "HTTP status: 202 (accepted) when at least one scene was submitted, 200 when the render "
-            + "was skipped (text_only) because DB or GCP_PROJECT_ID were unavailable.",
+            + "service account is used; locally, set GOOGLE_APPLICATION_CREDENTIALS.",
           tags: ["generation"],
           security: [{ GeminiKey: [] }],
+          parameters: [
+            {
+              name: "dry_run",
+              in: "query",
+              required: false,
+              schema: { type: "boolean", default: false },
+              description:
+                "When true, generates only the text package via Gemini and returns videos:[] with a cost_guard summary. Veo is never called and nothing is persisted. Equivalent to passing { \"dry_run\": true } in the JSON body.",
+            },
+          ],
           requestBody: {
             required: true,
             content: {
@@ -1001,7 +1213,8 @@ function buildOpenApiSpec(baseUrl) {
           },
           responses: {
             "200": {
-              description: "Package generated; no render jobs submitted (text_only / failed).",
+              description:
+                "dry_run success OR text_only fallback. mode='dry_run' when dry_run=true; otherwise the live render was skipped because DB or GCP_PROJECT_ID were unavailable.",
               content: {
                 "application/json": {
                   schema: { $ref: "#/components/schemas/GenerateReelResponse" },
@@ -1028,8 +1241,15 @@ function buildOpenApiSpec(baseUrl) {
                 "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
               },
             },
+            "403": {
+              description:
+                "VEO_DISABLED — paid Veo generation is gated off via ENABLE_VEO_GENERATION!='true' and the caller did not pass dry_run=true.",
+              content: {
+                "application/json": { schema: { $ref: "#/components/schemas/VeoDisabledError" } },
+              },
+            },
             "500": {
-              description: "Generation failed (all LLM providers)",
+              description: "Generation failed (Vertex AI Gemini error)",
               content: {
                 "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
               },
