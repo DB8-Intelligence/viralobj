@@ -226,6 +226,17 @@ app.post("/api/generate-reel", requireGeminiKey, async (req, res) => {
       user_name = null,
     } = req.body || {};
 
+    // Twin entry points for dry_run: query string for cURL/agent ergonomics,
+    // body for SDK-style callers. Either turns the call into a Gemini-only
+    // text validation that never touches Veo.
+    const dryRun =
+      req.query?.dry_run === "true" || req.body?.dry_run === true;
+    // Cost guard: hard kill switch for Veo. When this env is anything other
+    // than the literal string "true", paid video generation is blocked even
+    // if dry_run is omitted. Toggle on Cloud Run with
+    // `gcloud run services update ... --update-env-vars=ENABLE_VEO_GENERATION=true`.
+    const veoEnabled = process.env.ENABLE_VEO_GENERATION === "true";
+
     // Validation
     if (!niche || typeof niche !== "string") {
       return res.status(400).json({ success: false, error: "Field 'niche' (string) is required." });
@@ -240,6 +251,22 @@ app.post("/api/generate-reel", requireGeminiKey, async (req, res) => {
       return res.status(400).json({ success: false, error: "'duration' must be between 10 and 90 seconds." });
     }
 
+    // Reject before paying the Gemini call when Veo is disabled and the
+    // caller did not opt into dry_run. Saves both the LLM cost and the
+    // operator's confusion when expecting video output.
+    if (!veoEnabled && !dryRun) {
+      console.log(
+        "[VEO_DISABLED] generation blocked by ENABLE_VEO_GENERATION=false (use dry_run=true for text-only)",
+      );
+      return res.status(403).json({
+        ok: false,
+        success: false,
+        error: "VEO_DISABLED",
+        message:
+          "Veo generation is disabled by ENABLE_VEO_GENERATION=false. Use dry_run=true for text-only validation.",
+      });
+    }
+
     const result = await generatePackage({
       niche,
       objects,
@@ -250,6 +277,38 @@ app.post("/api/generate-reel", requireGeminiKey, async (req, res) => {
       provider,
       analysis,
     });
+
+    // dry_run short-circuit: Gemini ran, package is in memory, Veo never
+    // gets called and no DB rows are created. cost_guard advertises what
+    // a real run *would* have cost so callers can budget before flipping
+    // ENABLE_VEO_GENERATION=true.
+    if (dryRun) {
+      console.log("[DRY_RUN] Skipping Veo video generation");
+      const charCount = Array.isArray(result.package?.characters)
+        ? result.package.characters.length
+        : 0;
+      const sceneCount = Math.min(charCount, MAX_RENDER_SCENES);
+      // Mirrors the cost line in /api/reel/.../status (Veo 2 base pricing).
+      const estimatedCost =
+        Math.round(sceneCount * VEO_DURATION_SEC * 0.50 * 100) / 100;
+      return res.status(200).json({
+        ok: true,
+        success: true,
+        mode: "dry_run",
+        elapsed_ms: Date.now() - startedAt,
+        provider_used: result.result?.provider_used,
+        niche,
+        package: result.package,
+        summary: result.content?.[0]?.text,
+        videos: [],
+        cost_guard: {
+          veo_called: false,
+          veo_enabled: veoEnabled,
+          estimated_veo_cost: estimatedCost,
+          scenes_skipped: sceneCount,
+        },
+      });
+    }
 
     // Persist to DB best-effort. DB failure must NOT affect the API response —
     // the package was generated successfully and the user should receive it.
