@@ -45,7 +45,10 @@ async function callVertex(systemPrompt, userPrompt) {
     generationConfig: {
       responseMimeType: "application/json",
       temperature: 0.7,
-      maxOutputTokens: 8192,
+      // 32K accommodates a multi-character package on Gemini 2.5 — the
+      // older 8192 cap silently truncated mid-JSON, which then surfaced
+      // downstream as a baffling "Unexpected end of JSON input".
+      maxOutputTokens: 32768,
       topP: 0.95,
     },
     safetySettings: [
@@ -65,24 +68,36 @@ async function callVertex(systemPrompt, userPrompt) {
 
   const candidate = result?.response?.candidates?.[0];
   const text = candidate?.content?.parts?.map((p) => p.text).filter(Boolean).join("\n");
+  const finishReason = candidate?.finishReason ?? "no_candidate";
 
   if (!text) {
-    const finishReason = candidate?.finishReason ?? "no_candidate";
     throw new Error(`Vertex AI returned empty content (finishReason=${finishReason})`);
   }
-  return text.trim();
+  return { text: text.trim(), finishReason };
 }
 
-function parsePackage(raw) {
+function parsePackage({ text, finishReason }) {
   // responseMimeType=application/json should give us clean JSON, but be
   // defensive: pull the first balanced {...} block in case the model
   // wraps it in commentary on rare occasions.
   try {
-    return JSON.parse(raw);
-  } catch {
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("No JSON object in Vertex AI response");
-    return JSON.parse(jsonMatch[0]);
+    return JSON.parse(text);
+  } catch (firstErr) {
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      const preview = text.slice(0, 200).replace(/\s+/g, " ");
+      throw new Error(
+        `No JSON object in Vertex AI response (finishReason=${finishReason}, len=${text.length}, preview="${preview}")`,
+      );
+    }
+    try {
+      return JSON.parse(jsonMatch[0]);
+    } catch (secondErr) {
+      const preview = jsonMatch[0].slice(0, 200).replace(/\s+/g, " ");
+      throw new Error(
+        `JSON parse failed after regex extraction (finishReason=${finishReason}, len=${text.length}, preview="${preview}", inner=${secondErr.message})`,
+      );
+    }
   }
 }
 
