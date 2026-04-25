@@ -107,10 +107,13 @@ app.get("/health", (_req, res) => {
   });
 });
 
-// Extended health probe with real liveness checks for the Cloud Run revision.
-// Exposed unauthenticated so platform monitors can hit it; never calls
-// Gemini or Veo (those are paid). DB check is a sub-millisecond SELECT 1.
-app.get("/healthz", async (_req, res) => {
+// Readiness probe with real liveness checks for the Cloud Run revision.
+// Routed at /readyz (and aliased /healthz) — Google's frontend intercepts
+// the bare /healthz path on Cloud Run and answers 404 before our handler
+// ever runs, so /readyz is what callers should actually hit. Both paths
+// share the handler so the OpenAPI alias stays honest. Never calls Gemini
+// or Veo (those are paid). DB check is a sub-millisecond SELECT 1.
+app.get(["/readyz", "/healthz"], async (_req, res) => {
   const checks = { server: "ok", database: "unknown", storage: "unknown", vertex: "unknown" };
   const failures = [];
 
@@ -173,7 +176,7 @@ app.get("/agent-manifest.json", (req, res) => {
       "Google Cloud native API for generating viral talking object reel packages.",
     base_url: baseUrl,
     openapi_url: `${baseUrl}/openapi.json`,
-    health_url: `${baseUrl}/healthz`,
+    health_url: `${baseUrl}/readyz`,
     auth: {
       type: "apiKey",
       header: "X-Gemini-Key",
@@ -1057,11 +1060,11 @@ function buildOpenApiSpec(baseUrl) {
           },
         },
       },
-      "/healthz": {
+      "/readyz": {
         get: {
           summary: "Readiness probe (unauthenticated, real DB + env checks)",
           description:
-            "Exercises the database (SELECT 1) and verifies storage and Vertex env presence. Returns 503 if any check fails. Never calls Gemini or Veo (zero cost).",
+            "Exercises the database (SELECT 1) and verifies storage and Vertex env presence. Returns 503 if any check fails. Never calls Gemini or Veo (zero cost). Also reachable at the alias /healthz, but Google's Cloud Run frontend intercepts /healthz before the container — use /readyz from external probes.",
           tags: ["meta"],
           responses: {
             "200": {

@@ -54,12 +54,17 @@ http() {
 # `pass_if` runs the python expression with `j` bound to the parsed body.
 pass_if() {
   local label="$1" expr="$2" body="$TMP/${label}.json"
-  python -c "import json,sys
+  # Feed the file via stdin so bash resolves the path. Windows-native
+  # python (the one bundled with gcloud SDK) can't open mingw-style
+  # /tmp/... paths directly.
+  python -c "
+import json, sys
 try:
-  with open(r'$body') as f: j=json.load(f)
+    j = json.load(sys.stdin)
 except Exception as e:
-  print('PARSE_FAIL:'+str(e)); sys.exit(2)
-sys.exit(0 if ($expr) else 1)"
+    print('PARSE_FAIL:' + str(e)); sys.exit(2)
+sys.exit(0 if ($expr) else 1)
+" < "$body"
 }
 
 run() {
@@ -91,9 +96,9 @@ echo
 code=$(curl -sS -o "$TMP/health.json" -w "%{http_code}" "${BASE_URL}/health")
 run health "GET  /health" 200 "j.get('status')=='ok'" "$code"
 
-# ── 2. /healthz (unauth, real db/env checks) ────────────────────────────────
-code=$(curl -sS -o "$TMP/healthz.json" -w "%{http_code}" "${BASE_URL}/healthz")
-run healthz "GET  /healthz" 200 "j.get('ok') is True and 'database' in j.get('checks',{})" "$code"
+# ── 2. /readyz (unauth, real db/env checks; /healthz is intercepted by GFE) ─
+code=$(curl -sS -o "$TMP/readyz.json" -w "%{http_code}" "${BASE_URL}/readyz")
+run readyz "GET  /readyz" 200 "j.get('ok') is True and 'database' in j.get('checks',{})" "$code"
 
 # ── 3. /api/niches (auth required) ──────────────────────────────────────────
 code=$(http niches GET "/api/niches")
