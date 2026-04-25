@@ -22,6 +22,8 @@ import { listNiches, NICHES } from "./mcp/tools/niches.js";
 import db from "./src/infrastructure/database.js";
 import storage from "./src/infrastructure/storage.js";
 import veo from "./src/infrastructure/veo.js";
+import { firestore, FieldValue } from "./src/infrastructure/firebase.js";
+import { dualAuth } from "./src/middleware/firebaseAuth.js";
 
 // Render config — Veo 2/3 on Vertex AI. No more Fal.ai or external API keys;
 // auth is Application Default Credentials (the runtime service account on
@@ -42,6 +44,38 @@ function veoAvailable() {
 // seed during this process lifetime. Keeps us from stampeding seeds when
 // many /api/niches calls hit an empty DB in parallel.
 let seedAttempted = false;
+
+// Fire-and-forget mirror to Firestore. Cloud SQL is still the source of
+// truth for the production pipeline; this write feeds the future
+// migration target so we accumulate Firestore data ahead of the cutover.
+// Failures are logged but never block the API response.
+function recordGeneration({ user, niche, mode, status, providerUsed, historyId = null, topic = null, tone = null, duration = null }) {
+  return firestore()
+    .collection("generations")
+    .add({
+      user_id: user?.uid || "anonymous",
+      user_email: user?.email || null,
+      auth_provider: user?.provider || "anonymous",
+      niche,
+      mode,
+      status,
+      provider: "vertex",
+      provider_used: providerUsed || null,
+      history_id: historyId,
+      topic,
+      tone,
+      duration,
+      created_at: FieldValue.serverTimestamp(),
+    })
+    .then((ref) => ref.id)
+    .catch((err) => {
+      console.warn(
+        "[firestore] generations.add failed:",
+        err?.message ?? err,
+      );
+      return null;
+    });
+}
 
 const app = express();
 app.disable("x-powered-by");
@@ -200,7 +234,7 @@ app.get("/agent-manifest.json", (req, res) => {
 
 // ─── Protected routes (require X-Gemini-Key) ──────────────────────────────
 
-app.get("/api/niches", requireGeminiKey, async (req, res) => {
+app.get("/api/niches", dualAuth, async (req, res) => {
   try {
     const lang = (req.query.lang === "en" ? "en" : "pt");
     const rawCategory = typeof req.query.category === "string" ? req.query.category : null;
@@ -295,7 +329,7 @@ app.get("/api/niches", requireGeminiKey, async (req, res) => {
   }
 });
 
-app.post("/api/generate-reel", requireGeminiKey, async (req, res) => {
+app.post("/api/generate-reel", dualAuth, async (req, res) => {
   const startedAt = Date.now();
   try {
     const {
@@ -376,6 +410,20 @@ app.post("/api/generate-reel", requireGeminiKey, async (req, res) => {
       // Mirrors the cost line in /api/reel/.../status (Veo 2 base pricing).
       const estimatedCost =
         Math.round(sceneCount * VEO_DURATION_SEC * 0.50 * 100) / 100;
+
+      // Fire-and-forget Firestore mirror — never block the dry_run path
+      // on the write. errors are logged inside recordGeneration().
+      recordGeneration({
+        user: req.user,
+        niche,
+        mode: "dry_run",
+        status: "completed",
+        providerUsed: result.result?.provider_used,
+        topic,
+        tone,
+        duration,
+      });
+
       return res.status(200).json({
         ok: true,
         success: true,
@@ -533,6 +581,22 @@ app.post("/api/generate-reel", requireGeminiKey, async (req, res) => {
     const pollUrl = hasProcessing && historyId
       ? `/api/reel/${encodeURIComponent(historyId)}/status`
       : null;
+
+    // Mirror the live render submission into Firestore alongside the
+    // canonical Cloud SQL row. fire-and-forget. status reflects what the
+    // render attempt produced, not the eventual Veo outcome (which the
+    // status endpoint will update separately when we add Firestore there).
+    recordGeneration({
+      user: req.user,
+      niche,
+      mode: "full",
+      status: renderStatus,
+      providerUsed: result.result?.provider_used,
+      historyId,
+      topic,
+      tone,
+      duration,
+    });
 
     res.status(hasProcessing ? 202 : 200).json({
       success: true,
