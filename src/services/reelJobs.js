@@ -146,6 +146,12 @@ export async function createJobAndSubmitScenes({
     completed_scenes: 0,
     failed_scenes: 0,
     estimated_veo_cost: estimatedVeoCost,
+    // actual_veo_cost is filled in by getJobStatus when the job lands
+    // in a terminal state — see the [ECONOMICS] log line. price_charged
+    // is the placeholder for the future monetisation flow (Sprint 13);
+    // populated by the billing path, not by this service.
+    actual_veo_cost: null,
+    price_charged: null,
     limited_by_max_scenes: limitedByMaxScenes,
     requested_scenes: requested,
     provider_used: providerUsed,
@@ -413,6 +419,38 @@ export async function getJobStatus(jobId) {
     }
   }
 
+  // Unit economics: when the job first lands in a terminal state, snapshot
+  // the actual Veo cost. Idempotent — once actual_veo_cost is set, we
+  // never overwrite it (the bill is the bill). The price_charged field
+  // is left as-is here; whichever future monetisation hook fills it
+  // does so out-of-band.
+  const isTerminal = ["completed", "partial", "failed"].includes(nextStatus);
+  const alreadyPriced =
+    typeof job.actual_veo_cost === "number" && job.actual_veo_cost >= 0;
+  if (isTerminal && !alreadyPriced) {
+    // scene_count × VEO_DURATION_SECONDS × VEO_PRICE_PER_SEC. Mirrors
+    // estimated_veo_cost so the audit trail stays consistent — operators
+    // diff the two to spot drift in pricing assumptions.
+    const sceneCountForBilling = job.scene_count ?? scenes.length;
+    const actualCost =
+      Math.round(
+        sceneCountForBilling * VEO_DURATION_SEC * VEO_PRICE_PER_SEC * 100,
+      ) / 100;
+    await jobRef.update({
+      actual_veo_cost: actualCost,
+      updated_at: FieldValue.serverTimestamp(),
+    });
+    job.actual_veo_cost = actualCost;
+    const price = job.price_charged ?? null;
+    const margin =
+      typeof price === "number"
+        ? Math.round((price - actualCost) * 100) / 100
+        : null;
+    console.log(
+      `[ECONOMICS] job_id=${jobId} cost=${actualCost} price=${price ?? "null"} margin=${margin ?? "null"}`,
+    );
+  }
+
   return {
     job_id: jobId,
     status: nextStatus,
@@ -420,6 +458,8 @@ export async function getJobStatus(jobId) {
     completed_scenes: completed,
     failed_scenes: failed,
     estimated_veo_cost: job.estimated_veo_cost ?? null,
+    actual_veo_cost: job.actual_veo_cost ?? null,
+    price_charged: job.price_charged ?? null,
     limited_by_max_scenes: !!job.limited_by_max_scenes,
     requested_scenes: job.requested_scenes ?? totalForRoll,
     user_id: job.user_id,

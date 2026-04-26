@@ -782,7 +782,24 @@ function buildOpenApiSpec(baseUrl) {
             scene_count: { type: "integer" },
             completed_scenes: { type: "integer" },
             failed_scenes: { type: "integer" },
-            estimated_veo_cost: { type: "number", nullable: true },
+            estimated_veo_cost: {
+              type: "number",
+              nullable: true,
+              description:
+                "USD. scene_count × VEO_DURATION_SECONDS × $0.50. Snapshotted at job creation; never updated.",
+            },
+            actual_veo_cost: {
+              type: "number",
+              nullable: true,
+              description:
+                "USD. Same formula as estimated_veo_cost, but written exactly once when the job first lands in a terminal state (completed | partial | failed). Idempotent on subsequent polls.",
+            },
+            price_charged: {
+              type: "number",
+              nullable: true,
+              description:
+                "Placeholder for the future monetisation flow. The render pipeline never writes this field — whichever billing layer charges the customer fills it out-of-band so margin = price_charged - actual_veo_cost is computable downstream.",
+            },
             limited_by_max_scenes: { type: "boolean" },
             requested_scenes: { type: "integer" },
             user_id: { type: "string" },
