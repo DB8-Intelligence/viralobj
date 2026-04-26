@@ -460,6 +460,54 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
   }
 });
 
+// Cost preflight — pure arithmetic, no Gemini, no Veo, no Firestore
+// writes. Lets a caller know what a full-mode render would cost before
+// spending. The response mirrors the cap and feature-flag the live
+// pipeline would apply at the same instant.
+app.post("/api/reel/cost-preview", dualAuth, (req, res) => {
+  const body = req.body || {};
+  const requested =
+    Number.isFinite(body.scene_count) && body.scene_count > 0
+      ? Math.floor(body.scene_count)
+      : Array.isArray(body.objects)
+        ? body.objects.length
+        : 0;
+  const durationSeconds =
+    Number.isFinite(body.duration) && body.duration > 0
+      ? Math.floor(body.duration)
+      : parseInt(process.env.VEO_DURATION_SECONDS || "8", 10);
+
+  if (requested <= 0) {
+    return res.status(400).json({
+      ok: false,
+      success: false,
+      error: "INVALID_SCENE_COUNT",
+      message:
+        "Provide scene_count (integer > 0) or a non-empty objects[] array.",
+    });
+  }
+
+  const cap = parseInt(process.env.MAX_SCENES_PER_REEL || "2", 10);
+  const allowed = Math.max(1, Math.min(requested, cap));
+  // Veo 2 base price; keep in sync with reelJobs.js's VEO_PRICE_PER_SEC.
+  const estimated =
+    Math.round(allowed * durationSeconds * 0.5 * 100) / 100;
+  const veoEnabled = process.env.ENABLE_VEO_GENERATION === "true";
+
+  res.json({
+    ok: true,
+    success: true,
+    scene_count_requested: requested,
+    scene_count_allowed: allowed,
+    duration_seconds: durationSeconds,
+    estimated_veo_cost: estimated,
+    currency: "USD",
+    veo_enabled: veoEnabled,
+    would_run: veoEnabled,
+    limited_by_max_scenes: requested > cap,
+  });
+});
+
 // Polling endpoint for the Firestore-native render pipeline. Replaces
 // the SQL-bound /api/reel/{history_id}/status retired in Sprint 6.
 app.get("/api/reel/:jobId/status", dualAuth, async (req, res) => {
@@ -1001,6 +1049,72 @@ function buildOpenApiSpec(baseUrl) {
               content: {
                 "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
               },
+            },
+          },
+        },
+      },
+      "/api/reel/cost-preview": {
+        post: {
+          summary: "Estimate the Veo bill for a full render — no Gemini, no Veo, zero cost",
+          description:
+            "Pure arithmetic. Reads MAX_SCENES_PER_REEL, ENABLE_VEO_GENERATION and VEO_DURATION_SECONDS from the live revision and returns what a full-mode /api/generate-reel call *would* cost right now. Useful for an agent or UI to surface a budget warning before the user commits.",
+          tags: ["generation"],
+          security: [{ GeminiKey: [] }],
+          requestBody: {
+            required: false,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    scene_count: { type: "integer", minimum: 1, description: "Scenes the caller intends to render. Defaults to objects.length when omitted." },
+                    duration: { type: "integer", minimum: 1, description: "Per-scene duration in seconds. Defaults to VEO_DURATION_SECONDS (8)." },
+                    objects: { type: "array", items: { type: "string" }, description: "Object list; only its length is read here." },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "200": {
+              description: "Cost preview computed",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      ok: { type: "boolean", example: true },
+                      success: { type: "boolean", example: true },
+                      scene_count_requested: { type: "integer", example: 1 },
+                      scene_count_allowed: {
+                        type: "integer",
+                        example: 1,
+                        description: "min(requested, MAX_SCENES_PER_REEL).",
+                      },
+                      duration_seconds: { type: "integer", example: 8 },
+                      estimated_veo_cost: { type: "number", example: 4 },
+                      currency: { type: "string", example: "USD" },
+                      veo_enabled: {
+                        type: "boolean",
+                        description: "Mirrors ENABLE_VEO_GENERATION on the active revision.",
+                      },
+                      would_run: {
+                        type: "boolean",
+                        description: "Same as veo_enabled — when false, a follow-up POST /api/generate-reel without dry_run will be rejected with 403 VEO_DISABLED.",
+                      },
+                      limited_by_max_scenes: { type: "boolean" },
+                    },
+                  },
+                },
+              },
+            },
+            "400": {
+              description: "INVALID_SCENE_COUNT — neither scene_count nor objects[] supplied a positive count.",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+            },
+            "401": {
+              description: "Missing or invalid X-Gemini-Key / Bearer token",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
             },
           },
         },

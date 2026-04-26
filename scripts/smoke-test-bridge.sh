@@ -145,6 +145,13 @@ run openapi_status "GET  /openapi.json (status path documented)" 200 \
   "'/api/reel/{jobId}/status' in j['paths'] and 'ReelJobStatus' in j['components']['schemas']" \
   "$code"
 
+# ── 11. Cost preflight — pure math, no Gemini, no Veo ───────────────────────
+COST_PAYLOAD='{"duration":8,"objects":["martelo de juiz"],"scene_count":1}'
+code=$(http cost_preview POST "/api/reel/cost-preview" -d "$COST_PAYLOAD")
+run cost_preview "POST /api/reel/cost-preview (estimated_veo_cost=4)" 200 \
+  "j.get('estimated_veo_cost')==4 and j.get('veo_enabled') is False and j.get('would_run') is False and j.get('scene_count_allowed')==1" \
+  "$code"
+
 echo
 if [ "$FAILED" -gt 0 ]; then
   printf "%s%d failed%s · %s%d passed%s\n" "$C_FAIL" "$FAILED" "$C_RST" "$C_OK" "$PASSED" "$C_RST"
