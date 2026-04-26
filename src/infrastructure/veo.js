@@ -53,27 +53,45 @@ function endpointBase() {
 }
 
 async function authedFetch(url, init = {}) {
+  // Use the auth client's own request method instead of global fetch +
+  // getRequestHeaders. google-auth-library@^10 returns a Web `Headers`
+  // object from getRequestHeaders, which doesn't survive `{...headers}`
+  // spread (Headers has no enumerable own properties). The result was
+  // a request with NO Authorization, hence the Veo 401 we hit on the
+  // first paid run. client.request() attaches the bearer token via the
+  // gaxios interceptor and uses the same scope, so we get the right
+  // bearer token without manually wiring headers.
   const client = await getAuth().getClient();
-  const headers = await client.getRequestHeaders();
-  const res = await fetch(url, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...headers,
-      ...(init.headers ?? {}),
-    },
-  });
-  const text = await res.text();
-  let body;
-  try { body = text ? JSON.parse(text) : {}; } catch { body = { raw: text }; }
-  if (!res.ok) {
-    const msg = body?.error?.message ?? body?.raw ?? `HTTP ${res.status}`;
-    const err = new Error(`Veo ${res.status}: ${msg}`);
-    err.status = res.status;
-    err.body = body;
-    throw err;
+  const data = init.body
+    ? typeof init.body === "string"
+      ? JSON.parse(init.body)
+      : init.body
+    : undefined;
+  try {
+    const response = await client.request({
+      url,
+      method: init.method || (data ? "POST" : "GET"),
+      data,
+      headers: {
+        "Content-Type": "application/json",
+        ...(init.headers ?? {}),
+      },
+      // gaxios defaults: throw on non-2xx, parse JSON automatically.
+    });
+    return response.data ?? {};
+  } catch (err) {
+    const status = err.response?.status ?? err.status ?? err.code ?? "unknown";
+    const body = err.response?.data ?? null;
+    const msg =
+      body?.error?.message ??
+      (typeof body === "string" ? body : null) ??
+      err.message ??
+      `HTTP ${status}`;
+    const wrapped = new Error(`Veo ${status}: ${msg}`);
+    wrapped.status = status;
+    wrapped.body = body;
+    throw wrapped;
   }
-  return body;
 }
 
 /**
