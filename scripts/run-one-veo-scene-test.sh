@@ -57,6 +57,9 @@ echo "    ✓ Veo ON, MAX_SCENES_PER_REEL=1"
 
 echo
 echo "▸ Step 2/3 — POST /api/generate-reel (1 scene, 8s, ~\$4)…"
+# NB: `duration` is the *total reel* length in seconds (validated 10-90).
+# The actual Veo scene is fixed by VEO_DURATION_SECONDS (default 8), so
+# the bill is still 1 × 8s × $0.50 = $4 regardless of this value.
 RESP=$(curl -sS -X POST "$BASE_URL/api/generate-reel" \
   -H "Content-Type: application/json" \
   -H "X-Gemini-Key: $GEMINI_AGENT_TOKEN" \
@@ -64,7 +67,7 @@ RESP=$(curl -sS -X POST "$BASE_URL/api/generate-reel" \
     "niche": "advogado",
     "topic": "Como explicar inventário para clientes leigos",
     "tone": "profissional",
-    "duration": 8,
+    "duration": 10,
     "objects": ["martelo de juiz"]
   }')
 echo "$RESP"
