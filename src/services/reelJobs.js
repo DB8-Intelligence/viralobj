@@ -68,6 +68,28 @@ function maxScenesPerReel() {
   return Number.isFinite(raw) && raw > 0 ? raw : 2;
 }
 
+function veoTimeoutSeconds() {
+  // Wall-clock budget per scene from the moment the job was created.
+  // 600s (10 min) covers Veo 2 worst-case render of 8s clips with some
+  // headroom for queue depth. Set lower in tests via env.
+  const raw = parseInt(process.env.VEO_TIMEOUT_SECONDS || "600", 10);
+  return Number.isFinite(raw) && raw > 0 ? raw : 600;
+}
+
+function timestampToMillis(ts) {
+  // Firestore serverTimestamp arrives as a Timestamp object with toMillis().
+  // Anything else (string, number, missing) is treated as 0 so a stale
+  // doc without created_at never triggers a spurious timeout.
+  if (!ts) return 0;
+  if (typeof ts.toMillis === "function") return ts.toMillis();
+  if (typeof ts === "number") return ts;
+  if (typeof ts === "string") {
+    const n = Date.parse(ts);
+    return Number.isFinite(n) ? n : 0;
+  }
+  return 0;
+}
+
 /**
  * Create reel_jobs doc + scene subdocs and submit each scene to Veo.
  *
@@ -242,13 +264,40 @@ export async function getJobStatus(jobId) {
   const scenes = scenesSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
   // Advance in-flight scenes. submit_failed and completed/failed are terminal.
+  const timeoutMs = veoTimeoutSeconds() * 1000;
+  const jobCreatedMs = timestampToMillis(job.created_at);
+  const now = Date.now();
   await Promise.all(
     scenes.map(async (s) => {
       if (s.status === "completed" || s.status === "failed") return;
+
+      const sceneRef = jobRef.collection("scenes").doc(s.id);
+
+      // Timeout guard. Computed off the *job* created_at to align all
+      // scenes on the same wall-clock budget. If created_at is missing
+      // or parses to 0, timestampToMillis returns 0 → the comparison
+      // against (now-budget) is always false and we never spuriously
+      // time out a doc with bad metadata.
+      if (jobCreatedMs > 0 && now - jobCreatedMs > timeoutMs) {
+        const before = s.status;
+        await sceneRef.update({
+          status: "failed",
+          error: `TIMEOUT after ${veoTimeoutSeconds()}s`,
+          updated_at: FieldValue.serverTimestamp(),
+        });
+        s.status = "failed";
+        s.error = `TIMEOUT after ${veoTimeoutSeconds()}s`;
+        console.log(
+          `[SCENE] ${jobId}/${s.index} ${before}→failed (TIMEOUT)`,
+        );
+        return;
+      }
+
       if (!s.veo_operation) return;
+
       try {
         const op = await veo.fetchVeoOperation(s.veo_operation);
-        const sceneRef = jobRef.collection("scenes").doc(s.id);
+        const before = s.status;
         if (!op.done) {
           if (s.status !== "processing") {
             await sceneRef.update({
@@ -256,6 +305,9 @@ export async function getJobStatus(jobId) {
               updated_at: FieldValue.serverTimestamp(),
             });
             s.status = "processing";
+            console.log(
+              `[SCENE] ${jobId}/${s.index} ${before}→processing`,
+            );
           }
           return;
         }
@@ -267,6 +319,9 @@ export async function getJobStatus(jobId) {
           });
           s.status = "failed";
           s.error = op.raiReason;
+          console.log(
+            `[SCENE] ${jobId}/${s.index} ${before}→failed (RAI: ${op.raiReason})`,
+          );
           return;
         }
         if (op.error) {
@@ -277,6 +332,9 @@ export async function getJobStatus(jobId) {
           });
           s.status = "failed";
           s.error = op.error;
+          console.log(
+            `[SCENE] ${jobId}/${s.index} ${before}→failed (${op.error})`,
+          );
           return;
         }
         const publicUrl = veo.gcsUriToPublicUrl(op.gcsUri);
@@ -287,6 +345,9 @@ export async function getJobStatus(jobId) {
             updated_at: FieldValue.serverTimestamp(),
           });
           s.status = "failed";
+          console.log(
+            `[SCENE] ${jobId}/${s.index} ${before}→failed (bad_gcs_uri)`,
+          );
           return;
         }
         await sceneRef.update({
@@ -298,6 +359,7 @@ export async function getJobStatus(jobId) {
         s.status = "completed";
         s.gcs_uri = op.gcsUri;
         s.public_url = publicUrl;
+        console.log(`[SCENE] ${jobId}/${s.index} ${before}→completed`);
       } catch (err) {
         // Transient Vertex error — leave the scene as-is so the next
         // poll retries. We don't want to mark failed on a token refresh.
@@ -334,6 +396,7 @@ export async function getJobStatus(jobId) {
     completed !== (job.completed_scenes ?? 0) ||
     failed !== (job.failed_scenes ?? 0)
   ) {
+    const before = job.status;
     await jobRef.update({
       status: nextStatus,
       completed_scenes: completed,
@@ -343,6 +406,11 @@ export async function getJobStatus(jobId) {
     job.status = nextStatus;
     job.completed_scenes = completed;
     job.failed_scenes = failed;
+    if (before !== nextStatus) {
+      console.log(
+        `[JOB] ${jobId} ${before}→${nextStatus} (completed=${completed} failed=${failed} total=${totalForRoll})`,
+      );
+    }
   }
 
   return {

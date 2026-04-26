@@ -163,6 +163,32 @@ export function buildVeoSubmitPayload({
 }
 
 /**
+ * VEO_MOCK enables a deterministic, never-call-Vertex test mode. The
+ * submit path returns a synthetic operation name shaped
+ * `mock://<nonce>:<behavior>`, and the fetch path parses that string
+ * back into a canned operation result. Behaviors: completed | failed |
+ * processing | block. Default behavior on submit is "completed" so a
+ * happy-path live test resolves on the next poll.
+ */
+function veoMockEnabled() {
+  return process.env.VEO_MOCK === "true";
+}
+
+const MOCK_BUCKET = process.env.GCS_BUCKET_NAME || "viralobj-assets";
+
+function makeMockOperationName(behavior = "completed") {
+  const nonce = Math.random().toString(36).slice(2, 10);
+  return `mock://${nonce}:${behavior}`;
+}
+
+function parseMockOperationName(name) {
+  if (typeof name !== "string" || !name.startsWith("mock://")) return null;
+  const tail = name.slice("mock://".length);
+  const [id, behavior = "completed"] = tail.split(":");
+  return { id, behavior };
+}
+
+/**
  * Submit a Veo render job. Returns the operation name immediately
  * (sub-second); the actual render runs on Google's side and is
  * retrieved via fetchVeoOperation().
@@ -171,6 +197,20 @@ export function buildVeoSubmitPayload({
  * @returns {Promise<{ operationName: string, model: string, outputGcsUri: string }>}
  */
 export async function submitVeoJob(params) {
+  if (veoMockEnabled()) {
+    // Build the payload anyway so the audit trail / logs reflect what a
+    // real submit would have shipped — just don't send it.
+    buildVeoSubmitPayload(params);
+    const operationName = makeMockOperationName("completed");
+    console.log(
+      `[VEO_MOCK] active — synthetic operation ${operationName} (no Vertex contact)`,
+    );
+    return {
+      operationName,
+      model: `mock://${MODEL}`,
+      outputGcsUri: params.outputGcsUri,
+    };
+  }
   const { url, request_body } = buildVeoSubmitPayload(params);
   const body = await authedFetch(url, {
     method: "POST",
@@ -202,6 +242,37 @@ export async function submitVeoJob(params) {
  */
 export async function fetchVeoOperation(operationName) {
   if (!operationName) throw new Error("fetchVeoOperation: operationName is required");
+
+  // VEO_MOCK: parse the synthetic name written by submitVeoJob (or
+  // injected by a Firestore fixture) and short-circuit with a canned
+  // operation. Never contacts Vertex — safe for resilience tests.
+  const mock = parseMockOperationName(operationName);
+  if (mock) {
+    if (!veoMockEnabled()) {
+      console.warn(
+        `[VEO_MOCK] received mock operation name "${operationName}" but VEO_MOCK!=true — refusing to contact Vertex with a non-real op. Returning failed.`,
+      );
+      return { done: true, error: `Mock operation seen with VEO_MOCK off: ${operationName}` };
+    }
+    console.log(`[VEO_MOCK] fetch ${operationName} → ${mock.behavior}`);
+    switch (mock.behavior) {
+      case "processing":
+        return { done: false };
+      case "block":
+        return {
+          done: true,
+          blocked: true,
+          raiReason: "MOCK_RAI_POLICY",
+        };
+      case "failed":
+        return { done: true, error: "MOCK_FAILED" };
+      case "completed":
+      default: {
+        const gcsUri = `gs://${MOCK_BUCKET}/mock/${mock.id}.mp4`;
+        return { done: true, gcsUri, mimeType: "video/mp4" };
+      }
+    }
+  }
 
   const body = await authedFetch(`${endpointBase()}:fetchPredictOperation`, {
     method: "POST",
