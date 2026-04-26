@@ -31,6 +31,16 @@ import {
   createJobAndSubmitScenes,
   getJobStatus,
 } from "./src/services/reelJobs.js";
+import {
+  PRODUCT_TO_SCENES,
+  InsufficientCreditsError,
+  UnknownProductError,
+  processWebhookEvent,
+  reserveCredits,
+  refundCredits,
+  getCreditsBalance,
+} from "./src/services/billing.js";
+import crypto from "node:crypto";
 
 // Cost-guard config used by dry_run to compute what a live Veo render
 // *would* have charged. Live render itself is no longer wired into this
@@ -315,6 +325,47 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
       });
     }
 
+    // Billing gate (full mode only). Credits are scenes — one credit per
+    // rendered scene. We do an early read-only check so a customer with
+    // zero balance fails fast before paying for the Gemini call. The
+    // transactional debit happens after Gemini and just before submit.
+    let creditPriceContext = { price_per_scene: null };
+    if (!dryRun) {
+      const userIdForBilling = req.user?.uid;
+      if (!userIdForBilling) {
+        return res.status(401).json({
+          ok: false,
+          error: "NO_USER_CONTEXT",
+          message: "Could not derive user_id from auth — needed for credit lookup.",
+        });
+      }
+      try {
+        const balance = await getCreditsBalance(userIdForBilling);
+        if ((balance?.credits ?? 0) < 1) {
+          return res.status(402).json({
+            ok: false,
+            success: false,
+            error: "PAYMENT_REQUIRED",
+            message:
+              "Insufficient credits. Purchase via /api/billing/webhook to credit this user.",
+            user_id: userIdForBilling,
+            credits: balance?.credits ?? 0,
+          });
+        }
+        creditPriceContext.price_per_scene = balance?.price_per_scene ?? null;
+      } catch (err) {
+        console.error(
+          "[/api/generate-reel] credit balance read failed:",
+          err?.message ?? err,
+        );
+        return res.status(500).json({
+          ok: false,
+          error: "BILLING_READ_FAILED",
+          message: err?.message ?? String(err),
+        });
+      }
+    }
+
     const result = await generatePackage({
       niche,
       objects,
@@ -391,6 +442,48 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
     // We only get here when ENABLE_VEO_GENERATION=='true' AND the caller
     // did not pass dry_run. Each of the next steps is bounded so a slow
     // Veo region or a flaky scene cannot hang Cloud Run past its timeout.
+    const userIdForBilling = req.user?.uid;
+    const charactersForBilling = Array.isArray(result.package?.characters)
+      ? result.package.characters
+      : [];
+    const cap = parseInt(process.env.MAX_SCENES_PER_REEL || "2", 10);
+    const sceneCountToCharge = Math.max(
+      1,
+      Math.min(charactersForBilling.length || 1, cap),
+    );
+
+    // Transactional debit. If the balance dropped between the early
+    // read above and now (concurrent renders), this is what catches it.
+    try {
+      const reservation = await reserveCredits(
+        userIdForBilling,
+        sceneCountToCharge,
+      );
+      creditPriceContext.price_per_scene =
+        reservation.price_per_scene ?? creditPriceContext.price_per_scene;
+      console.log(
+        `[BILLING] reserved user_id=${userIdForBilling} -${sceneCountToCharge} credits (remaining=${reservation.credits_remaining})`,
+      );
+    } catch (err) {
+      if (err instanceof InsufficientCreditsError) {
+        return res.status(402).json({
+          ok: false,
+          success: false,
+          error: "PAYMENT_REQUIRED",
+          message: err.message,
+          user_id: userIdForBilling,
+          required: err.required,
+          available: err.currentBalance,
+        });
+      }
+      console.error("[/api/generate-reel] reserveCredits failed:", err);
+      return res.status(500).json({
+        ok: false,
+        error: "BILLING_RESERVE_FAILED",
+        message: err?.message ?? String(err),
+      });
+    }
+
     let job;
     try {
       job = await createJobAndSubmitScenes({
@@ -401,8 +494,12 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
         tone,
         duration,
         providerUsed: result.result?.provider_used,
+        pricePerScene: creditPriceContext.price_per_scene,
       });
     } catch (err) {
+      // Job creation itself blew up — the customer hasn't received any
+      // value, so refund every credit we reserved.
+      await refundCredits(userIdForBilling, sceneCountToCharge, "createJob_failed");
       console.error("[/api/generate-reel] reelJobs.createJobAndSubmitScenes:", err);
       return res.status(500).json({
         ok: false,
@@ -414,6 +511,23 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
     }
 
     const allFailed = job.scenes.every((s) => s.status === "failed");
+    if (allFailed) {
+      // Every scene's submit failed — the user hasn't and won't receive
+      // anything billable. Refund the full reservation.
+      await refundCredits(userIdForBilling, sceneCountToCharge, "all_scenes_failed_at_submit");
+    } else if (sceneCountToCharge > job.sceneCount) {
+      // We capped MAX_SCENES_PER_REEL above, but if the actual sceneCount
+      // ended up lower than what we charged (Gemini returned fewer
+      // characters than the cap), refund the difference.
+      const overcharge = sceneCountToCharge - job.sceneCount;
+      if (overcharge > 0) {
+        await refundCredits(
+          userIdForBilling,
+          overcharge,
+          "scene_count_smaller_than_cap",
+        );
+      }
+    }
     saveGenerationHistoryToFirestore({
       user_id: req.user?.uid || "anonymous",
       user_email: req.user?.email || null,
@@ -560,6 +674,122 @@ app.post("/api/reel/cost-preview", dualAuth, (req, res) => {
     would_run: veoEnabled,
     limited_by_max_scenes: requested > cap,
   });
+});
+
+// Billing webhook — accepts purchase events from Kiwify (Brazil) or
+// any provider that POSTs JSON. Idempotent via the transaction id, so
+// retries from the provider never double-credit. Auth: HMAC signature
+// when BILLING_WEBHOOK_SECRET is set; otherwise the endpoint accepts
+// unsigned payloads with a loud warning so test scenarios work.
+app.post("/api/billing/webhook", express.json({ verify: (req, _res, buf) => { req.rawBody = buf.toString("utf8"); } }), async (req, res) => {
+  const secret = process.env.BILLING_WEBHOOK_SECRET;
+  const signatureHeader =
+    req.header("X-Kiwify-Signature") ||
+    req.header("X-Webhook-Signature") ||
+    req.header("X-Hub-Signature-256");
+
+  if (secret) {
+    if (!signatureHeader) {
+      return res.status(401).json({
+        ok: false,
+        error: "MISSING_SIGNATURE",
+        message: "BILLING_WEBHOOK_SECRET is set on the server; request must include X-Kiwify-Signature.",
+      });
+    }
+    const computed = crypto
+      .createHmac("sha256", secret)
+      .update(req.rawBody ?? JSON.stringify(req.body ?? {}))
+      .digest("hex");
+    // Allow either the bare hex or the "sha256=<hex>" form GitHub uses.
+    const provided = signatureHeader.startsWith("sha256=")
+      ? signatureHeader.slice(7)
+      : signatureHeader;
+    if (
+      provided.length !== computed.length ||
+      !crypto.timingSafeEqual(Buffer.from(provided), Buffer.from(computed))
+    ) {
+      return res.status(401).json({
+        ok: false,
+        error: "INVALID_SIGNATURE",
+        message: "HMAC mismatch — refused to credit.",
+      });
+    }
+  } else {
+    console.warn(
+      "[BILLING] WARNING: BILLING_WEBHOOK_SECRET not set — accepting unsigned request. Production deploys MUST set the env.",
+    );
+  }
+
+  const body = req.body || {};
+  // Accept multiple field names so Kiwify's native shape AND the
+  // provider-agnostic test shape both work without a translator layer.
+  const userId = body.user_id || body.customer_email || body.email || null;
+  const amount = Number(
+    body.amount ?? body.total ?? body.amount_paid ?? body.value ?? 0,
+  );
+  const product = body.product || body.product_id || null;
+  // Transaction ids vary by provider. Synthesize a stable one as a last
+  // resort so the webhook still works against the user's ad-hoc curl.
+  const transactionId =
+    body.transaction_id ||
+    body.order_id ||
+    body.id ||
+    body.transaction ||
+    `synth-${userId}-${product}-${amount}`;
+
+  if (!userId || !product || !(amount > 0)) {
+    return res.status(400).json({
+      ok: false,
+      error: "INVALID_WEBHOOK_PAYLOAD",
+      required_fields: ["user_id (or email)", "product (or product_id)", "amount > 0"],
+      known_products: Object.keys(PRODUCT_TO_SCENES),
+    });
+  }
+
+  try {
+    const result = await processWebhookEvent({
+      userId,
+      product,
+      amountPaid: amount,
+      transactionId,
+    });
+    if (result.status === "credited") {
+      console.log(
+        `[BILLING] credited user_id=${userId} +${result.credits_added} credits (paid=$${amount} product=${product} tx=${transactionId})`,
+      );
+    } else {
+      console.log(
+        `[BILLING] webhook replay user_id=${userId} tx=${transactionId} (already_processed)`,
+      );
+    }
+    res.json({ ok: true, success: true, ...result });
+  } catch (err) {
+    if (err instanceof UnknownProductError) {
+      return res.status(400).json({
+        ok: false,
+        error: "UNKNOWN_PRODUCT",
+        product: err.product,
+        known_products: Object.keys(PRODUCT_TO_SCENES),
+      });
+    }
+    console.error("[BILLING] webhook error:", err);
+    res.status(500).json({ ok: false, error: err?.message ?? String(err) });
+  }
+});
+
+// Read-only balance probe — useful to a frontend that wants to display
+// "you have N renders left" before the user attempts a generation.
+app.get("/api/billing/credits", dualAuth, async (req, res) => {
+  const userId = req.user?.uid;
+  if (!userId) {
+    return res.status(401).json({ ok: false, error: "NO_USER_CONTEXT" });
+  }
+  try {
+    const balance = await getCreditsBalance(userId);
+    res.json({ ok: true, success: true, ...balance });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err?.message ?? String(err) });
+  }
 });
 
 // Polling endpoint for the Firestore-native render pipeline. Replaces
@@ -1100,6 +1330,12 @@ function buildOpenApiSpec(baseUrl) {
                 "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
               },
             },
+            "402": {
+              description: "PAYMENT_REQUIRED — caller has fewer credits than scenes to render. Top up via /api/billing/webhook.",
+              content: {
+                "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
+              },
+            },
             "403": {
               description:
                 "VEO_DISABLED — paid Veo generation is gated off via ENABLE_VEO_GENERATION!='true' and the caller did not pass dry_run=true.",
@@ -1120,6 +1356,91 @@ function buildOpenApiSpec(baseUrl) {
               content: {
                 "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
               },
+            },
+          },
+        },
+      },
+      "/api/billing/webhook": {
+        post: {
+          summary: "Provider webhook — grants render credits on payment",
+          description:
+            "Unauthenticated by Bearer; protected by HMAC signature when BILLING_WEBHOOK_SECRET is set on the server (validates X-Kiwify-Signature, X-Webhook-Signature, or X-Hub-Signature-256). Idempotent: each transaction_id is recorded under webhook_events/{tx_id}; replays return status='already_processed' and never double-credit. The product field maps to a fixed scene count via PRODUCT_TO_SCENES (see /src/services/billing.js).",
+          tags: ["billing"],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["user_id", "product", "amount"],
+                  properties: {
+                    user_id: { type: "string", description: "Stable identifier for the buyer (Firebase uid or customer email)." },
+                    product: { type: "string", enum: ["prod_1_scene", "prod_2_scenes", "prod_4_scenes"] },
+                    amount: { type: "number", minimum: 0.01, description: "USD paid." },
+                    transaction_id: { type: "string", description: "Provider's order / transaction id. Used as the idempotency key. Synthesized when absent — do not rely on auto-generation in production." },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "200": {
+              description: "Credit granted (or replay of an already-processed event)",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      ok: { type: "boolean" },
+                      status: { type: "string", enum: ["credited", "already_processed"] },
+                      user_id: { type: "string" },
+                      transaction_id: { type: "string" },
+                      credits_added: { type: "integer" },
+                      new_balance: { type: "integer" },
+                    },
+                  },
+                },
+              },
+            },
+            "400": {
+              description: "INVALID_WEBHOOK_PAYLOAD or UNKNOWN_PRODUCT",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+            },
+            "401": {
+              description: "MISSING_SIGNATURE or INVALID_SIGNATURE (when BILLING_WEBHOOK_SECRET is set)",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+            },
+          },
+        },
+      },
+      "/api/billing/credits": {
+        get: {
+          summary: "Read the authenticated user's render-credit balance",
+          tags: ["billing"],
+          security: [{ GeminiKey: [] }],
+          responses: {
+            "200": {
+              description: "Current balance and the latest pricing snapshot",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      ok: { type: "boolean" },
+                      user_id: { type: "string" },
+                      credits: { type: "integer" },
+                      price_per_scene: { type: "number", nullable: true },
+                      last_payment: { type: "number", nullable: true },
+                      last_product: { type: "string", nullable: true },
+                      exists: { type: "boolean", description: "false when the user has never received credits — credits will be 0." },
+                    },
+                  },
+                },
+              },
+            },
+            "401": {
+              description: "Missing or invalid X-Gemini-Key / Bearer token",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
             },
           },
         },

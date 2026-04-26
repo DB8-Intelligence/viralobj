@@ -117,6 +117,7 @@ export async function createJobAndSubmitScenes({
   tone,
   duration,
   providerUsed = null,
+  pricePerScene = null,
 }) {
   const fs = firestore();
   const userId = user?.uid || "anonymous";
@@ -147,11 +148,17 @@ export async function createJobAndSubmitScenes({
     failed_scenes: 0,
     estimated_veo_cost: estimatedVeoCost,
     // actual_veo_cost is filled in by getJobStatus when the job lands
-    // in a terminal state — see the [ECONOMICS] log line. price_charged
-    // is the placeholder for the future monetisation flow (Sprint 13);
-    // populated by the billing path, not by this service.
+    // in a terminal state — see the [ECONOMICS] log line.
     actual_veo_cost: null,
-    price_charged: null,
+    // Sprint 14: price_charged is now derived from the user's most
+    // recent payment (price_per_scene × scenes). When the operator
+    // hasn't wired billing yet (no purchases), pricePerScene is null
+    // and price_charged stays null.
+    price_per_scene: typeof pricePerScene === "number" ? pricePerScene : null,
+    price_charged:
+      typeof pricePerScene === "number"
+        ? Math.round(pricePerScene * sceneCount * 100) / 100
+        : null,
     limited_by_max_scenes: limitedByMaxScenes,
     requested_scenes: requested,
     provider_used: providerUsed,

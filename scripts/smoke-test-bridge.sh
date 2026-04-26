@@ -159,6 +159,26 @@ run veo_preview "POST /api/reel/veo-payload-preview (no audio key, Veo OFF)" 200
   "j.get('audit',{}).get('contains_generate_audio') is False and j.get('audit',{}).get('audio_keys')==[] and j.get('veo_enabled') is False and 'generateAudio' not in j.get('request_body',{}).get('parameters',{})" \
   "$code"
 
+# ── 13. Billing webhook — credits a synthetic user. Idempotent across re-runs.
+WEBHOOK_PAYLOAD='{"user_id":"smoke-test-user","amount":10,"product":"prod_2_scenes","transaction_id":"smoke-test-tx-1"}'
+# Webhook is unauthenticated (no X-Gemini-Key); use plain curl so the
+# request shape matches what Kiwify would actually POST.
+code=$(curl -sS -o "$TMP/webhook.json" -w "%{http_code}" \
+    -X POST -H "Content-Type: application/json" -d "$WEBHOOK_PAYLOAD" \
+    "${BASE_URL}/api/billing/webhook")
+run webhook "POST /api/billing/webhook (idempotent credit grant)" 200 \
+  "j.get('user_id')=='smoke-test-user' and j.get('status') in ('credited','already_processed') and j.get('new_balance',0)>=2" \
+  "$code"
+
+# ── 14. Credits balance probe (auth = same X-Gemini-Key path as the rest) ──
+# This exercises the read path for the same user_id that maps to
+# system:gemini-agent on the auth side, NOT smoke-test-user — so the
+# balance reflects whatever the system user has accumulated.
+code=$(http credits GET "/api/billing/credits")
+run credits "GET  /api/billing/credits (system user balance)" 200 \
+  "j.get('ok') is True and isinstance(j.get('credits',-1),int) and j.get('user_id')=='system:gemini-agent'" \
+  "$code"
+
 echo
 if [ "$FAILED" -gt 0 ]; then
   printf "%s%d failed%s · %s%d passed%s\n" "$C_FAIL" "$FAILED" "$C_RST" "$C_OK" "$PASSED" "$C_RST"
