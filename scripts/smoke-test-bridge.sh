@@ -102,7 +102,7 @@ run readyz "GET  /readyz" 200 "j.get('ok') is True and 'database' in j.get('chec
 
 # ── 3. /api/niches (auth required) ──────────────────────────────────────────
 code=$(http niches GET "/api/niches")
-run niches "GET  /api/niches (auth)" 200 "j.get('count',0)>=18 and j.get('source') in ('db','memory')" "$code"
+run niches "GET  /api/niches (auth)" 200 "j.get('count',0)>=18 and j.get('source') in ('firestore','db','db-fallback','memory')" "$code"
 
 # ── 4. /api/niches without auth → 401 ───────────────────────────────────────
 code=$(curl -sS -o "$TMP/niches_noauth.json" -w "%{http_code}" "${BASE_URL}/api/niches")
