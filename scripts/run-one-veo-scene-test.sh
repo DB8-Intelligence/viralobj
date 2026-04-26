@@ -1,28 +1,21 @@
 #!/usr/bin/env bash
 # =============================================================================
-# ViralObj — single-scene Veo render test
+# ViralObj — single-scene Veo render test (paid · ~$4 max)
 #
-# Executes the SMALLEST possible paid Veo render to confirm the
-# Firestore-native pipeline end-to-end. Cost: 1 scene × 8s × $0.50 = $4.
+# Flips Cloud Run env to ENABLE_VEO_GENERATION=true + MAX_SCENES_PER_REEL=1,
+# submits a single-object full render, captures the job_id, and ALWAYS
+# rolls Veo back to disabled on exit (success, error, ctrl-C). The render
+# itself continues asynchronously in Vertex AI even after rollback —
+# polling /api/reel/{jobId}/status keeps working because that endpoint
+# does not gate on ENABLE_VEO_GENERATION.
 #
-# Steps:
-#   1. Flip Cloud Run env: ENABLE_VEO_GENERATION=true, MAX_SCENES_PER_REEL=1.
-#   2. Submit a single-object full render and capture the job_id.
-#   3. Print the polling URL and the rollback command.
+# Cost cap: 1 scene × 8s × $0.50 = $4. Plus one Gemini package call
+# (~$0.05). The trap is set BEFORE the env flip so an aborted gcloud
+# update still triggers the off-state attempt.
 #
 # Required env:
 #   BASE_URL              https://viralobj-bridge-3s77drlfqa-uc.a.run.app
 #   GEMINI_AGENT_TOKEN    matches the secret on Cloud Run
-#
-# IMPORTANT: this script DOES NOT roll Veo back to disabled afterwards —
-# the rollback step is intentionally manual so the operator can poll
-# /api/reel/{job_id}/status and inspect the rendered MP4 before turning
-# the kill switch back on. Run the printed gcloud command when done.
-#
-# Usage:
-#   export BASE_URL="https://viralobj-bridge-3s77drlfqa-uc.a.run.app"
-#   export GEMINI_AGENT_TOKEN="$(grep '^GEMINI_AGENT_TOKEN=' ~/.viralobj-bootstrap-secrets.txt | cut -d= -f2)"
-#   bash scripts/run-one-veo-scene-test.sh
 # =============================================================================
 
 set -euo pipefail
@@ -33,13 +26,34 @@ set -euo pipefail
 REGION="${REGION:-us-central1}"
 SERVICE="${SERVICE:-viralobj-bridge}"
 PROJECT="${PROJECT:-viralreel-ai-493701}"
+JOB_ID_FILE="${JOB_ID_FILE:-$HOME/.viralobj-last-job-id.txt}"
+
+rollback() {
+  local rc=$?
+  echo
+  echo "▸ Rollback (exit=$rc) — flipping ENABLE_VEO_GENERATION=false, MAX_SCENES_PER_REEL=2…"
+  if gcloud run services update "$SERVICE" \
+      --region="$REGION" --project="$PROJECT" \
+      --update-env-vars="ENABLE_VEO_GENERATION=false,MAX_SCENES_PER_REEL=2" \
+      --quiet >/dev/null 2>&1; then
+    echo "    ✓ Veo back to disabled."
+  else
+    echo "    ✗ Rollback failed — RUN MANUALLY:"
+    echo "      gcloud run services update $SERVICE --region=$REGION --project=$PROJECT \\"
+    echo "        --update-env-vars=ENABLE_VEO_GENERATION=false,MAX_SCENES_PER_REEL=2 --quiet"
+  fi
+  exit $rc
+}
+# Set trap BEFORE the first state-changing operation so a failure during
+# the env flip still attempts to undo whatever partial state is in place.
+trap rollback EXIT
 
 echo "▸ Step 1/3 — flipping Cloud Run env (Veo ON, max 1 scene)…"
 gcloud run services update "$SERVICE" \
-  --region="$REGION" \
-  --project="$PROJECT" \
+  --region="$REGION" --project="$PROJECT" \
   --update-env-vars="ENABLE_VEO_GENERATION=true,MAX_SCENES_PER_REEL=1" \
-  --quiet
+  --quiet >/dev/null
+echo "    ✓ Veo ON, MAX_SCENES_PER_REEL=1"
 
 echo
 echo "▸ Step 2/3 — POST /api/generate-reel (1 scene, 8s, ~\$4)…"
@@ -55,18 +69,24 @@ RESP=$(curl -sS -X POST "$BASE_URL/api/generate-reel" \
   }')
 echo "$RESP"
 
-JOB_ID=$(echo "$RESP" | python -c 'import json,sys; print(json.load(sys.stdin).get("job_id",""))' 2>/dev/null || true)
+JOB_ID=$(printf '%s' "$RESP" | python -c 'import json,sys; print(json.load(sys.stdin).get("job_id",""))' 2>/dev/null || true)
+SCENE_COUNT=$(printf '%s' "$RESP" | python -c 'import json,sys; print(json.load(sys.stdin).get("scene_count",""))' 2>/dev/null || true)
+EST_COST=$(printf '%s' "$RESP" | python -c 'import json,sys; print(json.load(sys.stdin).get("estimated_veo_cost",""))' 2>/dev/null || true)
 
-echo
-echo "▸ Step 3/3 — next steps:"
 if [ -n "$JOB_ID" ]; then
-  echo "    Poll status:"
+  printf '%s\n' "$JOB_ID" > "$JOB_ID_FILE"
+  echo
+  echo "▸ Step 3/3 — saved job_id to $JOB_ID_FILE"
+  echo "    job_id:                $JOB_ID"
+  echo "    scene_count:           $SCENE_COUNT"
+  echo "    estimated_veo_cost:    \$${EST_COST}"
+  echo
+  echo "    Poll status from another shell:"
   echo "      curl -s -H \"X-Gemini-Key: \$GEMINI_AGENT_TOKEN\" \\"
   echo "        \"$BASE_URL/api/reel/$JOB_ID/status\" | python -m json.tool"
 else
-  echo "    (no job_id parsed — inspect the response above)"
+  echo
+  echo "    ⚠ No job_id parsed — inspect the response above. Trap will still rollback."
 fi
-echo
-echo "    When the scene is completed and you've inspected the MP4, roll back:"
-echo "      gcloud run services update $SERVICE --region=$REGION --project=$PROJECT \\"
-echo "        --update-env-vars=ENABLE_VEO_GENERATION=false,MAX_SCENES_PER_REEL=2 --quiet"
+
+# Normal exit — trap will run rollback now.
