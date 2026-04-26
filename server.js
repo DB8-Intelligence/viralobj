@@ -23,7 +23,19 @@ import db from "./src/infrastructure/database.js";
 import storage from "./src/infrastructure/storage.js";
 import veo from "./src/infrastructure/veo.js";
 import { firestore, FieldValue } from "./src/infrastructure/firebase.js";
+import {
+  getNichesFromFirestore,
+  getNicheBySlugFromFirestore,
+  saveGenerationHistoryToFirestore,
+} from "./src/infrastructure/firestoreRepository.js";
 import { dualAuth } from "./src/middleware/firebaseAuth.js";
+import { migrate as migrateNichesToFirestore } from "./scripts/migrate-postgres-to-firestore.mjs";
+
+// FIRESTORE_PRIMARY=true makes Firestore the canonical source for /api/niches
+// and the niche lookup inside /api/generate-reel. Cloud SQL stays online as a
+// fallback so a Firestore outage or empty collection degrades gracefully
+// instead of breaking the API. Setting this to "false" reverses the order.
+const firestorePrimary = () => process.env.FIRESTORE_PRIMARY === "true";
 
 // Render config — Veo 2/3 on Vertex AI. No more Fal.ai or external API keys;
 // auth is Application Default Credentials (the runtime service account on
@@ -195,6 +207,31 @@ app.get(["/readyz", "/healthz"], async (_req, res) => {
   });
 });
 
+// One-shot migration trigger. Idempotent (merge:true), safe to re-run.
+// Auth: legacy X-Gemini-Key only — Bearer-bound users shouldn't be able
+// to mass-rewrite catalog data even if they're authenticated.
+app.post("/api/admin/migrate-niches-to-firestore", requireGeminiKey, async (_req, res) => {
+  const startedAt = Date.now();
+  try {
+    const out = await migrateNichesToFirestore();
+    console.log(
+      `[migrate] niches=${out.niches} professionals=${out.professionals} skipped=${out.skipped}`,
+    );
+    res.json({
+      ok: true,
+      elapsed_ms: Date.now() - startedAt,
+      ...out,
+    });
+  } catch (err) {
+    console.error("[migrate]", err);
+    res.status(500).json({
+      ok: false,
+      error: err?.message ?? String(err),
+      elapsed_ms: Date.now() - startedAt,
+    });
+  }
+});
+
 app.get("/openapi.json", (req, res) => {
   const baseUrl = process.env.PUBLIC_URL
     || `${req.protocol}://${req.get("host")}`;
@@ -236,13 +273,45 @@ app.get("/agent-manifest.json", (req, res) => {
 
 app.get("/api/niches", dualAuth, async (req, res) => {
   try {
-    const lang = (req.query.lang === "en" ? "en" : "pt");
-    const rawCategory = typeof req.query.category === "string" ? req.query.category : null;
-    const category = rawCategory && ["profissoes", "lifestyle"].includes(rawCategory)
-      ? rawCategory
-      : null;
+    const lang = req.query.lang === "en" ? "en" : "pt";
+    const rawCategory =
+      typeof req.query.category === "string" ? req.query.category : null;
+    const category =
+      rawCategory && ["profissoes", "lifestyle"].includes(rawCategory)
+        ? rawCategory
+        : null;
 
-    // 1) Try DB first. If it returns rows, use them.
+    const useFirestoreFirst = firestorePrimary();
+
+    // ── Path A: Firestore-first ──────────────────────────────────────────
+    if (useFirestoreFirst) {
+      try {
+        const fs = await getNichesFromFirestore({ category, lang });
+        if (fs.count > 0) {
+          return res.json({
+            ok: true,
+            success: true,
+            source: "firestore",
+            count: fs.count,
+            category: category ?? "all",
+            categories: fs.categories,
+            niches: fs.niches,
+          });
+        }
+        // Empty collection — fall through to db-fallback rather than
+        // serve [] (callers expect 36 niches).
+        console.warn(
+          "[/api/niches] Firestore returned 0 docs, falling back to Cloud SQL",
+        );
+      } catch (err) {
+        console.warn(
+          "[/api/niches] Firestore lookup failed, falling back to Cloud SQL:",
+          err?.message ?? err,
+        );
+      }
+    }
+
+    // ── Path B: Cloud SQL (legacy primary OR Firestore-first fallback) ──
     let dbRows = null;
     let dbFailed = false;
     let dbError = null;
@@ -250,16 +319,15 @@ app.get("/api/niches", dualAuth, async (req, res) => {
       dbRows = await db.getNiches({ category });
     } catch (err) {
       dbFailed = true;
-      // Some pg errors arrive with an empty .message — fall through to
-      // String(err) and finally to null so the JSON body is always either
-      // a meaningful string or null, never "".
       const msg = err?.message?.trim() || String(err)?.trim();
       dbError = msg && msg !== "[object Object]" ? msg : null;
-      console.warn("[/api/niches] DB lookup failed, falling back to memory:", err);
+      console.warn(
+        "[/api/niches] DB lookup failed, falling back to memory:",
+        err,
+      );
     }
 
     if (Array.isArray(dbRows) && dbRows.length > 0) {
-      // Shape DB rows to match the in-memory listNiches response.
       const niches = dbRows.map((n) => ({
         key: n.key,
         name: lang === "en" ? n.name_en : n.name_pt,
@@ -267,13 +335,18 @@ app.get("/api/niches", dualAuth, async (req, res) => {
         category: n.category,
         objects_count: Array.isArray(n.objects) ? n.objects.length : 0,
         tone_default: n.tone_default,
-        sample_objects: (Array.isArray(n.objects) ? n.objects.slice(0, 3) : [])
-          .map((o) => lang === "en" ? (o.en || o.id || o.pt) : (o.pt || o.id || o.en)),
+        sample_objects: (Array.isArray(n.objects) ? n.objects.slice(0, 3) : []).map(
+          (o) => (lang === "en" ? o.en || o.id || o.pt : o.pt || o.id || o.en),
+        ),
       }));
       const categories = [...new Set(niches.map((n) => n.category))];
       return res.json({
+        ok: true,
         success: true,
-        source: "db",
+        // db-fallback when Firestore was tried first and came back empty;
+        // db when Firestore-first is disabled and SQL is the canonical
+        // source for this revision.
+        source: useFirestoreFirst ? "db-fallback" : "db",
         count: niches.length,
         category: category ?? "all",
         categories,
@@ -281,13 +354,11 @@ app.get("/api/niches", dualAuth, async (req, res) => {
       });
     }
 
-    // 2) Fall back to in-memory. Use this path when:
-    //    - DB errored (connection refused, auth, etc.)
-    //    - DB connected but returned 0 rows (fresh install before seed)
+    // ── Path C: in-memory (final fallback) ───────────────────────────────
     const memoryResult = await listNiches({ lang, category });
 
-    // 3) If DB was reachable but empty, fire-and-forget auto-seed so the
-    //    next request can serve from DB. Never awaits — response stays fast.
+    // Fire-and-forget auto-seed when SQL is reachable but empty so the
+    // next request serves from SQL — keeps the legacy primary path alive.
     if (!seedAttempted && !dbFailed && (dbRows?.length ?? 0) === 0) {
       seedAttempted = true;
       const allNiches = Object.entries(NICHES).map(([key, n]) => ({
@@ -301,14 +372,17 @@ app.get("/api/niches", dualAuth, async (req, res) => {
         prompts_base: n.prompts_base ?? null,
       }));
       db.bulkInsertNiches(allNiches)
-        .then((r) => console.log(`[/api/niches] auto-seeded ${r.inserted} niches into DB`))
+        .then((r) =>
+          console.log(`[/api/niches] auto-seeded ${r.inserted} niches into DB`),
+        )
         .catch((err) => {
           console.warn("[/api/niches] auto-seed failed:", err?.message ?? err);
-          seedAttempted = false; // allow retry on next call
+          seedAttempted = false;
         });
     }
 
     res.json({
+      ok: true,
       success: true,
       source: "memory",
       db_error: dbError,
@@ -319,10 +393,9 @@ app.get("/api/niches", dualAuth, async (req, res) => {
       summary: memoryResult.content?.[0]?.text,
     });
   } catch (err) {
-    // Only hits if BOTH DB AND memory fail — memory failing should be impossible,
-    // but we still guard against it.
     console.error("[/api/niches] catastrophic:", err);
     res.status(500).json({
+      ok: false,
       success: false,
       error: err?.message || String(err),
     });
@@ -368,6 +441,32 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
     }
     if (duration && (duration < 10 || duration > 90)) {
       return res.status(400).json({ success: false, error: "'duration' must be between 10 and 90 seconds." });
+    }
+
+    // Lookup the niche to tag the response with its source. Informational
+    // — generatePackage uses its own in-memory niche reference data, so an
+    // unknown slug here does not block generation.
+    let dataSource = "memory";
+    if (firestorePrimary()) {
+      try {
+        const fsNiche = await getNicheBySlugFromFirestore(niche);
+        if (fsNiche) dataSource = "firestore";
+      } catch (err) {
+        console.warn(
+          "[/api/generate-reel] Firestore niche lookup failed:",
+          err?.message ?? err,
+        );
+      }
+    }
+    if (dataSource === "memory") {
+      try {
+        const dbRows = await db.getNiches({});
+        const found =
+          Array.isArray(dbRows) && dbRows.some((r) => r.key === niche);
+        if (found) dataSource = "db-fallback";
+      } catch {
+        // db unreachable — leave dataSource="memory"
+      }
     }
 
     // Reject before paying the Gemini call when Veo is disabled and the
@@ -423,6 +522,20 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
         tone,
         duration,
       });
+      saveGenerationHistoryToFirestore({
+        user_id: req.user?.uid || "anonymous",
+        user_email: req.user?.email || null,
+        auth_provider: req.user?.provider || "anonymous",
+        niche,
+        topic,
+        mode: "dry_run",
+        status: "completed",
+        provider: "vertex",
+        provider_used: result.result?.provider_used ?? null,
+        data_source: dataSource,
+        tone,
+        duration,
+      });
 
       return res.status(200).json({
         ok: true,
@@ -431,6 +544,7 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
         elapsed_ms: Date.now() - startedAt,
         provider_used: result.result?.provider_used,
         niche,
+        data_source: dataSource,
         package: result.package,
         summary: result.content?.[0]?.text,
         videos: [],
@@ -597,11 +711,27 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
       tone,
       duration,
     });
+    saveGenerationHistoryToFirestore({
+      user_id: req.user?.uid || "anonymous",
+      user_email: req.user?.email || null,
+      auth_provider: req.user?.provider || "anonymous",
+      niche,
+      topic,
+      mode: "full",
+      status: renderStatus,
+      provider: "vertex",
+      provider_used: result.result?.provider_used ?? null,
+      data_source: dataSource,
+      history_id: historyId,
+      tone,
+      duration,
+    });
 
     res.status(hasProcessing ? 202 : 200).json({
       success: true,
       elapsed_ms: Date.now() - startedAt,
       provider_used: result.result?.provider_used,
+      data_source: dataSource,
       package: result.package,
       summary: result.content?.[0]?.text,
       history_id: historyId,
