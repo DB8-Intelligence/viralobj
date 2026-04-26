@@ -132,12 +132,16 @@ export async function submitVeoJob({
     durationSeconds,
     sampleCount: 1,
     storageUri: outputGcsUri,
-    // Veo 3 honors generateAudio; older models silently ignore it.
-    generateAudio,
     // Personal-content safety policy — keep wide so legitimate
     // professional reels (advogado, médico) aren't blocked.
     personGeneration: "allow_adult",
   };
+  // generateAudio only exists on Veo 3+. Veo 2 fails the operation with
+  // "Audio generation is not supported by this model" if the parameter
+  // is present at all (true *or* false). Omit unless the model is veo-3+.
+  if (/^veo-3/i.test(MODEL) && generateAudio) {
+    parameters.generateAudio = generateAudio;
+  }
 
   const body = await authedFetch(`${endpointBase()}:predictLongRunning`, {
     method: "POST",
