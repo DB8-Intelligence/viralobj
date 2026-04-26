@@ -18,10 +18,7 @@ import "dotenv/config";
 import express from "express";
 import { pathToFileURL } from "url";
 import { generatePackage } from "./mcp/tools/generate.js";
-import { listNiches, NICHES } from "./mcp/tools/niches.js";
-import db from "./src/infrastructure/database.js";
-import storage from "./src/infrastructure/storage.js";
-import veo from "./src/infrastructure/veo.js";
+import { listNiches } from "./mcp/tools/niches.js";
 import { firestore, FieldValue } from "./src/infrastructure/firebase.js";
 import {
   getNichesFromFirestore,
@@ -29,39 +26,19 @@ import {
   saveGenerationHistoryToFirestore,
 } from "./src/infrastructure/firestoreRepository.js";
 import { dualAuth } from "./src/middleware/firebaseAuth.js";
-import { migrate as migrateNichesToFirestore } from "./scripts/migrate-postgres-to-firestore.mjs";
 
-// FIRESTORE_PRIMARY=true makes Firestore the canonical source for /api/niches
-// and the niche lookup inside /api/generate-reel. Cloud SQL stays online as a
-// fallback so a Firestore outage or empty collection degrades gracefully
-// instead of breaking the API. Setting this to "false" reverses the order.
-const firestorePrimary = () => process.env.FIRESTORE_PRIMARY === "true";
-
-// Render config — Veo 2/3 on Vertex AI. No more Fal.ai or external API keys;
-// auth is Application Default Credentials (the runtime service account on
-// Cloud Run / App Engine, or GOOGLE_APPLICATION_CREDENTIALS locally).
+// Cost-guard config used by dry_run to compute what a live Veo render
+// *would* have charged. Live render itself is no longer wired into this
+// service — see the 501 branch in /api/generate-reel and the migration
+// note at the top of this file.
 const VEO_DURATION_SEC = parseInt(process.env.VEO_DURATION_SECONDS || "8", 10);
 const MAX_RENDER_SCENES = parseInt(process.env.VEO_MAX_SCENES || "4", 10);
-const RENDER_BUCKET = process.env.GCS_BUCKET_NAME || "viralobj-assets";
 
-// Veo render is unconditionally available when GCP_PROJECT_ID is set and
-// the runtime SA has roles/aiplatform.user — there's no "API key" to
-// verify upfront. We use an env presence check just to skip the submit
-// path with a friendly skip_reason in dev environments without ADC.
-function veoAvailable() {
-  return Boolean(process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT);
-}
-
-// Runtime flag tracking whether we've attempted the DB-empty → in-memory
-// seed during this process lifetime. Keeps us from stampeding seeds when
-// many /api/niches calls hit an empty DB in parallel.
-let seedAttempted = false;
-
-// Fire-and-forget mirror to Firestore. Cloud SQL is still the source of
-// truth for the production pipeline; this write feeds the future
-// migration target so we accumulate Firestore data ahead of the cutover.
-// Failures are logged but never block the API response.
-function recordGeneration({ user, niche, mode, status, providerUsed, historyId = null, topic = null, tone = null, duration = null }) {
+// Backward-compat mirror into the legacy "generations" collection
+// (introduced in Sprint 4). Sprint 5 added "generation_history" as the
+// canonical destination; this helper keeps both populated until any
+// downstream consumer migrates. Fire-and-forget — failures never block.
+function recordGeneration({ user, niche, mode, status, providerUsed, topic = null, tone = null, duration = null }) {
   return firestore()
     .collection("generations")
     .add({
@@ -73,7 +50,6 @@ function recordGeneration({ user, niche, mode, status, providerUsed, historyId =
       status,
       provider: "vertex",
       provider_used: providerUsed || null,
-      history_id: historyId,
       topic,
       tone,
       duration,
@@ -102,49 +78,10 @@ const PORT = process.env.PORT || 3001;
 
 // ─── Middleware: auth via X-Gemini-Key ────────────────────────────────────
 
-/**
- * Build a Veo 3 prompt from a character card in the generated package.
- * Combines visual description (ai_prompt_midjourney) with first-person
- * speech (voice_script_pt) and a scene direction derived from scene_type.
- */
-function buildVeoPrompt({ character, sceneType, niche, tone }) {
-  const visual =
-    character.ai_prompt_midjourney ??
-    `Animated ${character.name_pt || character.name_en || "object"} character in Disney/Pixar 3D style`;
-  const speech = character.voice_script_pt?.trim() ?? "";
-  const direction =
-    sceneType === "intro"
-      ? "Static medium shot, looking directly at camera with confident expression"
-      : sceneType === "dialogue"
-        ? "Expressive gesturing while speaking, emotional emphasis"
-        : sceneType === "reaction"
-          ? "Strong facial reaction — shock, indignation, or realization"
-          : "Closing call-to-action with warm smile and inviting gesture";
-
-  const moodTag = tone ? ` ${tone} tone.` : "";
-  const setting = `Cozy Brazilian setting, warm golden hour cinematic lighting, 9:16 vertical, 8K.${moodTag}`;
-
-  if (speech) {
-    return `${visual}. ${direction}. The character speaks directly to camera in Brazilian Portuguese, saying: "${speech}". ${setting} Niche: ${niche}.`;
-  }
-  return `${visual}. ${direction}. Subtle idle animation — breathing, blinking, micro-expressions. ${setting} Niche: ${niche}.`;
-}
-
-function requireGeminiKey(req, res, next) {
-  const expected = process.env.GEMINI_AGENT_TOKEN;
-  if (!expected) {
-    return res.status(500).json({
-      error: "Server misconfigured: GEMINI_AGENT_TOKEN not set in environment.",
-    });
-  }
-  const provided = req.header("X-Gemini-Key") || req.header("x-gemini-key");
-  if (!provided || provided !== expected) {
-    return res.status(401).json({
-      error: "Unauthorized. Valid X-Gemini-Key header required.",
-    });
-  }
-  next();
-}
+// requireGeminiKey was retired in Sprint 6 — its only callers (the
+// admin migration endpoint and /api/reel/{id}/status) were both deleted
+// when Cloud SQL came out. dualAuth (Bearer | X-Gemini-Key) now guards
+// every authed route; legacy callers keep working unchanged.
 
 // ─── Public routes ────────────────────────────────────────────────────────
 
@@ -165,21 +102,22 @@ app.get("/health", (_req, res) => {
 // share the handler so the OpenAPI alias stays honest. Never calls Gemini
 // or Veo (those are paid). DB check is a sub-millisecond SELECT 1.
 app.get(["/readyz", "/healthz"], async (_req, res) => {
-  const checks = { server: "ok", database: "unknown", storage: "unknown", vertex: "unknown" };
+  // Cloud SQL was decommissioned in Sprint 6; the database check is now
+  // a constant "deprecated" placeholder so consumers parsing the field
+  // don't crash. Firestore is the live primary and is reachable through
+  // the same ADC the rest of the bridge uses; we sidestep a per-probe
+  // Firestore read because every /api/niches request is itself a probe.
+  const checks = {
+    server: "ok",
+    database: "deprecated (Cloud SQL retired Sprint 6)",
+    firestore: "via-ADC",
+    storage: "unknown",
+    vertex: "unknown",
+  };
   const failures = [];
 
-  // Database: real SELECT 1 against Cloud SQL.
-  try {
-    const { elapsedMs } = await db.ping();
-    checks.database = `ok (${elapsedMs}ms)`;
-  } catch (err) {
-    checks.database = `fail: ${err?.message?.trim() || "unknown"}`;
-    failures.push("database");
-  }
-
   // Storage: env presence — we don't HEAD the bucket here to avoid a
-  // round-trip on every probe. The Cloud Run SA either has access or it
-  // doesn't, and a real upload would surface the failure loud and fast.
+  // round-trip on every probe.
   if (process.env.GCS_BUCKET_NAME) {
     checks.storage = `configured (${process.env.GCS_BUCKET_NAME})`;
   } else {
@@ -207,30 +145,11 @@ app.get(["/readyz", "/healthz"], async (_req, res) => {
   });
 });
 
-// One-shot migration trigger. Idempotent (merge:true), safe to re-run.
-// Auth: legacy X-Gemini-Key only — Bearer-bound users shouldn't be able
-// to mass-rewrite catalog data even if they're authenticated.
-app.post("/api/admin/migrate-niches-to-firestore", requireGeminiKey, async (_req, res) => {
-  const startedAt = Date.now();
-  try {
-    const out = await migrateNichesToFirestore();
-    console.log(
-      `[migrate] niches=${out.niches} professionals=${out.professionals} skipped=${out.skipped}`,
-    );
-    res.json({
-      ok: true,
-      elapsed_ms: Date.now() - startedAt,
-      ...out,
-    });
-  } catch (err) {
-    console.error("[migrate]", err);
-    res.status(500).json({
-      ok: false,
-      error: err?.message ?? String(err),
-      elapsed_ms: Date.now() - startedAt,
-    });
-  }
-});
+// /api/admin/migrate-niches-to-firestore was retired in Sprint 6 — its
+// only purpose was the one-shot Postgres → Firestore migration, which
+// completed successfully with 36 niches + 18 professionals before
+// Cloud SQL was stopped. The endpoint depended on the now-removed
+// scripts/migrate-postgres-to-firestore.mjs and on database.js.
 
 app.get("/openapi.json", (req, res) => {
   const baseUrl = process.env.PUBLIC_URL
@@ -281,119 +200,35 @@ app.get("/api/niches", dualAuth, async (req, res) => {
         ? rawCategory
         : null;
 
-    const useFirestoreFirst = firestorePrimary();
-
-    // ── Path A: Firestore-first ──────────────────────────────────────────
-    if (useFirestoreFirst) {
-      try {
-        const fs = await getNichesFromFirestore({ category, lang });
-        if (fs.count > 0) {
-          return res.json({
-            ok: true,
-            success: true,
-            source: "firestore",
-            count: fs.count,
-            category: category ?? "all",
-            categories: fs.categories,
-            niches: fs.niches,
-          });
-        }
-        // Empty collection — fall through to db-fallback rather than
-        // serve [] (callers expect 36 niches).
-        console.warn(
-          "[/api/niches] Firestore returned 0 docs, falling back to Cloud SQL",
-        );
-      } catch (err) {
-        console.warn(
-          "[/api/niches] Firestore lookup failed, falling back to Cloud SQL:",
-          err?.message ?? err,
-        );
-      }
-    }
-
-    // ── Path B: Cloud SQL (legacy primary OR Firestore-first fallback) ──
-    let dbRows = null;
-    let dbFailed = false;
-    let dbError = null;
-    try {
-      dbRows = await db.getNiches({ category });
-    } catch (err) {
-      dbFailed = true;
-      const msg = err?.message?.trim() || String(err)?.trim();
-      dbError = msg && msg !== "[object Object]" ? msg : null;
-      console.warn(
-        "[/api/niches] DB lookup failed, falling back to memory:",
-        err,
+    // Firestore is the only datastore now. No fallback. If the read
+    // fails or returns zero docs, surface 500 — silent degradation
+    // hid stale data during the dual-write phase and we are past that.
+    const fs = await getNichesFromFirestore({ category, lang });
+    if (!fs || fs.count === 0) {
+      console.error(
+        "[/api/niches] Firestore returned 0 docs — refusing to serve",
+        "an empty catalog (this used to fall back to Cloud SQL but Cloud",
+        "SQL was retired in Sprint 6).",
       );
-    }
-
-    if (Array.isArray(dbRows) && dbRows.length > 0) {
-      const niches = dbRows.map((n) => ({
-        key: n.key,
-        name: lang === "en" ? n.name_en : n.name_pt,
-        emoji: n.emoji,
-        category: n.category,
-        objects_count: Array.isArray(n.objects) ? n.objects.length : 0,
-        tone_default: n.tone_default,
-        sample_objects: (Array.isArray(n.objects) ? n.objects.slice(0, 3) : []).map(
-          (o) => (lang === "en" ? o.en || o.id || o.pt : o.pt || o.id || o.en),
-        ),
-      }));
-      const categories = [...new Set(niches.map((n) => n.category))];
-      return res.json({
-        ok: true,
-        success: true,
-        // db-fallback when Firestore was tried first and came back empty;
-        // db when Firestore-first is disabled and SQL is the canonical
-        // source for this revision.
-        source: useFirestoreFirst ? "db-fallback" : "db",
-        count: niches.length,
-        category: category ?? "all",
-        categories,
-        niches,
+      return res.status(500).json({
+        ok: false,
+        success: false,
+        error: "EMPTY_NICHES_CATALOG",
+        message:
+          "Firestore niches collection returned 0 documents. Re-run the migration or seed the collection.",
       });
     }
-
-    // ── Path C: in-memory (final fallback) ───────────────────────────────
-    const memoryResult = await listNiches({ lang, category });
-
-    // Fire-and-forget auto-seed when SQL is reachable but empty so the
-    // next request serves from SQL — keeps the legacy primary path alive.
-    if (!seedAttempted && !dbFailed && (dbRows?.length ?? 0) === 0) {
-      seedAttempted = true;
-      const allNiches = Object.entries(NICHES).map(([key, n]) => ({
-        key,
-        category: n.category ?? "lifestyle",
-        name_pt: n.name_pt,
-        name_en: n.name_en,
-        emoji: n.emoji,
-        tone_default: n.tone_default,
-        objects: n.objects ?? [],
-        prompts_base: n.prompts_base ?? null,
-      }));
-      db.bulkInsertNiches(allNiches)
-        .then((r) =>
-          console.log(`[/api/niches] auto-seeded ${r.inserted} niches into DB`),
-        )
-        .catch((err) => {
-          console.warn("[/api/niches] auto-seed failed:", err?.message ?? err);
-          seedAttempted = false;
-        });
-    }
-
-    res.json({
+    return res.json({
       ok: true,
       success: true,
-      source: "memory",
-      db_error: dbError,
-      count: memoryResult.niches.length,
+      source: "firestore",
+      count: fs.count,
       category: category ?? "all",
-      categories: memoryResult.categories,
-      niches: memoryResult.niches,
-      summary: memoryResult.content?.[0]?.text,
+      categories: fs.categories,
+      niches: fs.niches,
     });
   } catch (err) {
-    console.error("[/api/niches] catastrophic:", err);
+    console.error("[/api/niches] Firestore read failed:", err);
     res.status(500).json({
       ok: false,
       success: false,
@@ -445,28 +280,18 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
 
     // Lookup the niche to tag the response with its source. Informational
     // — generatePackage uses its own in-memory niche reference data, so an
-    // unknown slug here does not block generation.
+    // unknown slug here does not block generation. Firestore is the only
+    // catalog left after Sprint 6; "memory" means the slug isn't even in
+    // Firestore but we'll still try to generate it from mcp/tools/niches.js.
     let dataSource = "memory";
-    if (firestorePrimary()) {
-      try {
-        const fsNiche = await getNicheBySlugFromFirestore(niche);
-        if (fsNiche) dataSource = "firestore";
-      } catch (err) {
-        console.warn(
-          "[/api/generate-reel] Firestore niche lookup failed:",
-          err?.message ?? err,
-        );
-      }
-    }
-    if (dataSource === "memory") {
-      try {
-        const dbRows = await db.getNiches({});
-        const found =
-          Array.isArray(dbRows) && dbRows.some((r) => r.key === niche);
-        if (found) dataSource = "db-fallback";
-      } catch {
-        // db unreachable — leave dataSource="memory"
-      }
+    try {
+      const fsNiche = await getNicheBySlugFromFirestore(niche);
+      if (fsNiche) dataSource = "firestore";
+    } catch (err) {
+      console.warn(
+        "[/api/generate-reel] Firestore niche lookup failed:",
+        err?.message ?? err,
+      );
     }
 
     // Reject before paying the Gemini call when Veo is disabled and the
@@ -557,193 +382,20 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
       });
     }
 
-    // Persist to DB best-effort. DB failure must NOT affect the API response —
-    // the package was generated successfully and the user should receive it.
-    let persisted = { saved: false, reason: null, id: null };
-    let professionalId = null;
-    try {
-      const resolvedEmail = typeof user_email === "string" && user_email.trim()
-        ? user_email.trim().toLowerCase()
-        : "system@viralobj.bridge";
-      const resolvedName = resolvedEmail === "system@viralobj.bridge"
-        ? "Bridge system user"
-        : (user_name ?? null);
-
-      const professional = await db.ensureProfessional({
-        email: resolvedEmail,
-        fullName: resolvedName,
-        profession: niche,
-      });
-      professionalId = professional.id;
-
-      const historyRow = await db.saveUserHistory({
-        userId: professional.id,
-        niche,
-        topic,
-        tone,
-        duration,
-        packageData: result.package,
-        providerUsed: result.result?.provider_used ?? null,
-      });
-
-      persisted = { saved: true, reason: null, id: historyRow.id };
-    } catch (err) {
-      const msg = err?.message ?? String(err);
-      console.warn("[/api/generate-reel] persistence skipped:", msg);
-      persisted = { saved: false, reason: msg, id: null };
-    }
-
-    // ── Video render pipeline ──────────────────────────────────────────
-    // Submit each character to Vertex AI Veo as a long-running operation.
-    // We can ONLY do this when we have a history_id (FK from
-    // videos.generation_id); if persistence failed we return the text
-    // package without video jobs.
-    //
-    // Each submit takes <1s — no risk of Cloud Run timeout. The
-    // Fal render itself (~1-3 min/scene) happens in Fal's workers and is
-    // retrieved asynchronously by the /api/reel/:id/status endpoint.
-    const historyId = persisted.id;
-    let videoJobs = [];
-    let renderSkipReason = null;
-
-    if (!historyId) {
-      renderSkipReason = "DB persistence failed — cannot link video rows (FK videos.generation_id)";
-    } else if (!veoAvailable()) {
-      renderSkipReason = "GCP_PROJECT_ID not set — Vertex AI Veo render disabled";
-    } else {
-      const characters = Array.isArray(result.package?.characters)
-        ? result.package.characters
-        : [];
-      const scenes = characters.slice(0, MAX_RENDER_SCENES);
-
-      videoJobs = await Promise.all(
-        scenes.map(async (character, idx) => {
-          const sceneType =
-            idx === 0
-              ? "intro"
-              : idx === scenes.length - 1 && scenes.length > 1
-                ? "cta"
-                : "dialogue";
-          const sceneId = `${historyId}:${idx}:${sceneType}`;
-          const prompt = buildVeoPrompt({ character, sceneType, niche, tone });
-          // Veo writes the MP4 directly into this folder — no
-          // download-and-reupload step. Trailing slash is intentional.
-          const outputGcsUri = `gs://${RENDER_BUCKET}/videos/${historyId}/${encodeURIComponent(sceneId)}/`;
-
-          try {
-            const submitted = await veo.submitVeoJob({
-              prompt,
-              outputGcsUri,
-              aspectRatio: "9:16",
-              durationSeconds: VEO_DURATION_SEC,
-              generateAudio: true,
-            });
-
-            // Persist a "pending" row keyed by Veo operation name so the
-            // status endpoint can resume polling after a process restart.
-            try {
-              await db.saveVideo({
-                userId: professionalId,
-                generationId: historyId,
-                sceneId,
-                sceneType,
-                videoUrl: null,
-                imageUrl: null,
-                provider: "vertex-veo",
-                requestId: submitted.operationName,
-                status: "pending",
-              });
-            } catch (dbErr) {
-              console.warn(
-                `[/api/generate-reel] saveVideo failed for ${sceneId}:`,
-                dbErr?.message ?? dbErr,
-              );
-            }
-
-            return {
-              scene_id: sceneId,
-              scene_type: sceneType,
-              request_id: submitted.operationName,
-              status: "pending",
-              prompt_preview: prompt.slice(0, 160),
-              output_gcs_uri: outputGcsUri,
-            };
-          } catch (err) {
-            const msg = err?.message ?? String(err);
-            console.warn(
-              `[/api/generate-reel] Veo submit failed for ${sceneId}:`,
-              msg,
-            );
-            return {
-              scene_id: sceneId,
-              scene_type: sceneType,
-              status: "submit_failed",
-              error: msg,
-            };
-          }
-        }),
-      );
-    }
-
-    const hasProcessing = videoJobs.some((j) => j.status === "pending");
-    const renderStatus = hasProcessing
-      ? "processing"
-      : videoJobs.length === 0
-        ? "text_only"
-        : "failed";
-
-    const pollUrl = hasProcessing && historyId
-      ? `/api/reel/${encodeURIComponent(historyId)}/status`
-      : null;
-
-    // Mirror the live render submission into Firestore alongside the
-    // canonical Cloud SQL row. fire-and-forget. status reflects what the
-    // render attempt produced, not the eventual Veo outcome (which the
-    // status endpoint will update separately when we add Firestore there).
-    recordGeneration({
-      user: req.user,
-      niche,
-      mode: "full",
-      status: renderStatus,
-      providerUsed: result.result?.provider_used,
-      historyId,
-      topic,
-      tone,
-      duration,
-    });
-    saveGenerationHistoryToFirestore({
-      user_id: req.user?.uid || "anonymous",
-      user_email: req.user?.email || null,
-      auth_provider: req.user?.provider || "anonymous",
-      niche,
-      topic,
-      mode: "full",
-      status: renderStatus,
-      provider: "vertex",
-      provider_used: result.result?.provider_used ?? null,
-      data_source: dataSource,
-      history_id: historyId,
-      tone,
-      duration,
-    });
-
-    res.status(hasProcessing ? 202 : 200).json({
-      success: true,
-      elapsed_ms: Date.now() - startedAt,
-      provider_used: result.result?.provider_used,
-      data_source: dataSource,
-      package: result.package,
-      summary: result.content?.[0]?.text,
-      history_id: historyId,
-      // video_url is null at this point. Poll /api/reel/{history_id}/status
-      // every ~10s; the first scene's durable GCS URL appears there once
-      // Fal finishes and the bridge mirrors the MP4 into gs://viralobj-assets.
-      video_url: null,
-      render_status: renderStatus,
-      render_skip_reason: renderSkipReason,
-      video_jobs: videoJobs,
-      poll_url: pollUrl,
-      persisted,
+    // ── Live render path ─────────────────────────────────────────────────
+    // Sprint 6 retired Cloud SQL (which owned the videos and user_history
+    // tables this path used to write). The Veo submission + polling
+    // pipeline will return as a Firestore-native flow in a follow-up
+    // sprint; until then the only supported mode is dry_run. With the
+    // bridge running ENABLE_VEO_GENERATION=false, callers hit the 403
+    // gate above and never reach this branch — but if Veo is re-enabled
+    // before the new pipeline lands, surface 501 instead of half-running.
+    return res.status(501).json({
+      ok: false,
+      success: false,
+      error: "VIDEO_PIPELINE_NOT_IMPLEMENTED",
+      message:
+        "The live Veo render pipeline was retired with Cloud SQL in Sprint 6 and will return as a Firestore-native flow. Use ?dry_run=true for text-only validation.",
     });
   } catch (err) {
     console.error("[/api/generate-reel]", err);
@@ -755,167 +407,10 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
   }
 });
 
-/**
- * GET /api/reel/:history_id/status
- *
- * Polling endpoint the Gemini Agent (or any client) calls every ~10s after
- * /api/generate-reel returns 202. For each videos row that is still
- * pending/processing:
- *
- *   1. Ask Vertex AI for the long-running operation status.
- *   2. On done: read the gs:// URI Veo wrote into the bucket, convert
- *      it to a public https URL via veo.gcsUriToPublicUrl(), and UPDATE
- *      the row with status='completed' + the durable GCS URL.
- *   3. On error / RAI-blocked: mark the row failed with the message.
- *
- * The endpoint is idempotent — re-calling after completion just reads rows.
- */
-app.get("/api/reel/:history_id/status", requireGeminiKey, async (req, res) => {
-  const { history_id } = req.params;
-  const startedAt = Date.now();
-
-  try {
-    // 1) Read current video rows.
-    let videos;
-    try {
-      videos = await db.getVideosByGenerationId(history_id);
-    } catch (err) {
-      return res.status(500).json({
-        success: false,
-        error: "DB unavailable — cannot read video jobs",
-        detail: err?.message ?? String(err),
-      });
-    }
-    if (videos.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: `No video jobs for history_id=${history_id}`,
-      });
-    }
-
-    // 2) For each still-active row, advance status via Vertex AI Veo.
-    // The MP4 is already in GCS — Veo wrote it there at submit time.
-    const veoReady = veoAvailable();
-    const updated = await Promise.all(
-      videos.map(async (v) => {
-        // Terminal states short-circuit.
-        if (v.status === "completed" || v.status === "failed") return v;
-        if (!v.request_id) return v;
-        if (!veoReady) return v; // no GCP_PROJECT_ID — leave as pending
-
-        try {
-          const op = await veo.fetchVeoOperation(v.request_id);
-
-          // Still rendering → flip to "processing" on first detection.
-          if (!op.done) {
-            if (v.status !== "processing") {
-              try {
-                const row = await db.updateVideoByRequestId(v.request_id, {
-                  status: "processing",
-                });
-                return row ?? { ...v, status: "processing" };
-              } catch {
-                return { ...v, status: "processing" };
-              }
-            }
-            return v;
-          }
-
-          // RAI safety filter blocked the render — terminal failure.
-          if (op.blocked) {
-            const row = await db.updateVideoByRequestId(v.request_id, {
-              status: "failed",
-              error: `RAI blocked: ${op.raiReason}`,
-            });
-            return row ?? { ...v, status: "failed", error: op.raiReason };
-          }
-
-          // Operation errored on the Vertex side.
-          if (op.error) {
-            const row = await db.updateVideoByRequestId(v.request_id, {
-              status: "failed",
-              error: op.error.slice(0, 500),
-            });
-            return row ?? { ...v, status: "failed", error: op.error };
-          }
-
-          // Done + has a gcsUri. Veo already wrote the MP4 into our bucket;
-          // we just convert gs://... → public https URL and persist.
-          const publicUrl = veo.gcsUriToPublicUrl(op.gcsUri);
-          if (!publicUrl) {
-            const row = await db.updateVideoByRequestId(v.request_id, {
-              status: "failed",
-              error: `Invalid gcsUri returned: ${op.gcsUri}`,
-            });
-            return row ?? { ...v, status: "failed", error: "bad_gcs_uri" };
-          }
-
-          const row = await db.updateVideoByRequestId(v.request_id, {
-            status: "completed",
-            video_url: publicUrl,
-            duration_ms: VEO_DURATION_SEC * 1000,
-            // Veo 2 base pricing — adjust when Veo 3 GA / quotas change.
-            cost_usd: VEO_DURATION_SEC * 0.50,
-            provider: "vertex-veo",
-          });
-          return row ?? { ...v, status: "completed", video_url: publicUrl };
-        } catch (err) {
-          // Vertex poll itself threw — don't burn the row, let the
-          // next 10s poll retry. Common transient: rate limit, ADC
-          // token refresh.
-          console.warn(
-            `[/api/reel/${history_id}/status] Veo poll error for ${v.scene_id}:`,
-            err?.message ?? err,
-          );
-          return v;
-        }
-      }),
-    );
-
-    // 3) Aggregate + respond.
-    const completed = updated.filter((v) => v.status === "completed");
-    const pending = updated.filter((v) => v.status === "pending" || v.status === "processing");
-    const failed = updated.filter((v) => v.status === "failed");
-
-    const overall =
-      pending.length > 0
-        ? "processing"
-        : completed.length > 0
-          ? "completed"
-          : "failed";
-
-    res.json({
-      success: true,
-      elapsed_ms: Date.now() - startedAt,
-      history_id,
-      status: overall,
-      progress: {
-        completed: completed.length,
-        pending: pending.length,
-        failed: failed.length,
-        total: updated.length,
-      },
-      // First completed scene's durable URL — the headline result for the
-      // Gemini Agent to hand back to the user.
-      video_url: completed[0]?.video_url ?? null,
-      // Full per-scene breakdown.
-      scene_videos: updated.map((v) => ({
-        scene_id: v.scene_id,
-        scene_type: v.scene_type,
-        status: v.status,
-        video_url: v.video_url ?? null,
-        duration_ms: v.duration_ms,
-        error: v.error ?? null,
-      })),
-    });
-  } catch (err) {
-    console.error(`[/api/reel/${history_id}/status]`, err);
-    res.status(500).json({
-      success: false,
-      error: err?.message || String(err),
-    });
-  }
-});
+// /api/reel/{history_id}/status was retired in Sprint 6. It depended on
+// the Cloud SQL videos table (FK videos.generation_id → user_history.id)
+// to track Vertex AI Veo long-running operations. The replacement will
+// land alongside the Firestore-native render pipeline.
 
 // ─── OpenAPI 3.0 spec generator ───────────────────────────────────────────
 
@@ -1009,67 +504,43 @@ function buildOpenApiSpec(baseUrl) {
               type: "string",
               format: "email",
               description:
-                "Optional email of the professional making the request. When present, "
-                + "the row is upserted into professionals and user_history is linked to "
-                + "that id. When absent, history is saved under a synthetic system user.",
+                "Optional email of the professional making the request. Currently informational — Sprint 6 stopped writing it to a relational professionals table; the Firestore-native replacement will reintroduce upsert semantics.",
               example: "advogado@escritorio.com.br",
             },
             user_name: {
               type: "string",
-              description: "Optional full name; only used when creating a new professional row.",
+              description: "Optional full name; informational (see user_email).",
               example: "Dra. Maria Silva",
             },
           },
         },
-        VideoJob: {
-          type: "object",
-          properties: {
-            scene_id: { type: "string", example: "<history_id>:0:intro" },
-            scene_type: { type: "string", enum: ["intro", "dialogue", "reaction", "cta"] },
-            request_id: { type: "string", nullable: true, description: "Vertex AI Veo long-running operation name." },
-            status: {
-              type: "string",
-              enum: ["pending", "processing", "completed", "failed", "submit_failed"],
-            },
-            prompt_preview: { type: "string", nullable: true },
-            error: { type: "string", nullable: true },
-          },
-        },
-        SceneVideo: {
-          type: "object",
-          properties: {
-            scene_id: { type: "string" },
-            scene_type: { type: "string", enum: ["intro", "dialogue", "reaction", "cta"] },
-            status: { type: "string", enum: ["pending", "processing", "completed", "failed"] },
-            video_url: {
-              type: "string",
-              format: "uri",
-              nullable: true,
-              description: "Durable GCS URL once status=completed.",
-            },
-            duration_ms: { type: "integer", nullable: true },
-            error: { type: "string", nullable: true },
-          },
-        },
+        // VideoJob and SceneVideo schemas were removed in Sprint 6 along
+        // with the live render pipeline that produced them. They will
+        // return when the Firestore-native render flow lands.
         GenerateReelResponse: {
           type: "object",
           description:
-            "Three-shape response keyed off `mode` and HTTP status:\n"
-            + "  • HTTP 200 + mode='dry_run' — Gemini ran, Veo skipped, videos:[] and cost_guard populated.\n"
-            + "  • HTTP 202 + render_status='processing' — Veo jobs submitted, poll /api/reel/{id}/status.\n"
-            + "  • HTTP 200 + render_status='text_only' — render skipped (DB or GCP_PROJECT_ID missing).",
+            "After Sprint 6 only the dry_run shape is supported. A non-dry_run "
+            + "request currently returns 403 VEO_DISABLED (when ENABLE_VEO_GENERATION!='true') "
+            + "or 501 VIDEO_PIPELINE_NOT_IMPLEMENTED (when Veo is enabled but the "
+            + "Firestore-native render pipeline isn't wired yet).",
           properties: {
-            ok: { type: "boolean", example: true, description: "Mirror of success — added for agent-style boolean checks." },
+            ok: { type: "boolean", example: true },
             success: { type: "boolean", example: true },
             mode: {
               type: "string",
-              enum: ["dry_run", "live"],
-              nullable: true,
-              description: "Present only on dry_run responses. Absent on live runs.",
+              enum: ["dry_run"],
+              description: "Always 'dry_run' for now.",
             },
             elapsed_ms: { type: "integer", example: 8423 },
             provider_used: { type: "string", example: "vertex/gemini-2.5-flash" },
-            niche: { type: "string", nullable: true, description: "Echo of the request niche (dry_run only)." },
+            niche: { type: "string", description: "Echo of the request niche." },
+            data_source: {
+              type: "string",
+              enum: ["firestore", "memory"],
+              description:
+                "Where the niche reference came from: 'firestore' (canonical post-Sprint 6) or 'memory' (slug isn't in Firestore but generation still ran via mcp/tools/niches.js).",
+            },
             package: {
               type: "object",
               description: "Full production package: meta, characters[], captions[], post_copy, variations[].",
@@ -1078,11 +549,11 @@ function buildOpenApiSpec(baseUrl) {
             videos: {
               type: "array",
               items: { type: "object" },
-              description: "Always [] on dry_run. On live runs, the same content as video_jobs[] mirrored for convenience.",
+              description: "Always [] on dry_run.",
             },
             cost_guard: {
               type: "object",
-              description: "Present on dry_run; reports what a live run would cost before any billing happens.",
+              description: "Reports what a live run would cost before any billing happens.",
               properties: {
                 veo_called: { type: "boolean", example: false },
                 veo_enabled: { type: "boolean", example: false },
@@ -1090,83 +561,12 @@ function buildOpenApiSpec(baseUrl) {
                 scenes_skipped: { type: "integer", example: 4 },
               },
             },
-            history_id: {
-              type: "string",
-              format: "uuid",
-              nullable: true,
-              description:
-                "UUID of the user_history row. Doubles as generation_id. Persist this "
-                + "next to the professional's email for future 'memory'-style lookups. "
-                + "Absent on dry_run (nothing is persisted in that mode).",
-            },
-            video_url: {
-              type: "string",
-              format: "uri",
-              nullable: true,
-              description:
-                "ALWAYS null at this stage — the render is async. Poll /api/reel/{history_id}/status "
-                + "to receive the durable GCS URL when the first scene completes.",
-            },
-            render_status: {
-              type: "string",
-              enum: ["processing", "text_only", "failed"],
-              description:
-                "processing=jobs submitted to Vertex AI Veo; text_only=no render (DB or GCP_PROJECT_ID missing); failed=all submits failed.",
-            },
-            render_skip_reason: { type: "string", nullable: true },
-            video_jobs: {
-              type: "array",
-              items: { $ref: "#/components/schemas/VideoJob" },
-              description: "One entry per character in package.characters[] (max 4).",
-            },
-            poll_url: {
-              type: "string",
-              nullable: true,
-              description: "Relative URL the client/agent should GET every ~10s until status='completed'.",
-            },
-            persisted: {
-              type: "object",
-              properties: {
-                saved: { type: "boolean" },
-                id: { type: "string", format: "uuid", nullable: true },
-                reason: { type: "string", nullable: true },
-              },
-            },
+            // video_url, render_status, render_skip_reason, video_jobs,
+            // poll_url and persisted were retired in Sprint 6 along with
+            // the live render pipeline they described.
           },
         },
-        ReelStatusResponse: {
-          type: "object",
-          properties: {
-            success: { type: "boolean" },
-            elapsed_ms: { type: "integer" },
-            history_id: { type: "string", format: "uuid" },
-            status: {
-              type: "string",
-              enum: ["processing", "completed", "failed"],
-              description: "Aggregate: processing if any scene is still pending/processing; completed if >=1 scene succeeded and none is pending; failed if all scenes failed.",
-            },
-            progress: {
-              type: "object",
-              properties: {
-                completed: { type: "integer" },
-                pending: { type: "integer" },
-                failed: { type: "integer" },
-                total: { type: "integer" },
-              },
-            },
-            video_url: {
-              type: "string",
-              format: "uri",
-              nullable: true,
-              description:
-                "First completed scene's durable URL on Google Cloud Storage. Veo writes the MP4 directly into gs://viralobj-assets/videos/{history_id}/{scene_id}/ — no extra upload step.",
-            },
-            scene_videos: {
-              type: "array",
-              items: { $ref: "#/components/schemas/SceneVideo" },
-            },
-          },
-        },
+        // ReelStatusResponse removed in Sprint 6 with the /api/reel/{id}/status path.
         ErrorResponse: {
           type: "object",
           properties: {
@@ -1342,15 +742,9 @@ function buildOpenApiSpec(baseUrl) {
                       success: { type: "boolean" },
                       source: {
                         type: "string",
-                        enum: ["db", "memory"],
+                        enum: ["firestore"],
                         description:
-                          "'db' when served from Cloud SQL. 'memory' when DB is unreachable "
-                          + "or empty — in the latter case an async auto-seed is dispatched.",
-                      },
-                      db_error: {
-                        type: "string",
-                        nullable: true,
-                        description: "Populated when source='memory' due to a DB error.",
+                          "Always 'firestore' after Sprint 6. The legacy 'db' / 'db-fallback' / 'memory' values were retired with Cloud SQL.",
                       },
                       count: { type: "integer" },
                       category: { type: "string", enum: ["all", "profissoes", "lifestyle"] },
@@ -1366,7 +760,15 @@ function buildOpenApiSpec(baseUrl) {
               },
             },
             "401": {
-              description: "Missing or invalid X-Gemini-Key",
+              description: "Missing or invalid X-Gemini-Key / Bearer token",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ErrorResponse" },
+                },
+              },
+            },
+            "500": {
+              description: "EMPTY_NICHES_CATALOG — Firestore returned 0 docs (post-Sprint 6 there is no fallback).",
               content: {
                 "application/json": {
                   schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -1378,21 +780,19 @@ function buildOpenApiSpec(baseUrl) {
       },
       "/api/generate-reel": {
         post: {
-          summary: "Generate package + submit video render jobs (async)",
+          summary: "Generate the bilingual reel package (Gemini, dry_run only)",
           description:
-            "Two things happen synchronously:\n"
-            + "  1. Vertex AI Gemini produces the bilingual production package (5-15s).\n"
-            + "  2. Each character is submitted to Vertex AI Veo as a long-running operation (sub-second per submit).\n\n"
-            + "The actual video render (30s-3min per scene) runs on Google's side. Veo writes the MP4 "
-            + "directly into gs://viralobj-assets/videos/{history_id}/{scene_id}/ via storageUri — no "
-            + "download/upload roundtrip. When the call returns, video_url is null and status='processing'; "
-            + "the caller must poll GET /api/reel/{history_id}/status every ~10s. When the operation "
-            + "completes, the status endpoint converts the gs:// URI to a public https URL and returns it.\n\n"
-            + "Cost guards: pass `?dry_run=true` (or { dry_run: true } in the body) to run only the Gemini "
-            + "package generation and skip Veo entirely. When the deployment has ENABLE_VEO_GENERATION!='true', "
-            + "non-dry_run calls are rejected with HTTP 403 VEO_DISABLED before paying the Gemini call.\n\n"
-            + "Auth: Application Default Credentials (no API keys). On Cloud Run / App Engine the runtime "
-            + "service account is used; locally, set GOOGLE_APPLICATION_CREDENTIALS.",
+            "Sprint 6 retired Cloud SQL and the live Veo render pipeline that depended on it. "
+            + "Until the Firestore-native render flow lands, only dry_run is supported:\n\n"
+            + "  1. Vertex AI Gemini produces the bilingual production package (5-30s).\n"
+            + "  2. Veo is *not* called — videos:[] is returned with a cost_guard summary.\n"
+            + "  3. The call writes one row to the Firestore generation_history collection.\n\n"
+            + "Behaviour by flag:\n"
+            + "  • ENABLE_VEO_GENERATION!='true' (default) + no dry_run → 403 VEO_DISABLED.\n"
+            + "  • ENABLE_VEO_GENERATION=='true' + no dry_run → 501 VIDEO_PIPELINE_NOT_IMPLEMENTED.\n"
+            + "  • dry_run=true (any value of ENABLE_VEO_GENERATION) → 200 with package.\n\n"
+            + "Auth: dualAuth — Bearer Firebase ID token preferred, X-Gemini-Key fallback. "
+            + "Vertex auth is via Application Default Credentials (the runtime service account on Cloud Run).",
           tags: ["generation"],
           security: [{ GeminiKey: [] }],
           parameters: [
@@ -1415,16 +815,7 @@ function buildOpenApiSpec(baseUrl) {
           },
           responses: {
             "200": {
-              description:
-                "dry_run success OR text_only fallback. mode='dry_run' when dry_run=true; otherwise the live render was skipped because DB or GCP_PROJECT_ID were unavailable.",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/GenerateReelResponse" },
-                },
-              },
-            },
-            "202": {
-              description: "Package generated and render jobs submitted — poll /status.",
+              description: "dry_run success — Gemini package returned, Veo skipped, cost_guard populated.",
               content: {
                 "application/json": {
                   schema: { $ref: "#/components/schemas/GenerateReelResponse" },
@@ -1438,7 +829,7 @@ function buildOpenApiSpec(baseUrl) {
               },
             },
             "401": {
-              description: "Missing or invalid X-Gemini-Key",
+              description: "Missing or invalid X-Gemini-Key / Bearer token",
               content: {
                 "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
               },
@@ -1456,55 +847,9 @@ function buildOpenApiSpec(baseUrl) {
                 "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
               },
             },
-          },
-        },
-      },
-      "/api/reel/{history_id}/status": {
-        get: {
-          summary: "Poll render progress; returns GCS URL when scenes complete",
-          description:
-            "Idempotent polling endpoint. For each videos row still pending/processing:\n"
-            + "  1. Fetches the Vertex AI Veo long-running operation status.\n"
-            + "  2. On done: reads the gs:// URI Veo wrote into the bucket "
-            + "(no extra upload — Veo writes directly via storageUri), converts to a public https "
-            + "URL, and updates the row with status='completed' + video_url.\n"
-            + "  3. On error / RAI-blocked: stores the message in videos.error.\n\n"
-            + "Returns the full scene_videos[] breakdown plus a headline video_url (first "
-            + "completed scene).",
-          tags: ["generation"],
-          security: [{ GeminiKey: [] }],
-          parameters: [
-            {
-              name: "history_id",
-              in: "path",
-              required: true,
-              schema: { type: "string", format: "uuid" },
-              description: "The history_id returned by POST /api/generate-reel.",
-            },
-          ],
-          responses: {
-            "200": {
-              description: "Current render state for the reel",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/ReelStatusResponse" },
-                },
-              },
-            },
-            "401": {
-              description: "Missing or invalid X-Gemini-Key",
-              content: {
-                "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
-              },
-            },
-            "404": {
-              description: "No video jobs found for this history_id",
-              content: {
-                "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
-              },
-            },
-            "500": {
-              description: "DB or other server error",
+            "501": {
+              description:
+                "VIDEO_PIPELINE_NOT_IMPLEMENTED — Veo is enabled (ENABLE_VEO_GENERATION=true) but the Firestore-native render pipeline that replaced the Cloud-SQL flow has not been wired yet. Use ?dry_run=true.",
               content: {
                 "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
               },
@@ -1512,6 +857,8 @@ function buildOpenApiSpec(baseUrl) {
           },
         },
       },
+      // /api/reel/{history_id}/status was removed in Sprint 6 along with
+      // its underlying Cloud SQL videos table.
     },
   };
 }
