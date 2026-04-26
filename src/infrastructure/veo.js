@@ -95,21 +95,22 @@ async function authedFetch(url, init = {}) {
 }
 
 /**
- * Submit a Veo render job. Returns the operation name immediately
- * (sub-second); the actual render runs on Google's side and is
- * retrieved via fetchVeoOperation().
+ * Build the EXACT JSON body that submitVeoJob would POST to
+ * <endpoint>:predictLongRunning, without sending it. Single source of
+ * truth so both the live submit and the /api/reel/veo-payload-preview
+ * endpoint stay in lockstep — anything we add or remove here is
+ * reflected in production AND in audits.
  *
- * @param {object} params
- * @param {string} params.prompt                — text-to-video prompt
- * @param {string} params.outputGcsUri          — REQUIRED. e.g. "gs://viralobj-assets/videos/<history_id>/<scene_id>/"
- *                                                 Trailing slash matters — Veo treats it as a folder.
- * @param {"9:16"|"16:9"} [params.aspectRatio="9:16"]
- * @param {number} [params.durationSeconds=8]   — Veo 2 supports 5-8s; Veo 3 up to 8s today.
- * @param {string} [params.imageGcsUri]         — optional: image-to-video seed.
- * @param {boolean} [params.generateAudio=true] — Veo 3 only; ignored on Veo 2.
- * @returns {Promise<{ operationName: string, model: string, outputGcsUri: string }>}
+ * @param {object} params  — same shape submitVeoJob accepts
+ * @returns {{
+ *   url: string,
+ *   method: "POST",
+ *   model: string,
+ *   request_body: { instances: object[], parameters: object },
+ *   audit: { contains_generate_audio: boolean, audio_keys: string[] }
+ * }}
  */
-export async function submitVeoJob({
+export function buildVeoSubmitPayload({
   prompt,
   outputGcsUri,
   aspectRatio = "9:16",
@@ -117,9 +118,11 @@ export async function submitVeoJob({
   imageGcsUri = null,
   generateAudio = true,
 }) {
-  if (!prompt) throw new Error("submitVeoJob: prompt is required");
+  if (!prompt) throw new Error("buildVeoSubmitPayload: prompt is required");
   if (!outputGcsUri || !outputGcsUri.startsWith("gs://")) {
-    throw new Error('submitVeoJob: outputGcsUri must be a gs:// URI (folder; include trailing "/")');
+    throw new Error(
+      'buildVeoSubmitPayload: outputGcsUri must be a gs:// URI (folder; include trailing "/")',
+    );
   }
 
   const instances = [{ prompt }];
@@ -143,15 +146,46 @@ export async function submitVeoJob({
     parameters.generateAudio = generateAudio;
   }
 
-  const body = await authedFetch(`${endpointBase()}:predictLongRunning`, {
-    method: "POST",
-    body: JSON.stringify({ instances, parameters }),
-  });
+  const audioKeys = Object.keys(parameters).filter((k) =>
+    /audio/i.test(k),
+  );
 
+  return {
+    url: `${endpointBase()}:predictLongRunning`,
+    method: "POST",
+    model: MODEL,
+    request_body: { instances, parameters },
+    audit: {
+      contains_generate_audio: "generateAudio" in parameters,
+      audio_keys: audioKeys,
+    },
+  };
+}
+
+/**
+ * Submit a Veo render job. Returns the operation name immediately
+ * (sub-second); the actual render runs on Google's side and is
+ * retrieved via fetchVeoOperation().
+ *
+ * @param {object} params  — see buildVeoSubmitPayload
+ * @returns {Promise<{ operationName: string, model: string, outputGcsUri: string }>}
+ */
+export async function submitVeoJob(params) {
+  const { url, request_body } = buildVeoSubmitPayload(params);
+  const body = await authedFetch(url, {
+    method: "POST",
+    body: JSON.stringify(request_body),
+  });
   if (!body?.name) {
-    throw new Error(`Veo predictLongRunning returned no operation name: ${JSON.stringify(body).slice(0, 300)}`);
+    throw new Error(
+      `Veo predictLongRunning returned no operation name: ${JSON.stringify(body).slice(0, 300)}`,
+    );
   }
-  return { operationName: body.name, model: MODEL, outputGcsUri };
+  return {
+    operationName: body.name,
+    model: MODEL,
+    outputGcsUri: params.outputGcsUri,
+  };
 }
 
 /**
@@ -236,4 +270,5 @@ export default {
   fetchVeoOperation,
   gcsUriToPublicUrl,
   ping,
+  buildVeoSubmitPayload,
 };

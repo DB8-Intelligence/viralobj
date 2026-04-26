@@ -152,6 +152,13 @@ run cost_preview "POST /api/reel/cost-preview (estimated_veo_cost=4)" 200 \
   "j.get('estimated_veo_cost')==4 and j.get('veo_enabled') is False and j.get('would_run') is False and j.get('scene_count_allowed')==1" \
   "$code"
 
+# ── 12. Veo payload preview — proves generateAudio is stripped on Veo 2 ─────
+VEO_PREVIEW_PAYLOAD='{"niche":"advogado","tone":"profissional","object":"martelo de juiz"}'
+code=$(http veo_preview POST "/api/reel/veo-payload-preview" -d "$VEO_PREVIEW_PAYLOAD")
+run veo_preview "POST /api/reel/veo-payload-preview (no audio key, Veo OFF)" 200 \
+  "j.get('audit',{}).get('contains_generate_audio') is False and j.get('audit',{}).get('audio_keys')==[] and j.get('veo_enabled') is False and 'generateAudio' not in j.get('request_body',{}).get('parameters',{})" \
+  "$code"
+
 echo
 if [ "$FAILED" -gt 0 ]; then
   printf "%s%d failed%s · %s%d passed%s\n" "$C_FAIL" "$FAILED" "$C_RST" "$C_OK" "$PASSED" "$C_RST"

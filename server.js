@@ -25,6 +25,7 @@ import {
   getNicheBySlugFromFirestore,
   saveGenerationHistoryToFirestore,
 } from "./src/infrastructure/firestoreRepository.js";
+import { buildVeoSubmitPayload } from "./src/infrastructure/veo.js";
 import { dualAuth } from "./src/middleware/firebaseAuth.js";
 import {
   createJobAndSubmitScenes,
@@ -458,6 +459,59 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
       error: err?.message || String(err),
     });
   }
+});
+
+// Veo request preview — builds the EXACT payload submitVeoJob would
+// POST to Vertex, but never sends it. Useful to audit "is generateAudio
+// in the parameters block?" without paying for a job. Reuses the same
+// builder the live pipeline uses, so anything we see here is what
+// production would actually send.
+app.post("/api/reel/veo-payload-preview", dualAuth, (req, res) => {
+  const body = req.body || {};
+  const niche = typeof body.niche === "string" ? body.niche : "advogado";
+  const tone = typeof body.tone === "string" ? body.tone : "profissional";
+  const prompt =
+    typeof body.prompt === "string" && body.prompt.trim()
+      ? body.prompt
+      : `Pixar 3D animated ${body.object ?? "talking object"} character speaking directly to camera in Brazilian Portuguese. Niche: ${niche}, tone: ${tone}.`;
+  const userId = req.user?.uid || "anonymous";
+  const fakeJobId = "preview-job";
+  const sceneIndex = 0;
+  const bucket = process.env.GCS_BUCKET_NAME || "viralobj-assets";
+  const outputGcsUri = `gs://${bucket}/videos/${userId}/${fakeJobId}/scene-${sceneIndex}/`;
+
+  let preview;
+  try {
+    preview = buildVeoSubmitPayload({
+      prompt,
+      outputGcsUri,
+      aspectRatio: "9:16",
+      durationSeconds: parseInt(process.env.VEO_DURATION_SECONDS || "8", 10),
+      generateAudio: true, // request the upstream default; the builder
+      // strips it for Veo 2. The audit field reveals the result.
+    });
+  } catch (err) {
+    return res.status(500).json({
+      ok: false,
+      success: false,
+      error: "PREVIEW_BUILD_FAILED",
+      message: err?.message ?? String(err),
+    });
+  }
+
+  res.json({
+    ok: true,
+    success: true,
+    veo_enabled: process.env.ENABLE_VEO_GENERATION === "true",
+    veo_model: preview.model,
+    endpoint: { url: preview.url, method: preview.method },
+    request_body: preview.request_body,
+    audit: preview.audit,
+    note:
+      preview.audit.contains_generate_audio
+        ? "generateAudio IS in the payload — Veo 3+ model assumed."
+        : "generateAudio is NOT in the payload — safe for Veo 2.",
+  });
 });
 
 // Cost preflight — pure arithmetic, no Gemini, no Veo, no Firestore
@@ -1049,6 +1103,78 @@ function buildOpenApiSpec(baseUrl) {
               content: {
                 "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
               },
+            },
+          },
+        },
+      },
+      "/api/reel/veo-payload-preview": {
+        post: {
+          summary: "Audit the JSON body that submitVeoJob would POST — no Veo call",
+          description:
+            "Builds the exact payload the live render path would send to Vertex AI Veo's predictLongRunning endpoint. Reuses the same buildVeoSubmitPayload() the live submit uses, so anything visible here is what production would actually send (or omit). Useful to verify, e.g., that generateAudio is stripped from the parameters block on Veo 2 deployments before flipping ENABLE_VEO_GENERATION=true. Auth via dualAuth. Zero cost — does not contact Vertex.",
+          tags: ["generation"],
+          security: [{ GeminiKey: [] }],
+          requestBody: {
+            required: false,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    niche: { type: "string", example: "advogado" },
+                    tone: { type: "string", example: "profissional" },
+                    object: { type: "string", description: "Object name to fold into the synthetic prompt." },
+                    prompt: { type: "string", description: "Override the synthetic prompt entirely." },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "200": {
+              description: "Payload built. The audit object is the load-bearing field — contains_generate_audio is the canary for the Veo 2 'audio not supported' bug.",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      ok: { type: "boolean" },
+                      veo_enabled: { type: "boolean" },
+                      veo_model: { type: "string" },
+                      endpoint: {
+                        type: "object",
+                        properties: {
+                          url: { type: "string" },
+                          method: { type: "string" },
+                        },
+                      },
+                      request_body: {
+                        type: "object",
+                        properties: {
+                          instances: { type: "array", items: { type: "object" } },
+                          parameters: { type: "object" },
+                        },
+                      },
+                      audit: {
+                        type: "object",
+                        properties: {
+                          contains_generate_audio: { type: "boolean" },
+                          audio_keys: { type: "array", items: { type: "string" } },
+                        },
+                      },
+                      note: { type: "string" },
+                    },
+                  },
+                },
+              },
+            },
+            "401": {
+              description: "Missing or invalid X-Gemini-Key / Bearer token",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+            },
+            "500": {
+              description: "PREVIEW_BUILD_FAILED — invalid input or env (e.g. GCP_PROJECT_ID missing).",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
             },
           },
         },
