@@ -26,6 +26,10 @@ import {
   saveGenerationHistoryToFirestore,
 } from "./src/infrastructure/firestoreRepository.js";
 import { dualAuth } from "./src/middleware/firebaseAuth.js";
+import {
+  createJobAndSubmitScenes,
+  getJobStatus,
+} from "./src/services/reelJobs.js";
 
 // Cost-guard config used by dry_run to compute what a live Veo render
 // *would* have charged. Live render itself is no longer wired into this
@@ -382,20 +386,69 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
       });
     }
 
-    // ── Live render path ─────────────────────────────────────────────────
-    // Sprint 6 retired Cloud SQL (which owned the videos and user_history
-    // tables this path used to write). The Veo submission + polling
-    // pipeline will return as a Firestore-native flow in a follow-up
-    // sprint; until then the only supported mode is dry_run. With the
-    // bridge running ENABLE_VEO_GENERATION=false, callers hit the 403
-    // gate above and never reach this branch — but if Veo is re-enabled
-    // before the new pipeline lands, surface 501 instead of half-running.
-    return res.status(501).json({
-      ok: false,
-      success: false,
-      error: "VIDEO_PIPELINE_NOT_IMPLEMENTED",
-      message:
-        "The live Veo render pipeline was retired with Cloud SQL in Sprint 6 and will return as a Firestore-native flow. Use ?dry_run=true for text-only validation.",
+    // ── Live render path (Sprint 7, Firestore-native) ────────────────────
+    // We only get here when ENABLE_VEO_GENERATION=='true' AND the caller
+    // did not pass dry_run. Each of the next steps is bounded so a slow
+    // Veo region or a flaky scene cannot hang Cloud Run past its timeout.
+    let job;
+    try {
+      job = await createJobAndSubmitScenes({
+        user: req.user,
+        package: result.package,
+        niche,
+        topic,
+        tone,
+        duration,
+        providerUsed: result.result?.provider_used,
+      });
+    } catch (err) {
+      console.error("[/api/generate-reel] reelJobs.createJobAndSubmitScenes:", err);
+      return res.status(500).json({
+        ok: false,
+        success: false,
+        error: "VEO_SUBMIT_FAILED",
+        message: err?.message ?? String(err),
+        elapsed_ms: Date.now() - startedAt,
+      });
+    }
+
+    const allFailed = job.scenes.every((s) => s.status === "failed");
+    saveGenerationHistoryToFirestore({
+      user_id: req.user?.uid || "anonymous",
+      user_email: req.user?.email || null,
+      auth_provider: req.user?.provider || "anonymous",
+      niche,
+      topic,
+      mode: "full",
+      status: allFailed ? "failed" : "processing",
+      provider: "vertex",
+      provider_used: result.result?.provider_used ?? null,
+      data_source: dataSource,
+      job_id: job.jobId,
+      tone,
+      duration,
+    });
+
+    return res.status(allFailed ? 500 : 202).json({
+      ok: !allFailed,
+      success: !allFailed,
+      mode: "full",
+      job_id: job.jobId,
+      status: allFailed ? "failed" : "processing",
+      scene_count: job.sceneCount,
+      requested_scenes: result.package?.characters?.length ?? job.sceneCount,
+      limited_by_max_scenes: job.limitedByMaxScenes,
+      estimated_veo_cost: job.estimatedVeoCost,
+      status_url: `/api/reel/${job.jobId}/status`,
+      data_source: dataSource,
+      elapsed_ms: Date.now() - startedAt,
+      provider_used: result.result?.provider_used,
+      scenes: job.scenes.map((s) => ({
+        index: s.index,
+        status: s.status,
+        veo_operation: s.veo_operation ?? null,
+        error: s.error ?? null,
+      })),
     });
   } catch (err) {
     console.error("[/api/generate-reel]", err);
@@ -407,10 +460,36 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
   }
 });
 
-// /api/reel/{history_id}/status was retired in Sprint 6. It depended on
-// the Cloud SQL videos table (FK videos.generation_id → user_history.id)
-// to track Vertex AI Veo long-running operations. The replacement will
-// land alongside the Firestore-native render pipeline.
+// Polling endpoint for the Firestore-native render pipeline. Replaces
+// the SQL-bound /api/reel/{history_id}/status retired in Sprint 6.
+app.get("/api/reel/:jobId/status", dualAuth, async (req, res) => {
+  const { jobId } = req.params;
+  const startedAt = Date.now();
+  try {
+    const status = await getJobStatus(jobId);
+    if (!status) {
+      return res.status(404).json({
+        ok: false,
+        success: false,
+        error: "JOB_NOT_FOUND",
+        message: `No reel_jobs document for job_id=${jobId}`,
+      });
+    }
+    return res.json({
+      ok: true,
+      success: true,
+      elapsed_ms: Date.now() - startedAt,
+      ...status,
+    });
+  } catch (err) {
+    console.error(`[/api/reel/${jobId}/status]`, err);
+    res.status(500).json({
+      ok: false,
+      success: false,
+      error: err?.message || String(err),
+    });
+  }
+});
 
 // ─── OpenAPI 3.0 spec generator ───────────────────────────────────────────
 
@@ -520,50 +599,108 @@ function buildOpenApiSpec(baseUrl) {
         GenerateReelResponse: {
           type: "object",
           description:
-            "After Sprint 6 only the dry_run shape is supported. A non-dry_run "
-            + "request currently returns 403 VEO_DISABLED (when ENABLE_VEO_GENERATION!='true') "
-            + "or 501 VIDEO_PIPELINE_NOT_IMPLEMENTED (when Veo is enabled but the "
-            + "Firestore-native render pipeline isn't wired yet).",
+            "Two shapes, keyed off `mode`:\n"
+            + "  • mode='dry_run' (HTTP 200): Gemini package returned, Veo skipped.\n"
+            + "  • mode='full'    (HTTP 202): reel_jobs doc created, scenes submitted to Veo. "
+            + "Poll status_url to watch each scene complete.",
           properties: {
             ok: { type: "boolean", example: true },
             success: { type: "boolean", example: true },
             mode: {
               type: "string",
-              enum: ["dry_run"],
-              description: "Always 'dry_run' for now.",
+              enum: ["dry_run", "full"],
             },
             elapsed_ms: { type: "integer", example: 8423 },
             provider_used: { type: "string", example: "vertex/gemini-2.5-flash" },
-            niche: { type: "string", description: "Echo of the request niche." },
+            niche: { type: "string" },
             data_source: {
               type: "string",
               enum: ["firestore", "memory"],
-              description:
-                "Where the niche reference came from: 'firestore' (canonical post-Sprint 6) or 'memory' (slug isn't in Firestore but generation still ran via mcp/tools/niches.js).",
             },
+            // dry_run-only fields:
             package: {
               type: "object",
-              description: "Full production package: meta, characters[], captions[], post_copy, variations[].",
+              description: "Full production package (dry_run only).",
             },
-            summary: { type: "string" },
+            summary: { type: "string", description: "Pretty-printed summary (dry_run only)." },
             videos: {
               type: "array",
               items: { type: "object" },
-              description: "Always [] on dry_run.",
+              description: "Always [] on dry_run; absent on full mode.",
             },
             cost_guard: {
               type: "object",
-              description: "Reports what a live run would cost before any billing happens.",
+              description: "Reports what a live run would cost (dry_run only).",
               properties: {
                 veo_called: { type: "boolean", example: false },
                 veo_enabled: { type: "boolean", example: false },
-                estimated_veo_cost: { type: "number", example: 16, description: "USD. scenes × VEO_DURATION_SECONDS × 0.50." },
+                estimated_veo_cost: { type: "number", example: 16 },
                 scenes_skipped: { type: "integer", example: 4 },
               },
             },
-            // video_url, render_status, render_skip_reason, video_jobs,
-            // poll_url and persisted were retired in Sprint 6 along with
-            // the live render pipeline they described.
+            // full-mode-only fields:
+            job_id: { type: "string", description: "reel_jobs document id; pass to /api/reel/{jobId}/status." },
+            status: {
+              type: "string",
+              enum: ["processing", "failed"],
+              description: "Initial job status — 'processing' when at least one scene was submitted to Veo.",
+            },
+            scene_count: { type: "integer", description: "Scenes actually submitted (capped by MAX_SCENES_PER_REEL)." },
+            requested_scenes: { type: "integer", description: "Scenes the package would have had without the cap." },
+            limited_by_max_scenes: { type: "boolean", description: "true when scene_count < requested_scenes." },
+            estimated_veo_cost: { type: "number", description: "USD. scene_count × VEO_DURATION_SECONDS × 0.50." },
+            status_url: { type: "string", description: "Relative URL the caller should poll." },
+            scenes: {
+              type: "array",
+              items: { $ref: "#/components/schemas/SubmittedScene" },
+              description: "One entry per scene that was created in Firestore.",
+            },
+          },
+        },
+        SubmittedScene: {
+          type: "object",
+          properties: {
+            index: { type: "integer" },
+            status: { type: "string", enum: ["queued", "submitted", "processing", "completed", "failed"] },
+            veo_operation: { type: "string", nullable: true },
+            error: { type: "string", nullable: true },
+          },
+        },
+        ReelJobStatus: {
+          type: "object",
+          properties: {
+            ok: { type: "boolean" },
+            success: { type: "boolean" },
+            elapsed_ms: { type: "integer" },
+            job_id: { type: "string" },
+            status: {
+              type: "string",
+              enum: ["queued", "processing", "completed", "failed", "partial"],
+            },
+            scene_count: { type: "integer" },
+            completed_scenes: { type: "integer" },
+            failed_scenes: { type: "integer" },
+            estimated_veo_cost: { type: "number", nullable: true },
+            limited_by_max_scenes: { type: "boolean" },
+            requested_scenes: { type: "integer" },
+            user_id: { type: "string" },
+            niche: { type: "string" },
+            topic: { type: "string" },
+            scenes: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  index: { type: "integer" },
+                  object: { type: "string", nullable: true },
+                  status: { type: "string", enum: ["queued", "submitted", "processing", "completed", "failed"] },
+                  veo_operation: { type: "string", nullable: true },
+                  public_url: { type: "string", format: "uri", nullable: true },
+                  gcs_uri: { type: "string", nullable: true },
+                  error: { type: "string", nullable: true },
+                },
+              },
+            },
           },
         },
         // ReelStatusResponse removed in Sprint 6 with the /api/reel/{id}/status path.
@@ -780,19 +917,21 @@ function buildOpenApiSpec(baseUrl) {
       },
       "/api/generate-reel": {
         post: {
-          summary: "Generate the bilingual reel package (Gemini, dry_run only)",
+          summary: "Generate reel package — dry_run (200) or full render (202)",
           description:
-            "Sprint 6 retired Cloud SQL and the live Veo render pipeline that depended on it. "
-            + "Until the Firestore-native render flow lands, only dry_run is supported:\n\n"
-            + "  1. Vertex AI Gemini produces the bilingual production package (5-30s).\n"
-            + "  2. Veo is *not* called — videos:[] is returned with a cost_guard summary.\n"
-            + "  3. The call writes one row to the Firestore generation_history collection.\n\n"
+            "Two modes:\n\n"
+            + "  • dry_run=true → Gemini only; HTTP 200 with package + cost_guard.\n"
+            + "  • dry_run=false (full mode) → Gemini + Veo submit; HTTP 202 with job_id + status_url.\n\n"
+            + "Full-mode flow (Sprint 7, Firestore-native):\n"
+            + "  1. Vertex AI Gemini produces the bilingual package (5-30s).\n"
+            + "  2. Up to MAX_SCENES_PER_REEL characters are picked; estimated_veo_cost is computed.\n"
+            + "  3. A reel_jobs/{jobId} doc is created in Firestore with one scenes/{index} subdoc per scene.\n"
+            + "  4. Each scene is submitted to Vertex AI Veo as a long-running operation; the operation name is stored on the scene doc.\n"
+            + "  5. The caller polls GET /api/reel/{jobId}/status until status='completed'.\n\n"
             + "Behaviour by flag:\n"
             + "  • ENABLE_VEO_GENERATION!='true' (default) + no dry_run → 403 VEO_DISABLED.\n"
-            + "  • ENABLE_VEO_GENERATION=='true' + no dry_run → 501 VIDEO_PIPELINE_NOT_IMPLEMENTED.\n"
-            + "  • dry_run=true (any value of ENABLE_VEO_GENERATION) → 200 with package.\n\n"
-            + "Auth: dualAuth — Bearer Firebase ID token preferred, X-Gemini-Key fallback. "
-            + "Vertex auth is via Application Default Credentials (the runtime service account on Cloud Run).",
+            + "  • ENABLE_VEO_GENERATION=='true' + no dry_run → 202 with job_id (or 500 VEO_SUBMIT_FAILED if every scene submit fails).\n\n"
+            + "Auth: dualAuth — Bearer Firebase ID token preferred, X-Gemini-Key fallback.",
           tags: ["generation"],
           security: [{ GeminiKey: [] }],
           parameters: [
@@ -822,6 +961,14 @@ function buildOpenApiSpec(baseUrl) {
                 },
               },
             },
+            "202": {
+              description: "Full render accepted — reel_jobs/{job_id} created, scenes submitted to Veo. Poll status_url.",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/GenerateReelResponse" },
+                },
+              },
+            },
             "400": {
               description: "Validation error",
               content: {
@@ -841,15 +988,16 @@ function buildOpenApiSpec(baseUrl) {
                 "application/json": { schema: { $ref: "#/components/schemas/VeoDisabledError" } },
               },
             },
-            "500": {
-              description: "Generation failed (Vertex AI Gemini error)",
+            "429": {
+              description:
+                "COST_LIMIT_EXCEEDED — placeholder for future per-tenant rate limits. Currently unused; MAX_SCENES_PER_REEL caps cost transparently inside a single call instead of rejecting it.",
               content: {
                 "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
               },
             },
-            "501": {
+            "500": {
               description:
-                "VIDEO_PIPELINE_NOT_IMPLEMENTED — Veo is enabled (ENABLE_VEO_GENERATION=true) but the Firestore-native render pipeline that replaced the Cloud-SQL flow has not been wired yet. Use ?dry_run=true.",
+                "Generation failed. Two distinct errors share this status:\n  • Vertex AI Gemini error — `error: '<vertex message>'`.\n  • VEO_SUBMIT_FAILED — every scene's Veo submission failed; the reel_jobs doc is left in status='failed' for inspection.",
               content: {
                 "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
               },
@@ -857,8 +1005,55 @@ function buildOpenApiSpec(baseUrl) {
           },
         },
       },
-      // /api/reel/{history_id}/status was removed in Sprint 6 along with
-      // its underlying Cloud SQL videos table.
+      "/api/reel/{jobId}/status": {
+        get: {
+          summary: "Poll a Firestore reel_jobs render until every scene is terminal",
+          description:
+            "Idempotent. For each scene whose status is queued/submitted/processing, the bridge "
+            + "calls Vertex AI's fetchPredictOperation, updates the scene doc, and rolls up the "
+            + "parent job (status=completed when every scene completed; partial when at least one "
+            + "completed and at least one failed; failed when none completed). Veo writes the MP4 "
+            + "directly into gs://viralobj-assets/videos/{user_id}/{job_id}/scene-{index}/ via "
+            + "storageUri; this endpoint stores the gcs_uri Veo returns and exposes the public_url.",
+          tags: ["generation"],
+          security: [{ GeminiKey: [] }],
+          parameters: [
+            {
+              name: "jobId",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "The job_id returned by POST /api/generate-reel in full mode.",
+            },
+          ],
+          responses: {
+            "200": {
+              description: "Current job + scenes state",
+              content: {
+                "application/json": { schema: { $ref: "#/components/schemas/ReelJobStatus" } },
+              },
+            },
+            "401": {
+              description: "Missing or invalid X-Gemini-Key / Bearer token",
+              content: {
+                "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
+              },
+            },
+            "404": {
+              description: "JOB_NOT_FOUND — no reel_jobs document for that jobId",
+              content: {
+                "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
+              },
+            },
+            "500": {
+              description: "Firestore or Veo poll error",
+              content: {
+                "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
+              },
+            },
+          },
+        },
+      },
     },
   };
 }

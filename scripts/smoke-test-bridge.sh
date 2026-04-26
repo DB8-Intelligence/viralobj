@@ -133,6 +133,18 @@ run veo_blocked "POST /api/generate-reel (no dry_run → 403 VEO_DISABLED)" 403 
   "j.get('error')=='VEO_DISABLED' and j.get('ok') is False" \
   "$code"
 
+# ── 9. /api/reel/{fake}/status → 404 JOB_NOT_FOUND ──────────────────────────
+code=$(http fake_job GET "/api/reel/this-job-does-not-exist/status")
+run fake_job "GET  /api/reel/{fake}/status (404 JOB_NOT_FOUND)" 404 \
+  "j.get('error')=='JOB_NOT_FOUND' and j.get('ok') is False" \
+  "$code"
+
+# ── 10. OpenAPI documents the status path + ReelJobStatus schema ───────────
+code=$(curl -sS -o "$TMP/openapi_status.json" -w "%{http_code}" "${BASE_URL}/openapi.json")
+run openapi_status "GET  /openapi.json (status path documented)" 200 \
+  "'/api/reel/{jobId}/status' in j['paths'] and 'ReelJobStatus' in j['components']['schemas']" \
+  "$code"
+
 echo
 if [ "$FAILED" -gt 0 ]; then
   printf "%s%d failed%s · %s%d passed%s\n" "$C_FAIL" "$FAILED" "$C_RST" "$C_OK" "$PASSED" "$C_RST"
