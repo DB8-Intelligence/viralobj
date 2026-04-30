@@ -1,0 +1,48 @@
+# ViralObj — Webapp (Next.js 14 standalone) for Cloud Run
+# Multi-stage build: deps → builder → runner
+#
+# Deploy:
+#   gcloud run deploy viralobj-dashboard --source ./webapp --region us-central1
+#
+# Cloud Run injects PORT=8080. The standalone server.js reads it via
+# process.env.PORT.
+
+# ─── Stage 1: deps ──────────────────────────────────────────────────────
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm ci --no-audit --no-fund
+
+# ─── Stage 2: builder ───────────────────────────────────────────────────
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# NEXT_TELEMETRY_DISABLED keeps Cloud Build logs clean.
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npm run build
+
+# ─── Stage 3: runner ────────────────────────────────────────────────────
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=8080
+ENV HOSTNAME=0.0.0.0
+
+# Non-root user (alpine ships node:1000 by default).
+RUN addgroup --system --gid 1001 nodejs \
+ && adduser --system --uid 1001 nextjs
+
+# next.config.mjs has output:"standalone", so .next/standalone contains
+# a minimal server.js + the only node_modules it actually needs.
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+
+USER nextjs
+EXPOSE 8080
+
+CMD ["node", "server.js"]

@@ -24,6 +24,7 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // output: "standalone" — disabled in Sprint 16.1 to test Buildpacks deploy.
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
