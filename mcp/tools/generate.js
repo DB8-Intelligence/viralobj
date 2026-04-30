@@ -1,51 +1,49 @@
 /**
  * ViralObj — generate.js
  *
- * Single-provider package generation via **Google Vertex AI Gemini 1.5 Pro**.
- * Authentication is Application Default Credentials (ADC) — on GCP runtimes
- * (Cloud Run / App Engine / GCE) the attached service account is used
- * automatically; locally, set GOOGLE_APPLICATION_CREDENTIALS.
+ * Package generation via **Google AI Studio (Generative AI SDK)**.
+ * Authenticates with an API key from https://aistudio.google.com/app/apikey.
  *
- * Migrated from Anthropic + OpenAI + Gemini-AI-Studio fallback chain.
- * Kept the same generatePackage() signature so callers (server.js,
- * mcp/index.js) don't need changes.
+ * Migrated from @google-cloud/vertexai → @google/generative-ai. The SDK
+ * surface for getGenerativeModel / generateContent is intentionally
+ * compatible across the two, so the prompt + generationConfig + safetySettings
+ * shape did not change. Veo (video) still runs on Vertex AI — the rewrite
+ * here only covers Gemini text generation.
  */
-import { VertexAI } from "@google-cloud/vertexai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { loadNicheData } from "./niches.js";
 
-const VERTEX_PROJECT  = process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT;
-const VERTEX_LOCATION = process.env.VERTEX_LOCATION || "us-central1";
-const VERTEX_MODEL    = process.env.VERTEX_MODEL    || "gemini-1.5-pro";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-1.5-pro";
 
-// Lazy init: importing this module shouldn't blow up if the project id
-// isn't set yet (e.g. local tests with DB-only flows).
-let _vertex = null;
-function getVertex() {
-  if (!_vertex) {
-    if (!VERTEX_PROJECT) {
+// Lazy init: importing this module shouldn't crash if the API key isn't
+// set yet (e.g. niches-only requests, local tests).
+let _genAI = null;
+function getGenAI() {
+  if (!_genAI) {
+    const apiKey = process.env.GOOGLE_API_KEY;
+    if (!apiKey) {
       throw new Error(
-        "GCP_PROJECT_ID (or GOOGLE_CLOUD_PROJECT) is not set — Vertex AI cannot authenticate."
+        "GOOGLE_API_KEY is not set — Google AI Studio requires an API key (https://aistudio.google.com/app/apikey).",
       );
     }
-    _vertex = new VertexAI({ project: VERTEX_PROJECT, location: VERTEX_LOCATION });
+    _genAI = new GoogleGenerativeAI(apiKey);
   }
-  return _vertex;
+  return _genAI;
 }
 
 /**
- * Call Gemini 1.5 Pro on Vertex AI with native systemInstruction.
+ * Call Gemini via Google AI Studio with native systemInstruction.
  * Returns the parsed JSON package (responseMimeType=application/json
  * makes the model emit pure JSON, no markdown fences to strip).
  */
-async function callVertex(systemPrompt, userPrompt) {
-  const model = getVertex().getGenerativeModel({
-    model: VERTEX_MODEL,
-    // Native system instructions — the whole point of moving to Vertex.
+async function callGemini(systemPrompt, userPrompt) {
+  const model = getGenAI().getGenerativeModel({
+    model: GEMINI_MODEL,
     systemInstruction: { role: "system", parts: [{ text: systemPrompt }] },
     generationConfig: {
       responseMimeType: "application/json",
       temperature: 0.7,
-      // 32K accommodates a multi-character package on Gemini 2.5 — the
+      // 32K accommodates a multi-character package on Gemini 1.5 Pro — the
       // older 8192 cap silently truncated mid-JSON, which then surfaced
       // downstream as a baffling "Unexpected end of JSON input".
       maxOutputTokens: 32768,
@@ -67,11 +65,16 @@ async function callVertex(systemPrompt, userPrompt) {
   });
 
   const candidate = result?.response?.candidates?.[0];
-  const text = candidate?.content?.parts?.map((p) => p.text).filter(Boolean).join("\n");
+  const text = candidate?.content?.parts
+    ?.map((p) => p.text)
+    .filter(Boolean)
+    .join("\n");
   const finishReason = candidate?.finishReason ?? "no_candidate";
 
   if (!text) {
-    throw new Error(`Vertex AI returned empty content (finishReason=${finishReason})`);
+    throw new Error(
+      `Google AI Studio returned empty content (finishReason=${finishReason})`,
+    );
   }
   return { text: text.trim(), finishReason };
 }
@@ -87,7 +90,7 @@ function parsePackage({ text, finishReason }) {
     if (!jsonMatch) {
       const preview = text.slice(0, 200).replace(/\s+/g, " ");
       throw new Error(
-        `No JSON object in Vertex AI response (finishReason=${finishReason}, len=${text.length}, preview="${preview}")`,
+        `No JSON object in Gemini response (finishReason=${finishReason}, len=${text.length}, preview="${preview}")`,
       );
     }
     try {
@@ -127,9 +130,15 @@ export async function generatePackage({
   // provider that no longer exists.
   provider = "auto",
 }) {
-  if (provider && provider !== "auto" && provider !== "vertex") {
+  if (
+    provider &&
+    provider !== "auto" &&
+    provider !== "google" &&
+    provider !== "gemini" &&
+    provider !== "vertex"
+  ) {
     console.warn(
-      `[generate] provider="${provider}" is no longer supported (Anthropic/OpenAI/Gemini-AI-Studio were removed). Falling back to Vertex AI.`
+      `[generate] provider="${provider}" is no longer supported (Anthropic/OpenAI fallbacks were removed). Falling back to Google AI Studio.`,
     );
   }
 
@@ -241,10 +250,10 @@ Return this exact JSON structure (no markdown, no commentary):
 
   let pkg;
   try {
-    const raw = await callVertex(systemPrompt, userPrompt);
+    const raw = await callGemini(systemPrompt, userPrompt);
     pkg = parsePackage(raw);
   } catch (e) {
-    throw new Error(`Vertex AI generation failed: ${e.message}`);
+    throw new Error(`Google AI Studio generation failed: ${e.message}`);
   }
 
   const summary = `✅ Package generated — ${pkg.meta?.topic_pt || topic}
@@ -252,7 +261,7 @@ Return this exact JSON structure (no markdown, no commentary):
 🎭 ${numObjects} character(s): ${objects.join(", ")}
 🏷️  Niche: ${niche} | Tone: ${tone} | Duration: ${duration}s
 🌎 Bilingual: PT-BR + EN
-🤖 Provider: vertex (${VERTEX_MODEL})
+🤖 Provider: google-ai-studio (${GEMINI_MODEL})
 
 📦 Package includes:
    • ${numObjects} character scripts with AI prompts
@@ -266,6 +275,6 @@ Return this exact JSON structure (no markdown, no commentary):
   return {
     content: [{ type: "text", text: summary }],
     package: pkg,
-    result: { provider_used: `vertex/${VERTEX_MODEL}` },
+    result: { provider_used: `google-ai-studio/${GEMINI_MODEL}` },
   };
 }

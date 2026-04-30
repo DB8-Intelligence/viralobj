@@ -14,7 +14,40 @@
  *   POST /api/generate-reel     — generate full Talking Object package (auth)
  */
 
-import "dotenv/config";
+// .env.local takes precedence over .env (Next.js convention) so developers
+// can keep the production-frozen .env around as documentation while iterating
+// on local overrides. On Cloud Run neither file ships — env vars come from the
+// service spec / Secret Manager.
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+dotenv.config();
+
+// ─── PRODUCTION SAFETY GUARD (Sprint 25.1) ──────────────────────────────────
+// Refuse to start when MOCK_* leaks into a production runtime. Cloud Run
+// sets NODE_ENV=production; anything else (development/test) is allowed
+// to use mocks. Failing fast prevents a misconfigured deploy from quietly
+// serving fake reels.
+if (process.env.NODE_ENV === "production") {
+  const FORBIDDEN = [
+    "MOCK_VERTEX",
+    "MOCK_FIRESTORE",
+    "MOCK_STORAGE",
+    "MOCK_BILLING",
+    "MOCK_AUTH",
+    "LOCAL_DEV_MODE",
+  ];
+  const enabled = FORBIDDEN.filter(
+    (k) => process.env[k] === "true" || process.env[k] === true,
+  );
+  if (enabled.length > 0) {
+    console.error(
+      "[BOOT_GUARD] Refusing to start: MOCK_* flags enabled in production:",
+      enabled,
+    );
+    process.exit(1);
+  }
+}
+
 import express from "express";
 import { pathToFileURL } from "url";
 import { generatePackage } from "./mcp/tools/generate.js";
@@ -33,6 +66,7 @@ import {
 } from "./src/services/reelJobs.js";
 import {
   PRODUCT_TO_SCENES,
+  PRODUCT_CATALOG,
   InsufficientCreditsError,
   UnknownProductError,
   processWebhookEvent,
@@ -40,6 +74,17 @@ import {
   refundCredits,
   getCreditsBalance,
 } from "./src/services/billing.js";
+import { evaluateCostGate } from "./src/services/costGuard.js";
+import {
+  isLocalDev,
+  isMockVertex,
+  isMockFirestore,
+  isMockStorage,
+  isMockBilling,
+  isMockAuth,
+  anyMockEnabled,
+} from "./src/config/runtime.js";
+import Stripe from "stripe";
 import crypto from "node:crypto";
 
 // Cost-guard config used by dry_run to compute what a live Veo render
@@ -117,6 +162,25 @@ app.get("/health", (_req, res) => {
 // share the handler so the OpenAPI alias stays honest. Never calls Gemini
 // or Veo (those are paid). DB check is a sub-millisecond SELECT 1.
 app.get(["/readyz", "/healthz"], async (_req, res) => {
+  // Sprint 25.1 — local dev short-circuit. Reports each subsystem as
+  // mock so the operator knows the bridge is offline-safe.
+  if (isLocalDev()) {
+    return res.json({
+      ok: true,
+      service: "viralobj-bridge",
+      mode: "local-dev",
+      version: "local",
+      checks: {
+        server: "ok",
+        vertex: isMockVertex() ? "mock" : "unknown",
+        firestore: isMockFirestore() ? "mock" : "unknown",
+        storage: isMockStorage() ? "mock" : "unknown",
+        billing: isMockBilling() ? "mock" : "unknown",
+        auth: isMockAuth() ? "mock" : "unknown",
+      },
+    });
+  }
+
   // Cloud SQL was decommissioned in Sprint 6; the database check is now
   // a constant "deprecated" placeholder so consumers parsing the field
   // don't crash. Firestore is the live primary and is reachable through
@@ -215,6 +279,24 @@ app.get("/api/niches", dualAuth, async (req, res) => {
         ? rawCategory
         : null;
 
+    // Sprint 25.1 — local dev short-circuit. Returns 3 fixture niches so
+    // the webapp catalog can render without Firestore.
+    if (isMockFirestore()) {
+      return res.json({
+        ok: true,
+        success: true,
+        source: "mock",
+        count: 3,
+        category: category ?? "all",
+        categories: ["lifestyle", "profissoes"],
+        niches: [
+          { key: "casa", name: "Casa", emoji: "🏠", category: "lifestyle", objects_count: 3, tone_default: "angry", sample_objects: ["esponja", "água sanitária", "vassoura"] },
+          { key: "advogado", name: "Advogado", emoji: "⚖️", category: "profissoes", objects_count: 3, tone_default: "dramatic", sample_objects: ["martelo", "balança", "código"] },
+          { key: "medico", name: "Médico", emoji: "🩺", category: "profissoes", objects_count: 3, tone_default: "educational", sample_objects: ["estetoscópio", "seringa", "termômetro"] },
+        ],
+      });
+    }
+
     // Firestore is the only datastore now. No fallback. If the read
     // fails or returns zero docs, surface 500 — silent degradation
     // hid stale data during the dual-write phase and we are past that.
@@ -267,6 +349,82 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
       user_email = null,
       user_name = null,
     } = req.body || {};
+
+    // Sprint 25.1 — local dev mock. Skips billing/cost-guard/Gemini/Veo
+    // entirely and returns a deterministic fixture so the webapp wizard can
+    // be exercised without any Google Cloud call.
+    const mockDryRun =
+      req.query?.dry_run === "true" || req.body?.dry_run === true;
+    if (isMockVertex()) {
+      if (mockDryRun) {
+        return res.status(200).json({
+          ok: true,
+          success: true,
+          mode: "dry_run",
+          mock: true,
+          provider_used: "mock",
+          niche: niche || "casa",
+          data_source: "mock",
+          elapsed_ms: 10,
+          summary:
+            "✅ [MOCK] Package generated — Veo and Gemini were not called.",
+          package: {
+            meta: {
+              niche: niche || "casa",
+              topic_pt: topic || "Mock topic",
+              topic_en: topic || "Mock topic",
+              tone: tone || "dramatic",
+              duration: duration || 8,
+              objects_count: 1,
+              generated_at: new Date().toISOString(),
+            },
+            characters: [
+              {
+                id: 1,
+                name_pt: "Esponja",
+                name_en: "Sponge",
+                emoji: "🧽",
+                voice_script_pt: "Eu sou uma esponja revoltada!",
+                voice_script_en: "I am one outraged sponge!",
+              },
+            ],
+            post_copy: { hook_pt: "Mock hook", body_pt: "Mock body" },
+            captions_full_script: [],
+            variations: [],
+            production_stack: [],
+          },
+          videos: [],
+          cost_guard: {
+            veo_called: false,
+            veo_enabled: false,
+            estimated_veo_cost: 0,
+            scenes_skipped: 0,
+          },
+        });
+      }
+      // Full render mock — pretends a job already completed.
+      return res.status(202).json({
+        ok: true,
+        success: true,
+        mode: "full",
+        mock: true,
+        job_id: "mock-job-001",
+        status: "completed",
+        scene_count: 1,
+        requested_scenes: 1,
+        estimated_veo_cost: 0,
+        provider_used: "mock",
+        status_url: "/api/reel/mock-job-001/status",
+        scenes: [
+          {
+            index: 0,
+            status: "completed",
+            veo_operation: "mock://operation",
+            error: null,
+          },
+        ],
+      });
+    }
 
     // Twin entry points for dry_run: query string for cURL/agent ergonomics,
     // body for SDK-style callers. Either turns the call into a Gemini-only
@@ -325,10 +483,17 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
       });
     }
 
-    // Billing gate (full mode only). Credits are scenes — one credit per
-    // rendered scene. We do an early read-only check so a customer with
-    // zero balance fails fast before paying for the Gemini call. The
-    // transactional debit happens after Gemini and just before submit.
+    // Full-mode-only gates. Three distinct checks fire BEFORE the paid
+    // Gemini call so a blocked request never burns text-generation budget:
+    //
+    //   1. NO_USER_CONTEXT  — req.user.uid required for any per-user logic
+    //   2. Cost guard       — operator daily budget + per-user daily scenes
+    //                         (Sprint 20). Quotas first, billing second:
+    //                         a customer past their quota should not even
+    //                         get a "you have credits" signal.
+    //   3. PAYMENT_REQUIRED — credit balance ≥ 1 scene
+    //
+    // Transactional debit happens after Gemini and just before Veo submit.
     let creditPriceContext = { price_per_scene: null };
     if (!dryRun) {
       const userIdForBilling = req.user?.uid;
@@ -339,6 +504,47 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
           message: "Could not derive user_id from auth — needed for credit lookup.",
         });
       }
+
+      // ─── (Sprint 20) Cost gates ────────────────────────────────────────
+      try {
+        const scenesPreview = parseInt(
+          process.env.MAX_SCENES_PER_REEL || "2",
+          10,
+        );
+        const estimatedCostPreview =
+          Math.round(scenesPreview * VEO_DURATION_SEC * 0.5 * 100) / 100;
+        const denial = await evaluateCostGate({
+          userId: userIdForBilling,
+          scenesToCharge: scenesPreview,
+          estimatedCostUsd: estimatedCostPreview,
+        });
+        if (denial) {
+          console.warn(
+            `[COST_GUARD] ${denial.error} user=${userIdForBilling}`,
+            denial,
+          );
+          return res.status(429).json({
+            ok: false,
+            success: false,
+            ...denial,
+          });
+        }
+      } catch (err) {
+        console.error(
+          "[/api/generate-reel] cost guard read failed:",
+          err?.message ?? err,
+        );
+        // Fail closed: if Firestore can't tell us the spend, refuse the
+        // call. Better an operator opens this manually than leaking budget.
+        return res.status(503).json({
+          ok: false,
+          error: "COST_GUARD_UNAVAILABLE",
+          message:
+            "Could not verify daily budget. Try again or check Firestore reads.",
+        });
+      }
+
+      // ─── Credit balance gate ───────────────────────────────────────────
       try {
         const balance = await getCreditsBalance(userIdForBilling);
         if ((balance?.credits ?? 0) < 1) {
@@ -777,12 +983,231 @@ app.post("/api/billing/webhook", express.json({ verify: (req, _res, buf) => { re
   }
 });
 
+// Stripe-native webhook (Sprint 21). Stripe signs with `Stripe-Signature`
+// using a timestamped HMAC scheme that the SDK's constructEvent helper
+// validates atomically. This endpoint accepts:
+//   - checkout.session.completed       — usual happy path for one-shot purchases
+//   - payment_intent.succeeded         — fallback for non-Checkout flows
+// Both are mapped onto the same processWebhookEvent() used by the
+// provider-agnostic /api/billing/webhook so credit accounting stays in one
+// place. user_id + product come from session.metadata or payment_intent.metadata,
+// stamped by /api/billing/create-checkout.
+//
+// Required env: STRIPE_SECRET_KEY + STRIPE_WEBHOOK_SECRET (whsec_…)
+app.post(
+  "/api/billing/stripe-webhook",
+  // raw body — Stripe SDK needs the bytes exactly as sent.
+  express.raw({ type: "application/json" }),
+  async (req, res) => {
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    const whSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!stripeKey || !whSecret) {
+      return res
+        .status(503)
+        .json({ ok: false, error: "STRIPE_NOT_CONFIGURED" });
+    }
+    const sig = req.header("stripe-signature");
+    if (!sig) {
+      return res
+        .status(401)
+        .json({ ok: false, error: "MISSING_STRIPE_SIGNATURE" });
+    }
+    let event;
+    try {
+      const stripe = new Stripe(stripeKey, { apiVersion: "2024-12-18.acacia" });
+      event = stripe.webhooks.constructEvent(req.body, sig, whSecret);
+    } catch (err) {
+      console.warn("[BILLING] stripe webhook signature failed:", err?.message);
+      return res
+        .status(401)
+        .json({ ok: false, error: "INVALID_STRIPE_SIGNATURE" });
+    }
+
+    const interesting = new Set([
+      "checkout.session.completed",
+      "payment_intent.succeeded",
+    ]);
+    if (!interesting.has(event.type)) {
+      // Stripe expects 2xx for events we don't care about, otherwise it retries.
+      return res.json({ ok: true, ignored: event.type });
+    }
+
+    let userId = null;
+    let product = null;
+    let amountPaid = 0;
+    let transactionId = event.id;
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object;
+      userId =
+        session.metadata?.user_id ||
+        session.client_reference_id ||
+        session.customer_email ||
+        null;
+      product = session.metadata?.product || null;
+      amountPaid = (session.amount_total ?? 0) / 100;
+      transactionId =
+        session.payment_intent || session.id || transactionId;
+    } else if (event.type === "payment_intent.succeeded") {
+      const pi = event.data.object;
+      userId = pi.metadata?.user_id || pi.receipt_email || null;
+      product = pi.metadata?.product || null;
+      amountPaid = (pi.amount_received ?? 0) / 100;
+      transactionId = pi.id || transactionId;
+    }
+
+    if (!userId || !product || !(amountPaid > 0)) {
+      console.warn("[BILLING] stripe webhook missing metadata:", {
+        type: event.type,
+        userId,
+        product,
+        amountPaid,
+        transactionId,
+      });
+      // 200 anyway so Stripe stops retrying — operator can replay manually.
+      return res.json({
+        ok: false,
+        error: "INCOMPLETE_METADATA",
+        event_type: event.type,
+        transaction_id: transactionId,
+      });
+    }
+
+    try {
+      const result = await processWebhookEvent({
+        userId,
+        product,
+        amountPaid,
+        transactionId,
+      });
+      console.log(
+        `[BILLING] stripe ${event.type} → ${result.status} user=${userId} +${result.credits_added ?? 0} (tx=${transactionId})`,
+      );
+      return res.json({ ok: true, ...result });
+    } catch (err) {
+      if (err instanceof UnknownProductError) {
+        return res.status(400).json({
+          ok: false,
+          error: "UNKNOWN_PRODUCT",
+          product: err.product,
+          known_products: Object.keys(PRODUCT_TO_SCENES),
+        });
+      }
+      console.error("[BILLING] stripe webhook processWebhookEvent:", err);
+      return res
+        .status(500)
+        .json({ ok: false, error: err?.message ?? String(err) });
+    }
+  },
+);
+
+// Stripe Checkout session creator (Sprint 21).
+// Frontend calls this to receive a hosted Stripe URL the user is redirected
+// to. user_id (provided by the webapp's authenticated proxy) is stamped as
+// metadata on the Stripe Customer + Payment Intent so the eventual webhook
+// event can credit the right account. Idempotency on the credit side is
+// already handled by webhook_events/{transaction_id}; this endpoint is
+// fine to retry — Stripe creates a new Session per call.
+//
+// Required env on the bridge:
+//   STRIPE_SECRET_KEY              sk_test_… (sandbox) or sk_live_… (prod)
+//   STRIPE_PRICE_PROD_1_SCENE      price_… for the $9 SKU (Stripe dashboard)
+//   STRIPE_PRICE_PROD_2_SCENES     price_… for the $17 SKU (optional)
+//   STRIPE_PRICE_PROD_4_SCENES     price_… for the $32 SKU (optional)
+//   STRIPE_CHECKOUT_SUCCESS_URL    e.g. https://www.viralobj.app/app/billing?checkout=success
+//   STRIPE_CHECKOUT_CANCEL_URL     e.g. https://www.viralobj.app/app/billing?checkout=cancelled
+app.post("/api/billing/create-checkout", dualAuth, async (req, res) => {
+  const userId = req.user?.uid;
+  const userEmail = req.user?.email || null;
+  if (!userId) {
+    return res.status(401).json({ ok: false, error: "NO_USER_CONTEXT" });
+  }
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  if (!stripeKey) {
+    return res.status(503).json({
+      ok: false,
+      error: "STRIPE_NOT_CONFIGURED",
+      message:
+        "STRIPE_SECRET_KEY is not set on the bridge. Operator must wire Stripe before checkout works.",
+    });
+  }
+  const product = (req.body?.product || "prod_1_scene").toString();
+  if (!PRODUCT_CATALOG[product]) {
+    return res.status(400).json({
+      ok: false,
+      error: "UNKNOWN_PRODUCT",
+      product,
+      known_products: Object.keys(PRODUCT_CATALOG),
+    });
+  }
+  const priceEnvKey = `STRIPE_PRICE_${product.toUpperCase()}`;
+  const priceId = process.env[priceEnvKey];
+  if (!priceId) {
+    return res.status(503).json({
+      ok: false,
+      error: "STRIPE_PRICE_NOT_CONFIGURED",
+      message: `Set ${priceEnvKey} on the bridge to a Stripe Price id (price_…).`,
+      product,
+    });
+  }
+  const successUrl =
+    process.env.STRIPE_CHECKOUT_SUCCESS_URL ||
+    "https://www.viralobj.app/app/billing?checkout=success";
+  const cancelUrl =
+    process.env.STRIPE_CHECKOUT_CANCEL_URL ||
+    "https://www.viralobj.app/app/billing?checkout=cancelled";
+
+  try {
+    const stripe = new Stripe(stripeKey, { apiVersion: "2024-12-18.acacia" });
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      line_items: [{ price: priceId, quantity: 1 }],
+      // Two metadata layers — Session for human auditability, Payment
+      // Intent for the actual webhook event the credit logic reads.
+      client_reference_id: userId,
+      customer_email: userEmail || undefined,
+      metadata: { user_id: userId, product },
+      payment_intent_data: { metadata: { user_id: userId, product } },
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+    });
+    return res.json({
+      ok: true,
+      success: true,
+      checkout_url: session.url,
+      session_id: session.id,
+      product,
+      price_usd: PRODUCT_CATALOG[product].price_usd,
+      scenes: PRODUCT_CATALOG[product].scenes,
+    });
+  } catch (err) {
+    console.error("[BILLING] stripe checkout failed:", err?.message ?? err);
+    return res.status(502).json({
+      ok: false,
+      error: "STRIPE_CHECKOUT_FAILED",
+      message: err?.message ?? String(err),
+    });
+  }
+});
+
 // Read-only balance probe — useful to a frontend that wants to display
 // "you have N renders left" before the user attempts a generation.
 app.get("/api/billing/credits", dualAuth, async (req, res) => {
   const userId = req.user?.uid;
   if (!userId) {
     return res.status(401).json({ ok: false, error: "NO_USER_CONTEXT" });
+  }
+  // Sprint 25.1 — local dev short-circuit. Pretends a wallet with 999
+  // credits so the wizard never blocks on PAYMENT_REQUIRED.
+  if (isMockBilling()) {
+    return res.json({
+      ok: true,
+      success: true,
+      mock: true,
+      user_id: userId,
+      credits: 999,
+      price_per_scene: 0,
+      exists: true,
+    });
   }
   try {
     const balance = await getCreditsBalance(userId);
@@ -797,6 +1222,34 @@ app.get("/api/billing/credits", dualAuth, async (req, res) => {
 app.get("/api/reel/:jobId/status", dualAuth, async (req, res) => {
   const { jobId } = req.params;
   const startedAt = Date.now();
+
+  // Sprint 25.1 — mock status for the deterministic mock-job-001 the
+  // mock generate-reel handler returns. Doubles as an explicit "we are
+  // running offline" signal because the public_url points to mock.video.
+  if (isMockVertex() && jobId === "mock-job-001") {
+    return res.json({
+      ok: true,
+      success: true,
+      mock: true,
+      job_id: jobId,
+      status: "completed",
+      scene_count: 1,
+      completed_scenes: 1,
+      failed_scenes: 0,
+      estimated_veo_cost: 0,
+      actual_veo_cost: 0,
+      scenes: [
+        {
+          index: 0,
+          status: "completed",
+          public_url: "https://mock.video/url.mp4",
+          gcs_uri: "mock://video.mp4",
+          error: null,
+        },
+      ],
+    });
+  }
+
   try {
     const status = await getJobStatus(jobId);
     if (!status) {
@@ -1279,7 +1732,10 @@ function buildOpenApiSpec(baseUrl) {
             + "  5. The caller polls GET /api/reel/{jobId}/status until status='completed'.\n\n"
             + "Behaviour by flag:\n"
             + "  • ENABLE_VEO_GENERATION!='true' (default) + no dry_run → 403 VEO_DISABLED.\n"
-            + "  • ENABLE_VEO_GENERATION=='true' + no dry_run → 202 with job_id (or 500 VEO_SUBMIT_FAILED if every scene submit fails).\n\n"
+            + "  • ENABLE_VEO_GENERATION=='true' + no dry_run → 202 with job_id (or 500 VEO_SUBMIT_FAILED if every scene submit fails).\n"
+            + "  • Sprint 20 cost gates (full mode only):\n"
+            + "      - 429 USER_DAILY_LIMIT_EXCEEDED when sum(scene_count) for the user today ≥ USER_DAILY_SCENE_LIMIT.\n"
+            + "      - 429 DAILY_BUDGET_EXCEEDED when sum(actual_veo_cost ?? estimated_veo_cost) today ≥ DAILY_VEO_BUDGET_USD.\n\n"
             + "Auth: dualAuth — Bearer Firebase ID token preferred, X-Gemini-Key fallback.",
           tags: ["generation"],
           security: [{ GeminiKey: [] }],
@@ -1345,7 +1801,7 @@ function buildOpenApiSpec(baseUrl) {
             },
             "429": {
               description:
-                "COST_LIMIT_EXCEEDED — placeholder for future per-tenant rate limits. Currently unused; MAX_SCENES_PER_REEL caps cost transparently inside a single call instead of rejecting it.",
+                "Rate-limit / cost-guard rejection. Two distinct codes share this status:\n  • USER_DAILY_LIMIT_EXCEEDED — caller already rendered USER_DAILY_SCENE_LIMIT scenes today (reset at UTC midnight).\n  • DAILY_BUDGET_EXCEEDED — operator-wide DAILY_VEO_BUDGET_USD reached for the current UTC day.\n\nEither check happens AFTER credit balance verification but BEFORE the Gemini call so a blocked request never burns text-generation budget.",
               content: {
                 "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } },
               },

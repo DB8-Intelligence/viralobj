@@ -40,6 +40,31 @@ export const PRODUCT_TO_SCENES = {
   prod_4_scenes: 4,
 };
 
+// Catalog used by the webapp checkout button. price is the customer-facing
+// number; cost_per_scene_usd is what we owe Vertex Veo (~$4); the spread is
+// margin. Stripe needs an actual Price ID — set STRIPE_PRICE_<product> env
+// vars on the bridge and the create-checkout route reads from there.
+export const PRODUCT_CATALOG = {
+  prod_1_scene: {
+    label: "1 cena (1 render Veo de 8s)",
+    scenes: 1,
+    price_usd: 9,
+    cost_per_scene_usd: 4,
+  },
+  prod_2_scenes: {
+    label: "2 cenas",
+    scenes: 2,
+    price_usd: 17,
+    cost_per_scene_usd: 4,
+  },
+  prod_4_scenes: {
+    label: "4 cenas",
+    scenes: 4,
+    price_usd: 32,
+    cost_per_scene_usd: 4,
+  },
+};
+
 export class InsufficientCreditsError extends Error {
   constructor(currentBalance, required) {
     super(`Insufficient credits: have ${currentBalance}, need ${required}.`);
@@ -224,6 +249,7 @@ export async function getCreditsBalance(userId) {
 
 export default {
   PRODUCT_TO_SCENES,
+  PRODUCT_CATALOG,
   InsufficientCreditsError,
   UnknownProductError,
   processWebhookEvent,
