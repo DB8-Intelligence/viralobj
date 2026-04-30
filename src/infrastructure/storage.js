@@ -26,6 +26,15 @@ import path from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { Storage } from "@google-cloud/storage";
+import { isMockStorage } from "../config/runtime.js";
+
+const MOCK_RESULT = (destinationName, sizeBytes = 0) => ({
+  url: `mock://${destinationName}`,
+  bucket: "mock",
+  name: destinationName,
+  sizeBytes,
+  mock: true,
+});
 
 const BUCKET_NAME = process.env.GCS_BUCKET_NAME || "viralobj-assets";
 
@@ -72,6 +81,12 @@ export async function uploadMedia(filePath, destinationName, opts = {}) {
   if (!filePath) throw new Error("uploadMedia: filePath is required");
   if (!destinationName) throw new Error("uploadMedia: destinationName is required");
 
+  // Sprint 25.1 — local dev: pretend the upload succeeded.
+  if (isMockStorage()) {
+    console.log(`[MOCK_STORAGE] uploadMedia → mock://${destinationName}`);
+    return MOCK_RESULT(destinationName);
+  }
+
   const absolute = path.resolve(filePath);
   const stat = await fs.promises.stat(absolute);
   if (!stat.isFile()) throw new Error(`uploadMedia: not a file at ${absolute}`);
@@ -117,6 +132,13 @@ export async function uploadFromUrl(sourceUrl, destinationName, opts = {}) {
     throw new Error(`uploadFromUrl: invalid sourceUrl "${sourceUrl}"`);
   }
   if (!destinationName) throw new Error("uploadFromUrl: destinationName is required");
+
+  // Sprint 25.1 — local dev: pretend the relay succeeded without fetching
+  // anything. Avoids accidental egress in offline mode.
+  if (isMockStorage()) {
+    console.log(`[MOCK_STORAGE] uploadFromUrl(${sourceUrl}) → mock://${destinationName}`);
+    return { ...MOCK_RESULT(destinationName), sourceContentType: null };
+  }
 
   const res = await fetch(sourceUrl);
   if (!res.ok || !res.body) {

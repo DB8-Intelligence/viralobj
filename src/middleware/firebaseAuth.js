@@ -18,6 +18,7 @@
  * not block the request).
  */
 import { auth, firestore, FieldValue } from "../infrastructure/firebase.js";
+import { isLocalDev, isMockAuth } from "../config/runtime.js";
 
 const ANON_USER = {
   uid: "system:gemini-agent",
@@ -26,7 +27,22 @@ const ANON_USER = {
   provider: "gemini-key",
 };
 
+const LOCAL_DEV_USER = {
+  uid: "local-dev-user",
+  email: "local@viralobj.dev",
+  name: "Local Dev",
+  provider: "mock",
+};
+
 export async function dualAuth(req, res, next) {
+  // Sprint 25.1 — local dev short-circuit. Skipped entirely in production
+  // because the boot guard refuses to start with MOCK_AUTH=true when
+  // NODE_ENV=production.
+  if (isLocalDev() && isMockAuth()) {
+    req.user = { ...LOCAL_DEV_USER };
+    return next();
+  }
+
   const authz = req.header("Authorization") || req.header("authorization");
 
   // ── Path 1: Firebase Bearer ───────────────────────────────────────────
