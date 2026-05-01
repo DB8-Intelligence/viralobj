@@ -59,6 +59,15 @@ function getDefaultObjectsFor(niche: string): string {
   return cfg.objects.slice(0, 2).map((o) => o.id).join(", ");
 }
 
+// Sprint 29 — demo preview shown inside PackagePreview to communicate
+// "this is what your reel will look like" before the user pays for a real
+// Veo render. Reuses the real Sprint 19 Veo output (8s, ~$4 already paid)
+// so we get authentic product fidelity with zero new GCP cost.
+// Swap to your own asset by uploading to gs://viralobj-assets/<path> and
+// replacing this URL.
+const MOCK_PREVIEW_VIDEO_URL =
+  "https://storage.googleapis.com/viralobj-assets/videos/system%3Agemini-agent/ygoBeN3ueEW9RpuIBfbB/scene-0/15456740302001063961/sample_0.mp4";
+
 // ─── Types ────────────────────────────────────────────────────────────
 
 type Step = "input" | "package" | "rendering" | "completed" | "failed";
@@ -647,7 +656,7 @@ function InputForm(props: {
           className="input w-full"
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
-          placeholder="vinagre branco multiuso"
+          placeholder="Ex: como limpar casa mais rápido | por que seu gato te ignora"
         />
         {topicSuggestions.length > 0 && (
           <div className="mt-2">
@@ -739,10 +748,37 @@ function PackagePreview(props: {
   const hashtags = (post.hashtags_pt ?? []).join(" ");
   return (
     <div className="space-y-4">
+      {/* Sprint 29 — sales-pitch hero: makes the dry_run feel like a finished product */}
+      <div className="card p-6 bg-gradient-to-br from-viral-accent/10 via-transparent to-viral-accent2/10 border-viral-accent/30">
+        <h2 className="text-2xl font-bold mb-3">🚀 Seu vídeo viral está pronto</h2>
+        <ul className="space-y-1 text-sm text-viral-muted">
+          <li className="flex items-center gap-2"><span className="text-viral-accent">✔</span> Roteiro bilíngue com marcações de cena</li>
+          <li className="flex items-center gap-2"><span className="text-viral-accent">✔</span> Personagens com voz e personalidade</li>
+          <li className="flex items-center gap-2"><span className="text-viral-accent">✔</span> Post pronto pra Instagram (hook · body · hashtags)</li>
+          <li className="flex items-center gap-2"><span className="text-viral-accent">✔</span> Timeline de captions com timestamps</li>
+        </ul>
+      </div>
+
+      {/* Demo preview — real Veo render so the user sees the actual quality */}
+      <div className="card p-2 overflow-hidden">
+        <div className="text-[10px] uppercase tracking-wider text-viral-muted font-semibold px-3 pt-2 pb-1 flex items-center justify-between">
+          <span>Preview do estilo de vídeo</span>
+          <span className="text-viral-muted/60 normal-case font-normal">amostra Veo · 8s · 9:16</span>
+        </div>
+        <video
+          controls
+          preload="metadata"
+          className="w-full max-w-[280px] mx-auto rounded-lg shadow-lg"
+          src={MOCK_PREVIEW_VIDEO_URL}
+        >
+          Seu navegador não suporta vídeo.
+        </video>
+      </div>
+
       <div className="card p-6">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div>
-            <div className="eyebrow text-viral-accent mb-1">📦 Pacote pronto</div>
+            <div className="eyebrow text-viral-accent mb-1">📦 Pacote gerado</div>
             <h2 className="text-2xl font-bold mb-1">{pkg.meta?.topic_pt ?? "(sem tema)"}</h2>
             <p className="text-xs text-viral-muted">
               {nicheLabel} · {tone} · {duration}s · {pkg.meta?.objects_count ?? "?"} objeto(s)
@@ -786,7 +822,7 @@ function PackagePreview(props: {
         <div className="space-y-2">
           <div className="text-[10px] uppercase tracking-wider text-viral-muted font-semibold mb-2">Personagens</div>
           {(pkg.characters ?? []).map((c, i) => (
-            <div key={c.id ?? i} className="border border-viral-border rounded-lg p-3 flex gap-3 items-start">
+            <div key={c.id ?? i} className="character-card rounded-lg p-3 flex gap-3 items-start">
               <div className="text-2xl flex-shrink-0">{c.emoji ?? "🧩"}</div>
               <div className="flex-1 min-w-0">
                 <div className="font-semibold mb-1 flex items-center gap-2">
@@ -859,14 +895,16 @@ function PackagePreview(props: {
       </div>
 
       <div className="flex gap-3">
-        <button type="button" onClick={onBack} className="btn-secondary flex-1">← Refazer</button>
+        <button type="button" onClick={onBack} className="btn-secondary flex-1">
+          ✏️ Editar roteiro
+        </button>
         <button
           type="button"
           onClick={onRender}
           disabled={busy}
           className="btn-primary flex-1"
         >
-          Renderizar vídeo →
+          🎬 Gerar vídeo
         </button>
       </div>
     </div>

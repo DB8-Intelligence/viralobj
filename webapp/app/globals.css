@@ -167,4 +167,19 @@
   .aspect-video-9-16 {
     aspect-ratio: 9 / 16;
   }
+
+  /* Premium character card — gives the wizard package preview a "produto pago"
+     feel instead of a flat list (Sprint 29). */
+  .character-card {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.005));
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+  .character-card:hover {
+    transform: scale(1.02);
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 6px 24px -8px rgba(0, 0, 0, 0.5);
+  }
 }
