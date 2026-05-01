@@ -1,878 +1,1080 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { NICHES } from "@/lib/niches-data";
 import { NICHE_CONFIGS, TONE_OPTIONS } from "@/lib/niche-objects-data";
-import type { ObjectTone } from "@/lib/viral-objects/object-bible";
-import DebugPanel, { type RenderReport } from "@/components/app/DebugPanel";
 
-// ─── Tipos do wizard ──────────────────────────────────────────────
+// Topic suggestion chips per niche — operator can extend per nicho.
+const TOPIC_SUGGESTIONS: Record<string, string[]> = {
+  casa: [
+    "vinagre branco multiuso",
+    "esponja é nojenta depois de 7 dias",
+    "5 erros que estragam panela antiaderente",
+  ],
+  plantas: [
+    "regar suculenta direito",
+    "luz indireta vs direta",
+    "por que sua orquídea morreu",
+  ],
+  financeiro: [
+    "como o IR consome 30% do seu salário",
+    "dívida no rotativo cobra 400% ao ano",
+    "fundos de renda fixa que pagam 13%",
+  ],
+  culinaria: [
+    "chocolate ganache em 1 minuto",
+    "pão sem sova de 5 ingredientes",
+    "ovo perfeito sem tempo de cozinhar",
+  ],
+  saude: [
+    "alimentos que reduzem inflamação",
+    "água com limão de manhã: mito ou verdade",
+    "3 sinais de pré-diabetes que você ignora",
+  ],
+  pets: [
+    "comida humana que mata cachorro",
+    "como saber se gato está estressado",
+    "vermífugo: a cada quanto tempo",
+  ],
+  fitness: [
+    "carboidrato antes ou depois do treino",
+    "3 exercícios que custam zero",
+    "creatina: precisa fazer ciclo",
+  ],
+  // Fallback for niches without curated suggestions
+  _default: [
+    "tema 1",
+    "tema 2",
+    "tema 3",
+  ],
+};
 
-type WizardStep = "input" | "images" | "script" | "audio" | "video" | "music";
-
-interface GeneratedImage {
-  sceneId: string;
-  sceneType: string;
-  imageUrl: string;
-  objectId: string;
+function getTopicSuggestions(niche: string): string[] {
+  return TOPIC_SUGGESTIONS[niche] ?? TOPIC_SUGGESTIONS._default;
 }
 
-interface CharacterScript {
-  id: string;
-  name_pt: string;
-  emoji: string;
-  voice_script_pt: string;
+function getDefaultObjectsFor(niche: string): string {
+  const cfg = NICHE_CONFIGS[niche];
+  if (!cfg?.objects?.length) return "";
+  return cfg.objects.slice(0, 2).map((o) => o.id).join(", ");
+}
+
+// ─── Types ────────────────────────────────────────────────────────────
+
+type Step = "input" | "package" | "rendering" | "completed" | "failed";
+
+type Character = {
+  id?: number;
+  name_pt?: string;
+  emoji?: string;
+  timestamp_start?: string;
+  timestamp_end?: string;
+  voice_script_pt?: string;
   voice_script_en?: string;
-}
+};
 
-interface GeneratedAudio {
-  sceneId: string;
-  sceneType: string;
-  audioUrl: string;
-  objectId: string;
-  durationMs: number;
-}
+type PostCopy = {
+  hook_pt?: string;
+  body_pt?: string;
+  cta_pt?: string;
+  hashtags_pt?: string[];
+  hashtags_en?: string[];
+};
 
-interface SceneVideo {
-  sceneId: string;
-  sceneType: string;
-  videoUrl: string;
-  durationMs: number;
-}
+type Variation = { id?: number; angle_pt?: string; title_pt?: string };
 
-interface QueueItem {
-  sceneId: string;
-  sceneType: string;
-  requestId: string | null;
-  imageUrl: string;
-  promptPreview: string;
-  status: "IN_QUEUE" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "SUBMIT_FAILED";
+type Caption = {
+  time?: string;
+  text_pt?: string;
+  text_en?: string;
+  character?: string;
+  style?: string;
+  color?: string;
+};
+
+type Package = {
+  meta?: {
+    niche?: string;
+    topic_pt?: string;
+    tone?: string;
+    duration?: number;
+    objects_count?: number;
+  };
+  characters?: Character[];
+  post_copy?: PostCopy;
+  variations?: Variation[];
+  captions_full_script?: Caption[];
+};
+
+type Scene = {
+  index: number;
+  status: string;
+  public_url?: string | null;
+  gcs_uri?: string | null;
+  error?: string | null;
+};
+
+type StatusResp = {
+  ok: boolean;
+  status: string;
+  scene_count?: number;
+  completed_scenes?: number;
+  failed_scenes?: number;
+  scenes?: Scene[];
+  mock?: boolean;
+};
+
+type HistoryEntry = {
+  id: string;
+  ts: number;
+  niche: string;
+  topic: string;
+  objects: string;
+  tone: string;
+  duration: number;
+  hook?: string;
   videoUrl?: string;
-  error?: string;
-  submittedAt: string;
-  completedAt?: string;
-  durationMs?: number;
+};
+
+type ErrorMap = {
+  401: { title: string; hint: string };
+  402: { title: string; hint: string };
+  403: { title: string; hint: string };
+  429: { title: string; hint: string };
+  500: { title: string; hint: string };
+};
+
+const ERRORS: ErrorMap = {
+  401: { title: "Sessão expirada", hint: "Faça login novamente para continuar." },
+  402: { title: "Sem créditos", hint: "Compre 1 cena na aba Assinatura para renderizar." },
+  403: { title: "Veo desabilitado", hint: "ENABLE_VEO_GENERATION=false (modo seguro). Reativa quando estiver pronto pra cobrar render real." },
+  429: { title: "Limite diário atingido", hint: "Tente novamente após meia-noite UTC, ou aumente os caps." },
+  500: { title: "Erro inesperado", hint: "Tente novamente em alguns segundos." },
+};
+
+function pickError(status: number): { title: string; hint: string } {
+  const k = (status >= 500 ? 500 : status) as keyof ErrorMap;
+  return ERRORS[k] ?? ERRORS[500];
 }
 
-const STEPS: { key: WizardStep; label: string; icon: string }[] = [
-  { key: "input", label: "Tema", icon: "1" },
-  { key: "images", label: "Imagens", icon: "2" },
-  { key: "script", label: "Roteiro", icon: "3" },
-  { key: "audio", label: "Voz", icon: "4" },
-  { key: "video", label: "Vídeo", icon: "5" },
-  { key: "music", label: "Música", icon: "6" },
+// Loading hints — rotate every 1.4s during async work to give a sense of progress.
+const HINTS_PACKAGE = [
+  "📚 Lendo o nicho…",
+  "🎭 Escolhendo personalidades…",
+  "✍️ Escrevendo roteiro bilíngue…",
+  "🏷️ Gerando hashtags virais…",
+  "🎬 Empacotando timeline…",
+];
+const HINTS_RENDER = [
+  "🤖 Submetendo job ao Veo…",
+  "🎨 Renderizando frames 9:16…",
+  "🎙️ Sincronizando lip-sync…",
+  "🎵 Mixando áudio…",
+  "📦 Subindo MP4 para Cloud Storage…",
 ];
 
+const HISTORY_KEY = "viralobj.generate.history.v1";
+
+function loadHistory(): HistoryEntry[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    return raw ? (JSON.parse(raw) as HistoryEntry[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHistoryEntry(entry: HistoryEntry) {
+  if (typeof window === "undefined") return;
+  try {
+    const cur = loadHistory();
+    const next = [entry, ...cur.filter((e) => e.id !== entry.id)].slice(0, 5);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+  } catch {
+    /* quota or disabled — degrade silently */
+  }
+}
+
+// ─── Component ────────────────────────────────────────────────────────
+
 export default function AppGeneratePage() {
-  const router = useRouter();
-
-  // ─── Estado do wizard ───────────────────────────────────────────
-  const [step, setStep] = useState<WizardStep>("input");
-  const [generationId, setGenerationId] = useState<string | null>(null);
-
-  // Etapa 1: Input
+  const [step, setStep] = useState<Step>("input");
   const [niche, setNiche] = useState("casa");
-  const [selectedObjects, setSelectedObjects] = useState<string[]>([]);
-  const [selectedTopic, setSelectedTopic] = useState("");
-  const [customTopic, setCustomTopic] = useState("");
-  const [tone, setTone] = useState<ObjectTone>("dramatic");
-  const [duration, setDuration] = useState(30);
-  const [mode, setMode] = useState<"single" | "multi">("multi");
+  const [objects, setObjects] = useState("esponja, celular");
+  const [topic, setTopic] = useState("vinagre branco multiuso");
+  const [tone, setTone] = useState("dramatic");
+  const [duration, setDuration] = useState(15);
 
-  // Etapa 2: Imagens
-  const [images, setImages] = useState<GeneratedImage[]>([]);
-  const [approvedImages, setApprovedImages] = useState<Set<string>>(new Set());
+  const [pkg, setPkg] = useState<Package | null>(null);
+  const [providerUsed, setProviderUsed] = useState<string | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [statusResp, setStatusResp] = useState<StatusResp | null>(null);
+  const [error, setError] = useState<{ title: string; hint: string; raw?: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [credits] = useState<number>(999);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [hintIdx, setHintIdx] = useState(0);
+  const [copied, setCopied] = useState<string | null>(null);
 
-  // Etapa 3: Roteiro
-  const [characters, setCharacters] = useState<CharacterScript[]>([]);
-  const [editedScripts, setEditedScripts] = useState<Record<string, string>>({});
+  const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hintTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Etapa 4: Áudio
-  const [audios, setAudios] = useState<GeneratedAudio[]>([]);
-
-  // Etapa 5: Vídeo (queue async + polling)
-  const [videos, setVideos] = useState<SceneVideo[]>([]);
-  const [videoQueue, setVideoQueue] = useState<QueueItem[]>([]);
-  const [videoPolling, setVideoPolling] = useState(false);
-  const [videoReport, setVideoReport] = useState<RenderReport | null>(null);
-  const [videoProvider, setVideoProvider] = useState<string | null>(null);
-
-  // Global
-  const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const config = NICHE_CONFIGS[niche];
-  const objects = config?.objects ?? [];
-  const topics = config?.topics ?? [];
-
-  function handleNicheChange(newNiche: string) {
-    setNiche(newNiche);
-    setSelectedObjects([]);
-    setSelectedTopic("");
-    setCustomTopic("");
+  function clearPoll() {
+    if (pollTimer.current) clearInterval(pollTimer.current);
+    pollTimer.current = null;
   }
+  function clearHints() {
+    if (hintTimer.current) clearInterval(hintTimer.current);
+    hintTimer.current = null;
+  }
+  useEffect(() => () => { clearPoll(); clearHints(); }, []);
 
-  function toggleObject(objId: string) {
-    if (mode === "single") {
-      setSelectedObjects((prev) => (prev.includes(objId) ? [] : [objId]));
-    } else {
-      setSelectedObjects((prev) =>
-        prev.includes(objId)
-          ? prev.filter((id) => id !== objId)
-          : prev.length < 5
-            ? [...prev, objId]
-            : prev,
-      );
+  useEffect(() => {
+    setHistory(loadHistory());
+  }, []);
+
+  // Sprint 28b — auto-fill objects when niche changes (only if user hasn't
+  // typed something distinct from the previous niche's defaults). Avoids
+  // wiping a curated list the user is mid-editing.
+  const lastNicheRef = useRef<string>(niche);
+  useEffect(() => {
+    const prev = lastNicheRef.current;
+    if (prev === niche) return;
+    const prevDefault = getDefaultObjectsFor(prev);
+    const curObjs = objects.trim();
+    if (!curObjs || curObjs === prevDefault) {
+      const next = getDefaultObjectsFor(niche);
+      if (next) setObjects(next);
     }
-  }
+    lastNicheRef.current = niche;
+  }, [niche, objects]);
 
-  function getObjectNames(): string[] {
-    return selectedObjects.map((id) => {
-      const obj = objects.find((o) => o.id === id);
-      return obj?.name ?? id;
-    });
-  }
-
-  function getFinalTopic(): string {
-    if (customTopic.trim()) return customTopic.trim();
-    const topic = topics.find((t) => t.id === selectedTopic);
-    return topic?.label ?? selectedTopic;
-  }
-
-  function toggleImageApproval(sceneId: string) {
-    setApprovedImages((prev) => {
-      const next = new Set(prev);
-      if (next.has(sceneId)) next.delete(sceneId);
-      else next.add(sceneId);
-      return next;
-    });
-  }
-
-  function updateScript(charId: string, text: string) {
-    setEditedScripts((prev) => ({ ...prev, [charId]: text }));
-  }
-
-  // ─── Etapa 1 → 2: Gerar roteiro + imagens ──────────────────────
-  async function handleGenerateScriptAndImages() {
-    if (selectedObjects.length === 0) {
-      setError("Selecione pelo menos um personagem.");
+  // Drive rotating hints when busy.
+  useEffect(() => {
+    if (!busy) {
+      clearHints();
+      setHintIdx(0);
       return;
     }
-    if (!selectedTopic && !customTopic.trim()) {
-      setError("Selecione ou escreva um tópico.");
-      return;
-    }
+    setHintIdx(0);
+    hintTimer.current = setInterval(() => {
+      setHintIdx((i) => i + 1);
+    }, 1400);
+    return clearHints;
+  }, [busy]);
 
-    setLoading(true);
+  function copy(label: string, text: string) {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text).catch(() => {});
+    }
+    setCopied(label);
+    setTimeout(() => setCopied(null), 1600);
+  }
+
+  // ─── Step 1: Generate package (dry_run) ──────────────────────────────
+  async function handleGeneratePackage() {
+    setBusy(true);
     setError(null);
-    setStatus("Criando roteiro com IA...");
-
     try {
       const res = await fetch("/api/app/generate-package", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           niche,
-          objects: getObjectNames(),
-          topic: getFinalTopic(),
+          objects: objects.split(",").map((s) => s.trim()).filter(Boolean),
+          topic,
           tone,
           duration,
           lang: "both",
-          provider: "auto",
-          wizardMode: true, // Sinaliza para parar após imagens
+          dry_run: true,
         }),
       });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Erro desconhecido");
-
-      setGenerationId(data.generation_id);
-
-      // Extrair personagens do pacote
-      const chars = (data.package?.characters ?? []).map((c: any) => ({
-        id: c.id ?? c.name_pt,
-        name_pt: c.name_pt,
-        emoji: c.emoji ?? "🎭",
-        voice_script_pt: c.voice_script_pt ?? "",
-        voice_script_en: c.voice_script_en ?? "",
-      }));
-      setCharacters(chars);
-
-      // Inicializar scripts editáveis
-      const scripts: Record<string, string> = {};
-      chars.forEach((c: CharacterScript) => {
-        scripts[c.id] = c.voice_script_pt;
-      });
-      setEditedScripts(scripts);
-
-      // Extrair imagens geradas
-      const imgs = data.scene_images ?? [];
-      setImages(imgs);
-
-      // Aprovar todas por padrão (usuário pode desmarcar)
-      setApprovedImages(new Set(imgs.map((i: GeneratedImage) => i.sceneId)));
-
-      setStatus(null);
-      setStep("images");
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err));
-      setStatus(null);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // ─── Etapa 2 → 3: Aprovar imagens, ir para roteiro ─────────────
-  function handleApproveImages() {
-    if (approvedImages.size === 0) {
-      setError("Selecione pelo menos uma imagem.");
-      return;
-    }
-    setError(null);
-    setStep("script");
-  }
-
-  // ─── Etapa 3 → 4: Aprovar roteiro, gerar áudio ─────────────────
-  async function handleApproveScriptAndGenerateAudio() {
-    setLoading(true);
-    setError(null);
-    setStatus("Gerando narração com voz natural...");
-
-    try {
-      const res = await fetch("/api/app/generate-audio", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          generation_id: generationId,
-          edited_scripts: editedScripts,
-          approved_images: Array.from(approvedImages),
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Erro ao gerar áudio");
-
-      setAudios(data.scene_audios ?? []);
-      setStatus(null);
-      setStep("audio");
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err));
-      setStatus(null);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // ─── Etapa 4 → 5: Submeter jobs à fila Fal, avançar UI, iniciar polling
-  async function handleApproveAudioAndGenerateVideo() {
-    if (!generationId) {
-      setError("generation_id ausente. Recomece a geração.");
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    setStatus("Enviando cenas à fila do Veo 3...");
-
-    try {
-      const res = await fetch("/api/app/generate-video", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          generation_id: generationId,
-          approved_images: Array.from(approvedImages),
-        }),
-      });
-
-      const data = await res.json();
-      // Expected: 202 Accepted with queue_items
-      if (res.status !== 202 && !res.ok) {
-        throw new Error(data.error || "Erro ao submeter vídeo");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const e = pickError(res.status);
+        setError({ ...e, raw: (data as { error?: string }).error });
+        setBusy(false);
+        return;
       }
-
-      setVideoQueue(data.queue_items ?? []);
-      setVideoProvider("fal");
-      setVideos([]);
-      setVideoReport(null);
-      setStatus(null);
-      setStep("video");
-      // Inicia polling em background
-      startVideoStatusPolling(generationId);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err));
-      setStatus(null);
+      setPkg((data as { package?: Package }).package ?? null);
+      setProviderUsed((data as { provider_used?: string }).provider_used ?? null);
+      setStep("package");
+    } catch (e) {
+      setError({ title: "Erro de rede", hint: "Não consegui contactar o servidor.", raw: String(e) });
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
   }
 
-  // Polling a cada 10s até todos os jobs terminarem (ou erro/unmount)
-  function startVideoStatusPolling(genId: string) {
-    setVideoPolling(true);
-    let stopped = false;
+  // ─── Step 2: Render reel (full + poll) ───────────────────────────────
+  async function handleRenderReel() {
+    setBusy(true);
+    setError(null);
+    setStep("rendering");
+    setStatusResp(null);
+    try {
+      const res = await fetch("/api/app/render-reel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          niche,
+          objects: objects.split(",").map((s) => s.trim()).filter(Boolean),
+          topic,
+          tone,
+          duration,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const e = pickError(res.status);
+        setError({ ...e, raw: (data as { error?: string }).error });
+        setStep("package");
+        setBusy(false);
+        return;
+      }
+      const id = (data as { job_id?: string }).job_id;
+      if (!id) {
+        setError({ ...pickError(500), raw: "bridge não retornou job_id" });
+        setStep("package");
+        setBusy(false);
+        return;
+      }
+      setJobId(id);
+      startPolling(id);
+    } catch (e) {
+      setError({ title: "Erro de rede", hint: "Não consegui contactar o servidor.", raw: String(e) });
+      setStep("package");
+      setBusy(false);
+    }
+  }
 
-    const poll = async () => {
-      if (stopped) return;
+  function startPolling(id: string) {
+    clearPoll();
+    let attempts = 0;
+    const tick = async () => {
+      attempts++;
       try {
-        const res = await fetch(`/api/app/video-status?generation_id=${encodeURIComponent(genId)}`);
-        const data = await res.json();
-        if (!res.ok) {
-          console.warn("[poll] error:", data);
-          return;
+        const res = await fetch(
+          `/api/app/render-status?job_id=${encodeURIComponent(id)}`,
+        );
+        const data = (await res.json().catch(() => ({}))) as StatusResp;
+        setStatusResp(data);
+        if (data.status === "completed") {
+          clearPoll();
+          setStep("completed");
+          setBusy(false);
+          // Persist to history once we have a public URL.
+          const url = data.scenes?.find((s) => s.status === "completed")?.public_url ?? undefined;
+          const entry: HistoryEntry = {
+            id: id,
+            ts: Date.now(),
+            niche,
+            topic,
+            objects,
+            tone,
+            duration,
+            hook: pkg?.post_copy?.hook_pt,
+            videoUrl: url,
+          };
+          saveHistoryEntry(entry);
+          setHistory(loadHistory());
+        } else if (data.status === "failed") {
+          clearPoll();
+          setStep("failed");
+          setBusy(false);
+        } else if (attempts > 60) {
+          clearPoll();
+          setError({ title: "Timeout", hint: "O job demorou demais.", raw: `attempts=${attempts}` });
+          setStep("failed");
+          setBusy(false);
         }
-
-        setVideoQueue(data.items ?? []);
-        setVideos(data.scene_videos ?? []);
-
-        if (data.status === "completed" || data.status === "failed") {
-          stopped = true;
-          setVideoPolling(false);
-          // Atualizar report retrocompatível para o DebugPanel existente
-          setVideoReport({
-            scenes_requested: data.total ?? 0,
-            scenes_rendered: data.completed ?? 0,
-            total_cost_usd: (data.completed ?? 0) * 1.2, // estimativa (Veo3 Fast 8s ≈ $1.20)
-            elapsed_ms: 0,
-            scene_reports: (data.items ?? []).map((i: QueueItem) => ({
-              sceneId: i.sceneId,
-              sceneType: i.sceneType,
-              status: i.status === "COMPLETED" ? "success"
-                : i.status === "FAILED" || i.status === "SUBMIT_FAILED" ? "failed"
-                : "skipped",
-              videoUrl: i.videoUrl,
-              durationMs: i.durationMs,
-              error: i.error,
-              promptPreview: i.promptPreview,
-            })),
-          });
-          return;
-        }
-      } catch (err) {
-        console.warn("[poll] network error:", err);
+      } catch {
+        /* keep polling */
       }
-
-      if (!stopped) setTimeout(poll, 10000);
     };
-
-    setTimeout(poll, 3000); // primeiro poll após 3s (dá tempo do Fal enfileirar)
+    tick();
+    pollTimer.current = setInterval(tick, 3000);
   }
 
-  // ─── Etapa 5 → 6: Ir para música ──────────────────────────────
-  function handleGoToMusic() {
-    setStep("music");
+  function reset(opts: { keep?: "all" | "niche" | "tone" } = {}) {
+    clearPoll();
+    setStep("input");
+    setPkg(null);
+    setJobId(null);
+    setStatusResp(null);
+    setError(null);
+    setBusy(false);
+    if (opts.keep !== "all") {
+      if (opts.keep !== "niche") setObjects("esponja, celular");
+      if (opts.keep !== "tone") setTone("dramatic");
+      setTopic("");
+    }
   }
 
-  // ─── Etapa 6: Finalizar ───────────────────────────────────────
-  function handleFinalize() {
-    router.push("/app/history");
-    router.refresh();
+  function loadFromHistory(entry: HistoryEntry) {
+    setNiche(entry.niche);
+    setTopic(entry.topic);
+    setObjects(entry.objects);
+    setTone(entry.tone);
+    setDuration(entry.duration);
+    reset({ keep: "all" });
   }
 
-  // ─── Stepper visual ───────────────────────────────────────────
-  const currentStepIndex = STEPS.findIndex((s) => s.key === step);
+  const completedScene =
+    statusResp?.scenes?.find((s) => s.status === "completed") ?? null;
+  const nicheLabel = NICHES.find((n) => n.id === niche)?.label ?? niche;
 
+  // ─── Render ──────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-3xl font-bold mb-1">Nova geração</h1>
-        <p className="text-viral-muted text-sm">
-          Siga as etapas para criar seu vídeo com aprovação em cada passo.
-        </p>
-      </header>
+    <div className="grid lg:grid-cols-[1fr_280px] gap-6">
+      <div className="space-y-6">
+        <header className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold mb-1">Gerar reel</h1>
+            <p className="text-viral-muted text-sm">
+              Pacote (Gemini) → render (Veo) → vídeo final.
+            </p>
+          </div>
+          <div className="card px-4 py-2 text-right">
+            <div className="text-[10px] uppercase tracking-wider text-viral-muted">Créditos</div>
+            <div className="text-xl font-bold">{credits}</div>
+          </div>
+        </header>
 
-      {/* STEPPER */}
-      <div className="card p-4">
-        <div className="flex items-center justify-between gap-1">
-          {STEPS.map((s, i) => (
-            <div key={s.key} className="flex items-center gap-1 flex-1">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                  i < currentStepIndex
-                    ? "bg-emerald-500/20 text-emerald-400"
-                    : i === currentStepIndex
-                      ? "bg-viral-accent/20 text-viral-accent ring-2 ring-viral-accent"
-                      : "bg-viral-border/20 text-viral-muted/40"
-                }`}
-              >
-                {i < currentStepIndex ? "✓" : s.icon}
-              </div>
-              <span
-                className={`text-[10px] font-medium hidden sm:inline ${
-                  i === currentStepIndex ? "text-viral-accent" : "text-viral-muted/60"
-                }`}
-              >
-                {s.label}
-              </span>
-              {i < STEPS.length - 1 && (
-                <div
-                  className={`flex-1 h-px mx-1 ${
-                    i < currentStepIndex ? "bg-emerald-500/40" : "bg-viral-border/30"
-                  }`}
-                />
-              )}
-            </div>
+        <Stepper step={step} />
+
+        {error && (
+          <div className="card p-4 border-red-500/40 bg-red-500/10">
+            <div className="font-semibold text-red-300 mb-1">⚠️ {error.title}</div>
+            <p className="text-sm text-viral-muted">{error.hint}</p>
+            {error.raw && (
+              <pre className="text-[10px] text-viral-muted/60 mt-2 font-mono overflow-x-auto">{error.raw}</pre>
+            )}
+          </div>
+        )}
+
+        {step === "input" && (
+          <InputForm
+            niche={niche} setNiche={setNiche}
+            objects={objects} setObjects={setObjects}
+            topic={topic} setTopic={setTopic}
+            tone={tone} setTone={setTone}
+            duration={duration} setDuration={setDuration}
+            busy={busy}
+            hint={busy ? HINTS_PACKAGE[hintIdx % HINTS_PACKAGE.length] : null}
+            topicSuggestions={getTopicSuggestions(niche)}
+            onSubmit={handleGeneratePackage}
+          />
+        )}
+
+        {step === "package" && pkg && (
+          <PackagePreview
+            pkg={pkg}
+            providerUsed={providerUsed}
+            nicheLabel={nicheLabel}
+            tone={tone}
+            duration={duration}
+            busy={busy}
+            onBack={() => reset({ keep: "all" })}
+            onRender={handleRenderReel}
+            onCopy={copy}
+            copied={copied}
+          />
+        )}
+
+        {step === "rendering" && (
+          <RenderingPanel
+            jobId={jobId}
+            statusResp={statusResp}
+            hint={HINTS_RENDER[hintIdx % HINTS_RENDER.length]}
+          />
+        )}
+
+        {step === "completed" && completedScene?.public_url && pkg && (
+          <CompletedView
+            videoUrl={completedScene.public_url}
+            jobId={jobId}
+            mock={!!statusResp?.mock}
+            pkg={pkg}
+            niche={niche}
+            tone={tone}
+            duration={duration}
+            onCopy={copy}
+            copied={copied}
+            onNew={() => reset({})}
+            onDuplicate={() => reset({ keep: "all" })}
+            onChangeTone={() => reset({ keep: "niche" })}
+          />
+        )}
+
+        {step === "failed" && (
+          <div className="card p-6 border-red-500/40 bg-red-500/10 text-center space-y-3">
+            <div className="text-3xl">❌</div>
+            <div className="font-semibold">Render falhou</div>
+            <button type="button" onClick={() => reset({ keep: "all" })} className="btn-primary">
+              Tentar novamente
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Sidebar — history */}
+      <aside className="space-y-3">
+        <div className="card p-4">
+          <div className="eyebrow mb-3">Histórico recente</div>
+          {history.length === 0 ? (
+            <p className="text-xs text-viral-muted">Suas últimas 5 gerações ficam aqui.</p>
+          ) : (
+            <ul className="space-y-2">
+              {history.map((h) => (
+                <li key={h.id}>
+                  <button
+                    type="button"
+                    onClick={() => loadFromHistory(h)}
+                    className="w-full text-left p-2 rounded-md border border-viral-border hover:bg-viral-border/30 transition"
+                  >
+                    <div className="text-xs font-semibold truncate">{h.topic || "(sem tema)"}</div>
+                    <div className="text-[10px] text-viral-muted truncate">
+                      {h.niche} · {h.tone} · {h.duration}s
+                    </div>
+                    {h.hook && (
+                      <div className="text-[10px] text-viral-muted/80 italic line-clamp-2 mt-1">
+                        &quot;{h.hook}&quot;
+                      </div>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="card p-4 text-xs text-viral-muted">
+          <div className="font-semibold text-viral-text mb-1">💡 Dica</div>
+          <p>
+            Use <strong>Duplicar ideia</strong> ao final pra gerar o mesmo nicho com tema diferente, ou <strong>Variar tom</strong> para experimentar dramatic / funny / educational.
+          </p>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+// ─── Subcomponents ────────────────────────────────────────────────────
+
+function Stepper({ step }: { step: Step }) {
+  const order = ["input", "package", "rendering", "completed"] as const;
+  type S = (typeof order)[number];
+  const labels: Record<S, string> = {
+    input: "1. Tema",
+    package: "2. Pacote",
+    rendering: "3. Render",
+    completed: "4. Vídeo",
+  };
+  const stepIdx = order.indexOf(step as S);
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      {order.map((s) => {
+        const isActive = step === s;
+        const isPast = stepIdx > order.indexOf(s);
+        return (
+          <span
+            key={s}
+            className={`px-3 py-1 rounded-full border transition ${
+              isActive
+                ? "bg-viral-accent text-white border-viral-accent"
+                : isPast
+                  ? "bg-viral-accent/20 text-viral-text border-viral-accent/40"
+                  : "border-viral-border text-viral-muted"
+            }`}
+          >
+            {labels[s]}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+function InputForm(props: {
+  niche: string; setNiche: (v: string) => void;
+  objects: string; setObjects: (v: string) => void;
+  topic: string; setTopic: (v: string) => void;
+  tone: string; setTone: (v: string) => void;
+  duration: number; setDuration: (v: number) => void;
+  busy: boolean;
+  hint: string | null;
+  topicSuggestions: string[];
+  onSubmit: () => void;
+}) {
+  const { niche, setNiche, objects, setObjects, topic, setTopic, tone, setTone, duration, setDuration, busy, hint, topicSuggestions, onSubmit } = props;
+  const toneInfo = TONE_OPTIONS.find((t) => t.id === tone);
+  return (
+    <div className="card p-6 space-y-4">
+      <div>
+        <label htmlFor="niche-select" className="block text-xs uppercase tracking-wider text-viral-muted mb-1">Nicho</label>
+        <select
+          id="niche-select"
+          aria-label="Nicho do reel"
+          className="input w-full"
+          value={niche}
+          onChange={(e) => setNiche(e.target.value)}
+        >
+          {NICHES.map((n) => (
+            <option key={n.id} value={n.id}>{n.label}</option>
           ))}
+        </select>
+      </div>
+
+      <div>
+        <label htmlFor="objects-input" className="block text-xs uppercase tracking-wider text-viral-muted mb-1">
+          Objetos (separados por vírgula)
+        </label>
+        <input
+          id="objects-input"
+          className="input w-full"
+          value={objects}
+          onChange={(e) => setObjects(e.target.value)}
+          placeholder="esponja, água sanitária"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="topic-input" className="block text-xs uppercase tracking-wider text-viral-muted mb-1">Tema</label>
+        <input
+          id="topic-input"
+          className="input w-full"
+          value={topic}
+          onChange={(e) => setTopic(e.target.value)}
+          placeholder="vinagre branco multiuso"
+        />
+        {topicSuggestions.length > 0 && (
+          <div className="mt-2">
+            <div className="text-[10px] uppercase tracking-wider text-viral-muted/70 mb-1">
+              Exemplos para esse nicho
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {topicSuggestions.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setTopic(s)}
+                  className="text-[11px] px-2 py-1 rounded-full border border-viral-border hover:bg-viral-accent/10 hover:border-viral-accent/40 transition text-viral-muted"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label htmlFor="tone-select" className="block text-xs uppercase tracking-wider text-viral-muted mb-1">Tom</label>
+          <select
+            id="tone-select"
+            aria-label="Tom do reel"
+            className="input w-full"
+            value={tone}
+            onChange={(e) => setTone(e.target.value)}
+          >
+            {TONE_OPTIONS.map((t) => (
+              <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>
+            ))}
+          </select>
+          {toneInfo?.description && (
+            <p className="text-[10px] text-viral-muted/70 mt-1 italic">
+              {toneInfo.description}
+            </p>
+          )}
+        </div>
+        <div>
+          <label htmlFor="duration-input" className="block text-xs uppercase tracking-wider text-viral-muted mb-1">Duração (s)</label>
+          <input
+            id="duration-input"
+            aria-label="Duração total do reel em segundos"
+            type="number"
+            min={10}
+            max={90}
+            className="input w-full"
+            value={duration}
+            onChange={(e) => setDuration(parseInt(e.target.value) || 15)}
+          />
         </div>
       </div>
 
-      {/* ═══ ETAPA 1: INPUT ═══ */}
-      {step === "input" && (
-        <div className="space-y-5">
-          {/* Nicho */}
-          <div className="card p-5">
-            <label className="label mb-3">Nicho</label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-              {NICHES.map((n) => (
-                <button
-                  key={n.id}
-                  type="button"
-                  onClick={() => handleNicheChange(n.id)}
-                  className={`text-left p-3 rounded-lg border transition text-sm ${
-                    niche === n.id
-                      ? "border-viral-accent bg-viral-accent/10 text-viral-accent"
-                      : "border-viral-border/40 hover:border-viral-border"
-                  }`}
-                >
-                  <div className="font-medium">{n.label}</div>
-                  <div className="text-[10px] text-viral-muted mt-0.5">
-                    {n.objects_count} personagens
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Modo */}
-          <div className="card p-5">
-            <label className="label mb-3">Tipo de vídeo</label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => { setMode("single"); setSelectedObjects(selectedObjects.slice(0, 1)); }}
-                className={`p-4 rounded-lg border transition text-center ${
-                  mode === "single" ? "border-viral-accent bg-viral-accent/10" : "border-viral-border/40 hover:border-viral-border"
-                }`}
-              >
-                <div className="text-2xl mb-1">🎭</div>
-                <div className="font-medium text-sm">Um personagem</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode("multi")}
-                className={`p-4 rounded-lg border transition text-center ${
-                  mode === "multi" ? "border-viral-accent bg-viral-accent/10" : "border-viral-border/40 hover:border-viral-border"
-                }`}
-              >
-                <div className="text-2xl mb-1">🎬</div>
-                <div className="font-medium text-sm">Vários personagens</div>
-              </button>
-            </div>
-          </div>
-
-          {/* Personagens */}
-          <div className="card p-5">
-            <label className="label mb-3">
-              Personagens {mode === "single" ? "(escolha 1)" : `(${selectedObjects.length}/5)`}
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-              {objects.map((obj) => (
-                <button
-                  key={obj.id}
-                  type="button"
-                  onClick={() => toggleObject(obj.id)}
-                  className={`p-3 rounded-lg border transition text-center ${
-                    selectedObjects.includes(obj.id)
-                      ? "border-viral-accent bg-viral-accent/10 ring-1 ring-viral-accent"
-                      : "border-viral-border/40 hover:border-viral-border"
-                  }`}
-                >
-                  <div className="text-2xl mb-1">{obj.emoji}</div>
-                  <div className="text-xs font-medium truncate">{obj.name}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Tópico */}
-          <div className="card p-5">
-            <label className="label mb-3">Tópico</label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
-              {topics.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => { setSelectedTopic(t.id); setCustomTopic(""); }}
-                  className={`text-left p-3 rounded-lg border transition text-sm ${
-                    selectedTopic === t.id
-                      ? "border-viral-accent bg-viral-accent/10 text-viral-accent"
-                      : "border-viral-border/40 hover:border-viral-border"
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-            <input
-              type="text"
-              className="input"
-              placeholder="Ou escreva seu próprio tópico..."
-              value={customTopic}
-              onChange={(e) => { setCustomTopic(e.target.value); setSelectedTopic(""); }}
-            />
-          </div>
-
-          {/* Tom + Duração */}
-          <div className="card p-5">
-            <label className="label mb-3">Tom do personagem</label>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-              {TONE_OPTIONS.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setTone(t.id as ObjectTone)}
-                  className={`p-3 rounded-lg border transition text-center ${
-                    tone === t.id ? "border-viral-accent bg-viral-accent/10" : "border-viral-border/40 hover:border-viral-border"
-                  }`}
-                >
-                  <div className="text-xl mb-1">{t.emoji}</div>
-                  <div className="text-xs font-medium">{t.label}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="card p-5">
-            <label className="label mb-3">Duração do vídeo</label>
-            <div className="grid grid-cols-4 gap-2">
-              {[15, 30, 45, 60].map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() => setDuration(d)}
-                  className={`p-3 rounded-lg border transition text-center ${
-                    duration === d ? "border-viral-accent bg-viral-accent/10" : "border-viral-border/40 hover:border-viral-border"
-                  }`}
-                >
-                  <div className="font-bold">{d}s</div>
-                  <div className="text-[10px] text-viral-muted">
-                    {d === 15 ? "Curto" : d === 30 ? "Padrão" : d === 45 ? "Médio" : "Longo"}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Botão avançar */}
-          <div className="flex items-center gap-3">
-            <button type="button" onClick={handleGenerateScriptAndImages} className="btn-primary" disabled={loading}>
-              {loading ? "Gerando..." : "Gerar roteiro e imagens →"}
-            </button>
-            <Link href="/app" className="btn-secondary">Cancelar</Link>
-          </div>
+      <button
+        type="button"
+        onClick={onSubmit}
+        disabled={busy || !topic.trim() || !objects.trim()}
+        className="btn-primary w-full"
+      >
+        {busy ? (hint ?? "Gerando…") : "Gerar pacote"}
+      </button>
+      {busy && (
+        <div className="text-center">
+          <ProgressDots />
         </div>
       )}
+    </div>
+  );
+}
 
-      {/* ═══ ETAPA 2: APROVAR IMAGENS ═══ */}
-      {step === "images" && (
-        <div className="space-y-5">
-          <div className="card p-5">
-            <h2 className="text-lg font-bold mb-1">Selecione as imagens que deseja usar</h2>
-            <p className="text-xs text-viral-muted mb-4">
-              Clique para selecionar/deselecionar. Apenas as imagens aprovadas serão usadas no vídeo final.
+function PackagePreview(props: {
+  pkg: Package;
+  providerUsed: string | null;
+  nicheLabel: string;
+  tone: string;
+  duration: number;
+  busy: boolean;
+  onBack: () => void;
+  onRender: () => void;
+  onCopy: (label: string, text: string) => void;
+  copied: string | null;
+}) {
+  const { pkg, providerUsed, nicheLabel, tone, duration, busy, onBack, onRender, onCopy, copied } = props;
+  const post = pkg.post_copy ?? {};
+  const hashtags = (post.hashtags_pt ?? []).join(" ");
+  return (
+    <div className="space-y-4">
+      <div className="card p-6">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div>
+            <div className="eyebrow text-viral-accent mb-1">📦 Pacote pronto</div>
+            <h2 className="text-2xl font-bold mb-1">{pkg.meta?.topic_pt ?? "(sem tema)"}</h2>
+            <p className="text-xs text-viral-muted">
+              {nicheLabel} · {tone} · {duration}s · {pkg.meta?.objects_count ?? "?"} objeto(s)
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {images
-                .filter((img) => img.imageUrl.startsWith("http") && !img.imageUrl.includes("placehold"))
-                .map((img) => (
-                  <button
-                    key={img.sceneId}
-                    type="button"
-                    onClick={() => toggleImageApproval(img.sceneId)}
-                    className={`relative rounded-lg overflow-hidden border-2 transition ${
-                      approvedImages.has(img.sceneId)
-                        ? "border-emerald-400 ring-2 ring-emerald-400/30"
-                        : "border-viral-border/40 opacity-50"
+          </div>
+          {providerUsed && (
+            <code className="text-[10px] font-mono text-viral-muted bg-viral-bg/40 px-2 py-1 rounded whitespace-nowrap">
+              {providerUsed}
+            </code>
+          )}
+        </div>
+
+        {/* Post copy */}
+        {post.hook_pt && (
+          <div className="mb-4 p-4 rounded-lg bg-viral-accent/5 border border-viral-accent/30">
+            <div className="text-[10px] uppercase tracking-wider text-viral-accent font-semibold mb-1">Hook</div>
+            <div className="font-bold text-base mb-3">{post.hook_pt}</div>
+            {post.body_pt && (
+              <>
+                <div className="text-[10px] uppercase tracking-wider text-viral-muted font-semibold mb-1">Body</div>
+                <p className="text-sm whitespace-pre-line text-viral-text mb-3">{post.body_pt}</p>
+              </>
+            )}
+            {post.cta_pt && (
+              <p className="text-sm font-semibold text-viral-accent2 mb-3">→ {post.cta_pt}</p>
+            )}
+            {hashtags && (
+              <p className="text-xs text-viral-muted break-all mb-3">{hashtags}</p>
+            )}
+            <button
+              type="button"
+              onClick={() => onCopy("post", `${post.hook_pt}\n\n${post.body_pt ?? ""}\n\n${post.cta_pt ?? ""}\n\n${hashtags}`)}
+              className="text-xs text-viral-accent hover:underline"
+            >
+              {copied === "post" ? "✓ Copiado" : "📋 Copiar post inteiro"}
+            </button>
+          </div>
+        )}
+
+        {/* Characters */}
+        <div className="space-y-2">
+          <div className="text-[10px] uppercase tracking-wider text-viral-muted font-semibold mb-2">Personagens</div>
+          {(pkg.characters ?? []).map((c, i) => (
+            <div key={c.id ?? i} className="border border-viral-border rounded-lg p-3 flex gap-3 items-start">
+              <div className="text-2xl flex-shrink-0">{c.emoji ?? "🧩"}</div>
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold mb-1 flex items-center gap-2">
+                  {c.name_pt}
+                  {c.timestamp_start && c.timestamp_end && (
+                    <span className="text-[10px] text-viral-muted font-normal">{c.timestamp_start}–{c.timestamp_end}</span>
+                  )}
+                </div>
+                {c.voice_script_pt && (
+                  <p className="text-sm text-viral-muted italic">&quot;{c.voice_script_pt}&quot;</p>
+                )}
+              </div>
+              <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                {c.voice_script_pt && <SpeakButton text={c.voice_script_pt} />}
+                <button
+                  type="button"
+                  onClick={() => onCopy(`script-${c.id}`, c.voice_script_pt ?? "")}
+                  className="text-[10px] text-viral-accent hover:underline"
+                >
+                  {copied === `script-${c.id}` ? "✓" : "📋"}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Captions timeline */}
+        {pkg.captions_full_script && pkg.captions_full_script.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-viral-border/50">
+            <div className="text-[10px] uppercase tracking-wider text-viral-muted font-semibold mb-2">Timeline de captions</div>
+            <ol className="space-y-1.5">
+              {pkg.captions_full_script.map((cap, i) => (
+                <li key={i} className="flex gap-3 items-start text-xs">
+                  <span className="font-mono text-viral-muted/70 w-12 text-right flex-shrink-0">{cap.time ?? "·"}</span>
+                  <span
+                    className={`flex-1 ${
+                      cap.style === "bold" ? "font-semibold" : ""
+                    } ${
+                      cap.color === "red"
+                        ? "text-red-400"
+                        : cap.color === "green"
+                          ? "text-green-400"
+                          : "text-viral-text"
                     }`}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={img.imageUrl}
-                      alt={img.sceneId}
-                      className="w-full aspect-[9/16] object-cover"
-                      loading="lazy"
-                    />
-                    <div className="absolute top-2 right-2">
-                      <div
-                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                          approvedImages.has(img.sceneId) ? "bg-emerald-500 text-white" : "bg-black/50 text-white/50"
-                        }`}
-                      >
-                        {approvedImages.has(img.sceneId) ? "✓" : ""}
-                      </div>
-                    </div>
-                    <div className="absolute bottom-0 inset-x-0 bg-black/70 p-2">
-                      <span className="text-[10px] text-white uppercase">{img.sceneType}</span>
-                    </div>
-                  </button>
-                ))}
-            </div>
-            <p className="text-xs text-viral-muted mt-3">
-              {approvedImages.size} de {images.filter((i) => i.imageUrl.startsWith("http")).length} imagens selecionadas
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button type="button" onClick={() => setStep("input")} className="btn-secondary">
-              ← Voltar
-            </button>
-            <button type="button" onClick={handleApproveImages} className="btn-primary">
-              Aprovar imagens e continuar →
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ ETAPA 3: APROVAR ROTEIRO ═══ */}
-      {step === "script" && (
-        <div className="space-y-5">
-          <div className="card p-5">
-            <h2 className="text-lg font-bold mb-1">Revise e edite o roteiro</h2>
-            <p className="text-xs text-viral-muted mb-4">
-              Edite o texto de fala de cada personagem. Este texto será usado para gerar a narração com voz.
-            </p>
-            <div className="space-y-4">
-              {characters.map((char) => (
-                <div key={char.id} className="bg-viral-bg/60 rounded-lg p-4 border border-viral-border/30">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xl">{char.emoji}</span>
-                    <span className="font-semibold text-sm">{char.name_pt}</span>
-                  </div>
-                  <textarea
-                    value={editedScripts[char.id] ?? char.voice_script_pt}
-                    onChange={(e) => updateScript(char.id, e.target.value)}
-                    rows={4}
-                    className="input w-full text-sm leading-relaxed"
-                    placeholder="Texto de fala do personagem..."
-                  />
-                  <div className="text-[10px] text-viral-muted mt-1">
-                    {(editedScripts[char.id] ?? char.voice_script_pt).length} caracteres
-                  </div>
-                </div>
+                    {cap.text_pt ?? cap.text_en ?? ""}
+                  </span>
+                  {cap.character && (
+                    <span className="text-viral-muted/60 text-[10px]">{cap.character}</span>
+                  )}
+                </li>
               ))}
-            </div>
+            </ol>
           </div>
+        )}
 
-          <div className="flex items-center gap-3">
-            <button type="button" onClick={() => setStep("images")} className="btn-secondary">
-              ← Voltar
-            </button>
-            <button type="button" onClick={handleApproveScriptAndGenerateAudio} className="btn-primary" disabled={loading}>
-              {loading ? "Gerando áudio..." : "Aprovar roteiro e gerar voz →"}
+        {/* Variations */}
+        {pkg.variations && pkg.variations.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-viral-border/50">
+            <div className="text-[10px] uppercase tracking-wider text-viral-muted font-semibold mb-2">Variações para A/B testar</div>
+            <ul className="space-y-1">
+              {pkg.variations.map((v, i) => (
+                <li key={v.id ?? i} className="text-sm text-viral-muted">
+                  <span className="text-viral-accent2 font-semibold">·</span> {v.title_pt} <span className="text-viral-muted/60 text-xs">({v.angle_pt})</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      <div className="flex gap-3">
+        <button type="button" onClick={onBack} className="btn-secondary flex-1">← Refazer</button>
+        <button
+          type="button"
+          onClick={onRender}
+          disabled={busy}
+          className="btn-primary flex-1"
+        >
+          Renderizar vídeo →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function RenderingPanel(props: {
+  jobId: string | null;
+  statusResp: StatusResp | null;
+  hint: string;
+}) {
+  const { jobId, statusResp, hint } = props;
+  const completed = statusResp?.completed_scenes ?? 0;
+  const total = statusResp?.scene_count ?? 1;
+  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+  return (
+    <div className="card p-8 space-y-5">
+      <div className="text-center">
+        <div className="text-5xl inline-block animate-spin-slow mb-3">⚙️</div>
+        <div className="font-semibold text-lg mb-1">Renderizando vídeo…</div>
+        <p className="text-sm text-viral-muted">{hint}</p>
+      </div>
+
+      {/* Progress bar */}
+      <div className="space-y-1">
+        <div className="flex items-center justify-between text-xs text-viral-muted">
+          <span>cenas</span>
+          <span>{completed}/{total}</span>
+        </div>
+        <div className="h-2 bg-viral-border/40 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-viral-accent transition-all duration-500"
+            data-pct={pct}
+            ref={(el) => {
+              if (el) el.style.width = `${pct}%`;
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="text-center text-xs text-viral-muted">
+        Job: <code className="font-mono">{jobId}</code>
+        {statusResp && (
+          <span> · status: <span className="text-viral-text">{statusResp.status}</span></span>
+        )}
+      </div>
+      <ProgressDots />
+    </div>
+  );
+}
+
+function CompletedView(props: {
+  videoUrl: string;
+  jobId: string | null;
+  mock: boolean;
+  pkg: Package;
+  niche: string;
+  tone: string;
+  duration: number;
+  onCopy: (label: string, text: string) => void;
+  copied: string | null;
+  onNew: () => void;
+  onDuplicate: () => void;
+  onChangeTone: () => void;
+}) {
+  const { videoUrl, jobId, mock, pkg, onCopy, copied, onNew, onDuplicate, onChangeTone } = props;
+  const post = pkg.post_copy ?? {};
+  const hashtags = (post.hashtags_pt ?? []).join(" ");
+  return (
+    <div className="space-y-4">
+      <div className="card p-6 text-center">
+        <div className="text-4xl mb-2">✅</div>
+        <h2 className="text-xl font-bold mb-1">Reel pronto</h2>
+        <p className="text-xs text-viral-muted">
+          Job: <code className="font-mono">{jobId}</code>
+          {mock && (
+            <span className="ml-2 px-2 py-0.5 rounded-full bg-viral-accent2/20 text-viral-accent2 text-[10px] uppercase font-semibold">
+              Mock
+            </span>
+          )}
+        </p>
+      </div>
+
+      <div className="grid md:grid-cols-[280px_1fr] gap-4">
+        {/* Mobile-style 9:16 frame */}
+        <div className="card p-2 mx-auto md:mx-0 w-full max-w-[280px]">
+          <div className="rounded-xl overflow-hidden bg-black aspect-video-9-16 relative">
+            <video
+              controls
+              src={videoUrl}
+              className="w-full h-full object-cover"
+            >
+              Seu navegador não suporta vídeo.
+            </video>
+          </div>
+          <div className="mt-2 flex gap-2">
+            <a
+              href={videoUrl}
+              download={`viralobj-${jobId ?? "reel"}.mp4`}
+              className="btn-primary text-xs flex-1 text-center"
+            >
+              ⬇️ Download
+            </a>
+            <button
+              type="button"
+              onClick={() => onCopy("video-url", videoUrl)}
+              className="btn-secondary text-xs flex-1"
+            >
+              {copied === "video-url" ? "✓ Copiado" : "📋 URL"}
             </button>
           </div>
         </div>
-      )}
 
-      {/* ═══ ETAPA 4: OUVIR ÁUDIO ═══ */}
-      {step === "audio" && (
-        <div className="space-y-5">
-          <div className="card p-5">
-            <h2 className="text-lg font-bold mb-1">Ouça as narrações geradas</h2>
-            <p className="text-xs text-viral-muted mb-4">
-              Cada cena tem sua narração. Ouça e aprove antes de gerar os vídeos.
-            </p>
-            <div className="space-y-3">
-              {audios
-                .filter((a) => a.audioUrl && (a.audioUrl.startsWith("http") || a.audioUrl.startsWith("data:")))
-                .map((audio, i) => {
-                  const char = characters.find((c) => audio.sceneId.includes(c.id));
-                  return (
-                    <div key={i} className="flex items-center gap-3 bg-viral-bg/60 rounded-lg p-3 border border-viral-border/30">
-                      <span className="text-lg flex-shrink-0">{char?.emoji ?? "🎙️"}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium truncate">
-                          {char?.name_pt ?? `Cena ${i + 1}`}
-                          <span className="text-viral-muted ml-1">· {audio.sceneType}</span>
-                        </div>
-                        <div className="text-[10px] text-viral-muted">
-                          {(audio.durationMs / 1000).toFixed(1)}s
-                        </div>
-                      </div>
-                      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-                      <audio controls src={audio.audioUrl} className="h-8 max-w-[200px]" preload="none" />
-                    </div>
-                  );
-                })}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button type="button" onClick={() => setStep("script")} className="btn-secondary">
-              ← Voltar ao roteiro
-            </button>
-            <button type="button" onClick={handleApproveAudioAndGenerateVideo} className="btn-primary" disabled={loading}>
-              {loading ? "Gerando vídeos..." : "Aprovar áudio e gerar vídeos →"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ ETAPA 5: VÍDEOS GERADOS (queue async + polling) ═══ */}
-      {step === "video" && (
-        <div className="space-y-5">
-          {/* Banner de progresso enquanto polling */}
-          {videoPolling && (
-            <div className="card p-4 border-viral-accent/40 bg-viral-accent/5">
-              <div className="flex items-center gap-3">
-                <span className="w-4 h-4 border-2 border-viral-accent border-t-transparent rounded-full animate-spin" />
-                <div className="flex-1">
-                  <div className="text-sm font-medium text-viral-text">
-                    Renderizando no Veo 3 Fast...
-                  </div>
-                  <div className="text-[10px] text-viral-muted mt-0.5">
-                    {videoQueue.filter((q) => q.status === "COMPLETED").length}/{videoQueue.length} cenas prontas
-                    · ~1-3 min por cena · atualizando a cada 10s
-                  </div>
-                </div>
-              </div>
+        {/* Package summary */}
+        <div className="card p-4 space-y-3 text-sm">
+          <div className="eyebrow">Post pronto pro Instagram</div>
+          {post.hook_pt && (
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-viral-muted">Hook</div>
+              <p className="font-bold">{post.hook_pt}</p>
             </div>
           )}
-
-          {/* Grid de status por cena (aparece sempre que há queue) */}
-          {videoQueue.length > 0 && (
-            <div className="card p-5">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-viral-muted mb-3">
-                Status por cena ({videoQueue.length})
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {videoQueue.map((q, i) => {
-                  const statusConfig: Record<typeof q.status, { label: string; cls: string; icon: string }> = {
-                    IN_QUEUE: { label: "Na fila", cls: "bg-viral-border/10 text-viral-muted border-viral-border/40", icon: "⏳" },
-                    IN_PROGRESS: { label: "Renderizando", cls: "bg-amber-500/10 text-amber-400 border-amber-500/30", icon: "🎬" },
-                    COMPLETED: { label: "Pronto", cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30", icon: "✓" },
-                    FAILED: { label: "Falhou", cls: "bg-red-500/10 text-red-400 border-red-500/30", icon: "✗" },
-                    SUBMIT_FAILED: { label: "Erro ao enviar", cls: "bg-red-500/10 text-red-400 border-red-500/30", icon: "✗" },
-                  };
-                  const cfg = statusConfig[q.status];
-                  const isSuccess = q.status === "COMPLETED" && q.videoUrl;
-
-                  return (
-                    <div key={i} className={`rounded-lg border overflow-hidden ${cfg.cls}`}>
-                      {isSuccess ? (
-                        // eslint-disable-next-line jsx-a11y/media-has-caption
-                        <video controls src={q.videoUrl} className="w-full aspect-[9/16] object-cover" preload="metadata" />
-                      ) : (
-                        <div className="w-full aspect-[9/16] bg-viral-bg/60 flex flex-col items-center justify-center gap-2 p-4">
-                          <span className="text-3xl">{cfg.icon}</span>
-                          <span className="text-xs font-semibold uppercase tracking-wider">{cfg.label}</span>
-                          {q.status === "IN_PROGRESS" && (
-                            <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                          )}
-                          {q.error && (
-                            <span className="text-[9px] text-center opacity-80 mt-1 break-all">{q.error.slice(0, 120)}</span>
-                          )}
-                        </div>
-                      )}
-                      <div className="p-2 bg-viral-bg/60 flex items-center gap-2">
-                        <span className="text-[10px] font-semibold uppercase">{q.sceneType}</span>
-                        <span className="text-[9px] text-viral-muted truncate">{q.sceneId}</span>
-                        {q.durationMs && q.status === "COMPLETED" && (
-                          <span className="text-[9px] text-viral-muted ml-auto">{(q.durationMs / 1000).toFixed(0)}s</span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+          {post.body_pt && (
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-viral-muted">Body</div>
+              <p className="whitespace-pre-line text-viral-muted">{post.body_pt}</p>
             </div>
           )}
-
-          {videoReport && !videoPolling && <DebugPanel report={videoReport} provider={videoProvider ?? undefined} />}
-
-          <div className="card p-5">
-            <h2 className="text-lg font-bold mb-1">Vídeos finais</h2>
-            <p className="text-xs text-viral-muted mb-4">
-              {videoPolling
-                ? "Cenas ainda em processamento. Os vídeos aprovados aparecerão aqui assim que ficarem prontos."
-                : "Cada cena foi animada com lip sync via IA."}
-            </p>
-            {videos.filter((v) => typeof v.videoUrl === "string" && v.videoUrl.startsWith("http")).length === 0 && !videoPolling && (
-              <div className="text-center text-viral-muted py-8 space-y-3">
-                <p>Nenhum vídeo gerado ainda.</p>
-                <p className="text-[10px] text-viral-muted/70">
-                  Verifique o painel de debug acima para detalhes. Você pode tentar novamente
-                  ou voltar para revisar imagens/roteiro.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleApproveAudioAndGenerateVideo}
-                  disabled={loading}
-                  className="btn-primary text-sm disabled:opacity-50"
-                >
-                  {loading ? "Tentando..." : "🔄 Tentar gerar vídeos novamente"}
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button type="button" onClick={() => setStep("audio")} className="btn-secondary">
-              ← Voltar
-            </button>
-            <button type="button" onClick={handleGoToMusic} className="btn-primary">
-              Continuar para trilha sonora →
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ ETAPA 6: MÚSICA + FINALIZAR ═══ */}
-      {step === "music" && (
-        <div className="space-y-5">
-          <div className="card p-5">
-            <h2 className="text-lg font-bold mb-1">Trilha sonora e efeitos</h2>
-            <p className="text-xs text-viral-muted mb-4">
-              Em breve: seleção de fundo musical por tema e efeitos sonoros.
-              Por enquanto, use o CapCut para adicionar trilha ao vídeo final.
-            </p>
-            <div className="bg-viral-accent/5 border border-viral-accent/20 rounded-lg p-4">
-              <p className="text-xs text-viral-accent">
-                💡 <strong>Dica:</strong> No CapCut, junte os vídeos das cenas na ordem, adicione uma trilha sonora
-                do tema (busque por &quot;cinematic&quot; ou &quot;dramatic&quot;) e exporte em 9:16 para Instagram Reels.
-              </p>
+          {hashtags && (
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-viral-muted">Hashtags</div>
+              <p className="text-xs text-viral-muted break-all">{hashtags}</p>
             </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button type="button" onClick={() => setStep("video")} className="btn-secondary">
-              ← Voltar
-            </button>
-            <button type="button" onClick={handleFinalize} className="btn-primary">
-              Finalizar e ir para o histórico →
-            </button>
-          </div>
+          )}
+          <button
+            type="button"
+            onClick={() => onCopy("post-final", `${post.hook_pt ?? ""}\n\n${post.body_pt ?? ""}\n\n${post.cta_pt ?? ""}\n\n${hashtags}`)}
+            className="btn-secondary text-xs w-full"
+          >
+            {copied === "post-final" ? "✓ Post copiado" : "📋 Copiar post completo"}
+          </button>
         </div>
-      )}
+      </div>
 
-      {/* PROGRESSO */}
-      {loading && status && (
-        <div className="flex items-center gap-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-          <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
-          <div>
-            <p className="text-sm text-blue-300 font-medium">{status}</p>
-            <p className="text-xs text-blue-400/70 mt-1">Isso pode levar alguns minutos. Não feche esta página.</p>
-          </div>
-        </div>
-      )}
+      {/* Quick actions */}
+      <div className="grid grid-cols-3 gap-2">
+        <button type="button" onClick={onDuplicate} className="btn-secondary text-xs">
+          ↻ Duplicar ideia
+        </button>
+        <button type="button" onClick={onChangeTone} className="btn-secondary text-xs">
+          🎭 Variar tom
+        </button>
+        <button type="button" onClick={onNew} className="btn-primary text-xs">
+          ＋ Novo reel
+        </button>
+      </div>
+    </div>
+  );
+}
 
-      {/* ERRO */}
-      {error && (
-        <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-          {error}
-        </div>
-      )}
+function SpeakButton({ text, lang = "pt-BR" }: { text: string; lang?: string }) {
+  const [supported, setSupported] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+
+  useEffect(() => {
+    setSupported(typeof window !== "undefined" && "speechSynthesis" in window);
+  }, []);
+
+  function toggle() {
+    if (!supported) return;
+    const synth = window.speechSynthesis;
+    if (speaking) {
+      synth.cancel();
+      setSpeaking(false);
+      return;
+    }
+    // Strip stage markers ([pausa], [ÊNFASE], etc.) so the synth doesn't
+    // read "abre colchetes pausa fecha colchetes" out loud.
+    const clean = text.replace(/\[[^\]]+\]/g, "").replace(/\s+/g, " ").trim();
+    if (!clean) return;
+    const utter = new SpeechSynthesisUtterance(clean);
+    utter.lang = lang;
+    utter.rate = 1.05;
+    utter.onend = () => setSpeaking(false);
+    utter.onerror = () => setSpeaking(false);
+    setSpeaking(true);
+    synth.speak(utter);
+  }
+
+  if (!supported) return null;
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      title={speaking ? "Parar" : "Ouvir voz (browser TTS)"}
+      className="text-[10px] text-viral-accent hover:underline flex-shrink-0"
+    >
+      {speaking ? "⏹️" : "🔊"}
+    </button>
+  );
+}
+
+function ProgressDots() {
+  return (
+    <div className="inline-flex gap-1 text-viral-muted">
+      <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse-dot-1" />
+      <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse-dot-2" />
+      <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse-dot-3" />
     </div>
   );
 }

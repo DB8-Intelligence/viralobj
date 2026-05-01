@@ -357,6 +357,9 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
       req.query?.dry_run === "true" || req.body?.dry_run === true;
     if (isMockVertex()) {
       if (mockDryRun) {
+        const objsList = Array.isArray(objects) ? objects : [String(objects ?? "esponja")];
+        const firstObj = objsList[0] || "esponja";
+        const topicLabel = topic || "vinagre branco multiuso";
         return res.status(200).json({
           ok: true,
           success: true,
@@ -371,27 +374,55 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
           package: {
             meta: {
               niche: niche || "casa",
-              topic_pt: topic || "Mock topic",
-              topic_en: topic || "Mock topic",
+              topic_pt: topicLabel,
+              topic_en: topicLabel,
               tone: tone || "dramatic",
-              duration: duration || 8,
-              objects_count: 1,
+              duration: duration || 15,
+              objects_count: objsList.length,
               generated_at: new Date().toISOString(),
             },
-            characters: [
-              {
-                id: 1,
-                name_pt: "Esponja",
-                name_en: "Sponge",
-                emoji: "🧽",
-                voice_script_pt: "Eu sou uma esponja revoltada!",
-                voice_script_en: "I am one outraged sponge!",
-              },
+            characters: objsList.map((obj, idx) => ({
+              id: idx + 1,
+              name_pt: obj.charAt(0).toUpperCase() + obj.slice(1),
+              name_en: obj.charAt(0).toUpperCase() + obj.slice(1),
+              emoji: ["🧽", "⚖️", "🩺", "🧴", "📱"][idx % 5],
+              timestamp_start: `${idx * 5}s`,
+              timestamp_end: `${(idx + 1) * 5}s`,
+              voice_script_pt: `Eu sou ${obj}, e estou farto de ser usado errado. Olha como você me trata todo dia!`,
+              voice_script_en: `I am ${obj}, and I am tired of being misused. Look how you treat me every day!`,
+              ai_prompt_midjourney: `Pixar 3D render of ${obj}, expressive face, 9:16 vertical, dramatic lighting, 8K`,
+            })),
+            post_copy: {
+              hook_pt: `Você tá usando ${firstObj} ERRADO esse tempo todo`,
+              hook_en: `You've been using ${firstObj} WRONG this whole time`,
+              body_pt: `🚨 ${firstObj} revela a verdade sobre ${topicLabel}.\n\n• 1ª regra que você ignora\n• 2 sinais que ninguém te avisa\n• o jeito certo em 8 segundos\n\nSalva esse antes que apague.`,
+              body_en: `🚨 ${firstObj} spills the truth about ${topicLabel}.\n\n• rule #1 you skip\n• 2 signs no one warns you\n• the right way in 8 seconds\n\nSave before it disappears.`,
+              cta_pt: "Marca quem precisa ver isso",
+              cta_en: "Tag someone who needs to see this",
+              hashtags_pt: [
+                "#dicasdecasa", "#limpeza", "#donadecasa", "#truques",
+                "#facilita", "#vidasimples", "#casalimpa", "#viral",
+                "#brasil", "#tiktokbrasil"
+              ],
+              hashtags_en: [
+                "#cleaningtips", "#homehacks", "#lifehacks", "#viral",
+                "#cleantok", "#sponge", "#kitchenhacks"
+              ],
+            },
+            captions_full_script: objsList.flatMap((obj, idx) => [
+              { time: `${idx * 5}s`, text_pt: `[ENTRA ${obj.toUpperCase()}]`, text_en: `[${obj.toUpperCase()} ENTERS]`, character: obj, style: "bold", color: "white" },
+              { time: `${idx * 5 + 2}s`, text_pt: `Você usa ${obj} errado!`, text_en: `You use ${obj} wrong!`, character: obj, style: "bold", color: "red" },
+            ]),
+            variations: [
+              { id: 1, angle_pt: "Ângulo educacional", angle_en: "Educational angle", title_pt: "3 erros que todo mundo comete", title_en: "3 mistakes everyone makes" },
+              { id: 2, angle_pt: "Ângulo dramático", angle_en: "Dramatic angle", title_pt: "Pare de fazer isso AGORA", title_en: "Stop doing this NOW" },
+              { id: 3, angle_pt: "Ângulo cômico", angle_en: "Funny angle", title_pt: "POV: você ainda usa errado", title_en: "POV: you still use it wrong" },
             ],
-            post_copy: { hook_pt: "Mock hook", body_pt: "Mock body" },
-            captions_full_script: [],
-            variations: [],
-            production_stack: [],
+            production_stack: [
+              { step: 1, tool: "Vertex AI Gemini", purpose_pt: "Roteiro bilíngue", priority: "essential" },
+              { step: 2, tool: "Vertex AI Veo 2", purpose_pt: "Render 9:16", priority: "essential" },
+              { step: 3, tool: "Cloud Storage", purpose_pt: "Hospedagem MP4", priority: "essential" },
+            ],
           },
           videos: [],
           cost_guard: {
