@@ -70,7 +70,11 @@ const MOCK_PREVIEW_VIDEO_URL =
 
 // ─── Types ────────────────────────────────────────────────────────────
 
-type Step = "input" | "package" | "rendering" | "completed" | "failed";
+// Sprint 30 — flat state. The render flow no longer transitions to
+// separate "rendering" / "completed" screens; it stays on the package
+// step and shows render progress + final video inline. Keeps the user's
+// context (post copy, characters, captions) visible throughout.
+type Step = "input" | "package" | "failed";
 
 type Character = {
   id?: number;
@@ -221,6 +225,9 @@ export default function AppGeneratePage() {
   const [statusResp, setStatusResp] = useState<StatusResp | null>(null);
   const [error, setError] = useState<{ title: string; hint: string; raw?: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  // Sprint 30 — flat render state, lives alongside the package
+  const [isRendering, setIsRendering] = useState(false);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [credits] = useState<number>(999);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [hintIdx, setHintIdx] = useState(0);
@@ -316,12 +323,12 @@ export default function AppGeneratePage() {
     }
   }
 
-  // ─── Step 2: Render reel (full + poll) ───────────────────────────────
+  // ─── Sprint 30: in-place render — never leaves the package screen ────
   async function handleRenderReel() {
-    setBusy(true);
     setError(null);
-    setStep("rendering");
+    setIsRendering(true);
     setStatusResp(null);
+    setVideoUrl(null);
     try {
       const res = await fetch("/api/app/render-reel", {
         method: "POST",
@@ -338,23 +345,20 @@ export default function AppGeneratePage() {
       if (!res.ok) {
         const e = pickError(res.status);
         setError({ ...e, raw: (data as { error?: string }).error });
-        setStep("package");
-        setBusy(false);
+        setIsRendering(false);
         return;
       }
       const id = (data as { job_id?: string }).job_id;
       if (!id) {
         setError({ ...pickError(500), raw: "bridge não retornou job_id" });
-        setStep("package");
-        setBusy(false);
+        setIsRendering(false);
         return;
       }
       setJobId(id);
       startPolling(id);
     } catch (e) {
       setError({ title: "Erro de rede", hint: "Não consegui contactar o servidor.", raw: String(e) });
-      setStep("package");
-      setBusy(false);
+      setIsRendering(false);
     }
   }
 
@@ -371,10 +375,10 @@ export default function AppGeneratePage() {
         setStatusResp(data);
         if (data.status === "completed") {
           clearPoll();
-          setStep("completed");
-          setBusy(false);
+          const url = data.scenes?.find((s) => s.status === "completed")?.public_url ?? null;
+          setVideoUrl(url);
+          setIsRendering(false);
           // Persist to history once we have a public URL.
-          const url = data.scenes?.find((s) => s.status === "completed")?.public_url ?? undefined;
           const entry: HistoryEntry = {
             id: id,
             ts: Date.now(),
@@ -384,26 +388,25 @@ export default function AppGeneratePage() {
             tone,
             duration,
             hook: pkg?.post_copy?.hook_pt,
-            videoUrl: url,
+            videoUrl: url ?? undefined,
           };
           saveHistoryEntry(entry);
           setHistory(loadHistory());
         } else if (data.status === "failed") {
           clearPoll();
+          setIsRendering(false);
           setStep("failed");
-          setBusy(false);
         } else if (attempts > 60) {
           clearPoll();
-          setError({ title: "Timeout", hint: "O job demorou demais.", raw: `attempts=${attempts}` });
-          setStep("failed");
-          setBusy(false);
+          setIsRendering(false);
+          setError({ title: "Timeout", hint: "O render demorou demais.", raw: `attempts=${attempts}` });
         }
       } catch {
         /* keep polling */
       }
     };
     tick();
-    pollTimer.current = setInterval(tick, 3000);
+    pollTimer.current = setInterval(tick, 1500);
   }
 
   function reset(opts: { keep?: "all" | "niche" | "tone" } = {}) {
@@ -412,6 +415,8 @@ export default function AppGeneratePage() {
     setPkg(null);
     setJobId(null);
     setStatusResp(null);
+    setVideoUrl(null);
+    setIsRendering(false);
     setError(null);
     setBusy(false);
     if (opts.keep !== "all") {
@@ -430,8 +435,6 @@ export default function AppGeneratePage() {
     reset({ keep: "all" });
   }
 
-  const completedScene =
-    statusResp?.scenes?.find((s) => s.status === "completed") ?? null;
   const nicheLabel = NICHES.find((n) => n.id === niche)?.label ?? niche;
 
   // ─── Render ──────────────────────────────────────────────────────────
@@ -451,7 +454,7 @@ export default function AppGeneratePage() {
           </div>
         </header>
 
-        <Stepper step={step} />
+        <Stepper step={step} hasVideo={!!videoUrl} isRendering={isRendering} />
 
         {error && (
           <div className="card p-4 border-red-500/40 bg-red-500/10">
@@ -485,35 +488,17 @@ export default function AppGeneratePage() {
             tone={tone}
             duration={duration}
             busy={busy}
+            isRendering={isRendering}
+            videoUrl={videoUrl}
+            jobId={jobId}
+            statusResp={statusResp}
             onBack={() => reset({ keep: "all" })}
             onRender={handleRenderReel}
             onCopy={copy}
             copied={copied}
-          />
-        )}
-
-        {step === "rendering" && (
-          <RenderingPanel
-            jobId={jobId}
-            statusResp={statusResp}
-            hint={HINTS_RENDER[hintIdx % HINTS_RENDER.length]}
-          />
-        )}
-
-        {step === "completed" && completedScene?.public_url && pkg && (
-          <CompletedView
-            videoUrl={completedScene.public_url}
-            jobId={jobId}
-            mock={!!statusResp?.mock}
-            pkg={pkg}
-            niche={niche}
-            tone={tone}
-            duration={duration}
-            onCopy={copy}
-            copied={copied}
-            onNew={() => reset({})}
             onDuplicate={() => reset({ keep: "all" })}
             onChangeTone={() => reset({ keep: "niche" })}
+            onNew={() => reset({})}
           />
         )}
 
@@ -572,33 +557,41 @@ export default function AppGeneratePage() {
 
 // ─── Subcomponents ────────────────────────────────────────────────────
 
-function Stepper({ step }: { step: Step }) {
-  const order = ["input", "package", "rendering", "completed"] as const;
-  type S = (typeof order)[number];
-  const labels: Record<S, string> = {
-    input: "1. Tema",
-    package: "2. Pacote",
-    rendering: "3. Render",
-    completed: "4. Vídeo",
-  };
-  const stepIdx = order.indexOf(step as S);
+function Stepper({
+  step,
+  hasVideo,
+  isRendering,
+}: {
+  step: Step;
+  hasVideo: boolean;
+  isRendering: boolean;
+}) {
+  // Sprint 30 — 3 phases. The "Vídeo" pill lights up only after a real
+  // render completes, not after the package generation.
+  const phases = [
+    { id: "input" as const, label: "1. Tema",   active: step === "input" },
+    { id: "package" as const, label: "2. Pacote", active: step === "package" && !isRendering && !hasVideo },
+    { id: "video" as const,   label: "3. Vídeo",  active: isRendering || hasVideo },
+  ];
   return (
     <div className="flex items-center gap-2 text-xs">
-      {order.map((s) => {
-        const isActive = step === s;
-        const isPast = stepIdx > order.indexOf(s);
+      {phases.map((p, i) => {
+        const past = (p.id === "input" && (step === "package" || step === "failed"))
+                  || (p.id === "package" && hasVideo);
+        const dim = !p.active && !past;
         return (
           <span
-            key={s}
+            key={p.id}
             className={`px-3 py-1 rounded-full border transition ${
-              isActive
+              p.active
                 ? "bg-viral-accent text-white border-viral-accent"
-                : isPast
+                : past
                   ? "bg-viral-accent/20 text-viral-text border-viral-accent/40"
                   : "border-viral-border text-viral-muted"
-            }`}
+            } ${isRendering && p.id === "video" ? "animate-pulse" : ""}`}
           >
-            {labels[s]}
+            {p.label}
+            {p.id === "video" && hasVideo && " ✓"}
           </span>
         );
       })}
@@ -738,42 +731,81 @@ function PackagePreview(props: {
   tone: string;
   duration: number;
   busy: boolean;
+  isRendering: boolean;
+  videoUrl: string | null;
+  jobId: string | null;
+  statusResp: StatusResp | null;
   onBack: () => void;
   onRender: () => void;
   onCopy: (label: string, text: string) => void;
   copied: string | null;
+  onDuplicate: () => void;
+  onChangeTone: () => void;
+  onNew: () => void;
 }) {
-  const { pkg, providerUsed, nicheLabel, tone, duration, busy, onBack, onRender, onCopy, copied } = props;
+  const { pkg, providerUsed, nicheLabel, tone, duration, busy, isRendering, videoUrl, jobId, statusResp, onBack, onRender, onCopy, copied, onDuplicate, onChangeTone, onNew } = props;
   const post = pkg.post_copy ?? {};
   const hashtags = (post.hashtags_pt ?? []).join(" ");
   return (
     <div className="space-y-4">
-      {/* Sprint 29 — sales-pitch hero: makes the dry_run feel like a finished product */}
+      {/* Hero — reshapes its message based on render state */}
       <div className="card p-6 bg-gradient-to-br from-viral-accent/10 via-transparent to-viral-accent2/10 border-viral-accent/30">
-        <h2 className="text-2xl font-bold mb-3">🚀 Seu vídeo viral está pronto</h2>
-        <ul className="space-y-1 text-sm text-viral-muted">
-          <li className="flex items-center gap-2"><span className="text-viral-accent">✔</span> Roteiro bilíngue com marcações de cena</li>
-          <li className="flex items-center gap-2"><span className="text-viral-accent">✔</span> Personagens com voz e personalidade</li>
-          <li className="flex items-center gap-2"><span className="text-viral-accent">✔</span> Post pronto pra Instagram (hook · body · hashtags)</li>
-          <li className="flex items-center gap-2"><span className="text-viral-accent">✔</span> Timeline de captions com timestamps</li>
-        </ul>
+        {videoUrl ? (
+          <>
+            <h2 className="text-2xl font-bold mb-3">✅ Seu vídeo viral está pronto</h2>
+            <p className="text-sm text-viral-muted">
+              Render completo. Confira o player abaixo, baixe o MP4 e copie o post pra Instagram.
+            </p>
+          </>
+        ) : isRendering ? (
+          <>
+            <h2 className="text-2xl font-bold mb-3">🎬 Renderizando seu reel…</h2>
+            <p className="text-sm text-viral-muted">
+              A IA está animando os personagens e sincronizando o áudio. Não feche esta tela.
+            </p>
+          </>
+        ) : (
+          <>
+            <h2 className="text-2xl font-bold mb-3">🚀 Seu vídeo viral está pronto</h2>
+            <ul className="space-y-1 text-sm text-viral-muted">
+              <li className="flex items-center gap-2"><span className="text-viral-accent">✔</span> Roteiro bilíngue com marcações de cena</li>
+              <li className="flex items-center gap-2"><span className="text-viral-accent">✔</span> Personagens com voz e personalidade</li>
+              <li className="flex items-center gap-2"><span className="text-viral-accent">✔</span> Post pronto pra Instagram (hook · body · hashtags)</li>
+              <li className="flex items-center gap-2"><span className="text-viral-accent">✔</span> Timeline de captions com timestamps</li>
+            </ul>
+          </>
+        )}
       </div>
 
-      {/* Demo preview — real Veo render so the user sees the actual quality */}
-      <div className="card p-2 overflow-hidden">
-        <div className="text-[10px] uppercase tracking-wider text-viral-muted font-semibold px-3 pt-2 pb-1 flex items-center justify-between">
-          <span>Preview do estilo de vídeo</span>
-          <span className="text-viral-muted/60 normal-case font-normal">amostra Veo · 8s · 9:16</span>
+      {/* Video frame — three states share the same slot for visual continuity */}
+      {videoUrl ? (
+        <FinalVideoBlock
+          videoUrl={videoUrl}
+          jobId={jobId}
+          mock={!!statusResp?.mock}
+          post={post}
+          hashtags={hashtags}
+          onCopy={onCopy}
+          copied={copied}
+        />
+      ) : isRendering ? (
+        <RenderingInline jobId={jobId} statusResp={statusResp} />
+      ) : (
+        <div className="card p-2 overflow-hidden">
+          <div className="text-[10px] uppercase tracking-wider text-viral-muted font-semibold px-3 pt-2 pb-1 flex items-center justify-between">
+            <span>Preview do estilo de vídeo</span>
+            <span className="text-viral-muted/60 normal-case font-normal">amostra Veo · 8s · 9:16</span>
+          </div>
+          <video
+            controls
+            preload="metadata"
+            className="w-full max-w-[280px] mx-auto rounded-lg shadow-lg"
+            src={MOCK_PREVIEW_VIDEO_URL}
+          >
+            Seu navegador não suporta vídeo.
+          </video>
         </div>
-        <video
-          controls
-          preload="metadata"
-          className="w-full max-w-[280px] mx-auto rounded-lg shadow-lg"
-          src={MOCK_PREVIEW_VIDEO_URL}
-        >
-          Seu navegador não suporta vídeo.
-        </video>
-      </div>
+      )}
 
       <div className="card p-6">
         <div className="flex items-start justify-between gap-3 mb-3">
@@ -894,50 +926,63 @@ function PackagePreview(props: {
         )}
       </div>
 
-      <div className="flex gap-3">
-        <button type="button" onClick={onBack} className="btn-secondary flex-1">
-          ✏️ Editar roteiro
-        </button>
-        <button
-          type="button"
-          onClick={onRender}
-          disabled={busy}
-          className="btn-primary flex-1"
-        >
-          🎬 Gerar vídeo
-        </button>
-      </div>
+      {videoUrl ? (
+        <div className="grid grid-cols-3 gap-2">
+          <button type="button" onClick={onDuplicate} className="btn-secondary text-xs">↻ Duplicar ideia</button>
+          <button type="button" onClick={onChangeTone} className="btn-secondary text-xs">🎭 Variar tom</button>
+          <button type="button" onClick={onNew} className="btn-primary text-xs">＋ Novo reel</button>
+        </div>
+      ) : (
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onBack}
+            disabled={isRendering}
+            className="btn-secondary flex-1"
+          >
+            ✏️ Editar roteiro
+          </button>
+          <button
+            type="button"
+            onClick={onRender}
+            disabled={busy || isRendering}
+            className="btn-primary flex-1"
+          >
+            {isRendering ? "Renderizando…" : "🎬 Gerar vídeo"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-function RenderingPanel(props: {
+function RenderingInline(props: {
   jobId: string | null;
   statusResp: StatusResp | null;
-  hint: string;
 }) {
-  const { jobId, statusResp, hint } = props;
+  const { jobId, statusResp } = props;
   const completed = statusResp?.completed_scenes ?? 0;
   const total = statusResp?.scene_count ?? 1;
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
   return (
-    <div className="card p-8 space-y-5">
-      <div className="text-center">
-        <div className="text-5xl inline-block animate-spin-slow mb-3">⚙️</div>
-        <div className="font-semibold text-lg mb-1">Renderizando vídeo…</div>
-        <p className="text-sm text-viral-muted">{hint}</p>
+    <div className="card p-6 bg-gradient-to-br from-viral-accent/5 to-viral-accent2/5 border-viral-accent/30">
+      <div className="text-center space-y-3 mb-4">
+        <div className="text-4xl inline-block animate-spin-slow">⚙️</div>
+        <div className="space-y-2 text-sm">
+          <p className="render-stage-line render-stage-1">🎬 Gerando vídeo…</p>
+          <p className="render-stage-line render-stage-2">🎭 Animando personagens…</p>
+          <p className="render-stage-line render-stage-3">🧠 Sincronizando roteiro…</p>
+        </div>
       </div>
 
-      {/* Progress bar */}
       <div className="space-y-1">
-        <div className="flex items-center justify-between text-xs text-viral-muted">
+        <div className="flex items-center justify-between text-[10px] text-viral-muted">
           <span>cenas</span>
           <span>{completed}/{total}</span>
         </div>
-        <div className="h-2 bg-viral-border/40 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-viral-border/40 rounded-full overflow-hidden">
           <div
             className="h-full bg-viral-accent transition-all duration-500"
-            data-pct={pct}
             ref={(el) => {
               if (el) el.style.width = `${pct}%`;
             }}
@@ -945,120 +990,86 @@ function RenderingPanel(props: {
         </div>
       </div>
 
-      <div className="text-center text-xs text-viral-muted">
-        Job: <code className="font-mono">{jobId}</code>
-        {statusResp && (
-          <span> · status: <span className="text-viral-text">{statusResp.status}</span></span>
-        )}
-      </div>
-      <ProgressDots />
+      {jobId && (
+        <div className="text-center text-[10px] text-viral-muted/60 mt-3">
+          job <code className="font-mono">{jobId}</code>
+        </div>
+      )}
     </div>
   );
 }
 
-function CompletedView(props: {
+function FinalVideoBlock(props: {
   videoUrl: string;
   jobId: string | null;
   mock: boolean;
-  pkg: Package;
-  niche: string;
-  tone: string;
-  duration: number;
+  post: PostCopy;
+  hashtags: string;
   onCopy: (label: string, text: string) => void;
   copied: string | null;
-  onNew: () => void;
-  onDuplicate: () => void;
-  onChangeTone: () => void;
 }) {
-  const { videoUrl, jobId, mock, pkg, onCopy, copied, onNew, onDuplicate, onChangeTone } = props;
-  const post = pkg.post_copy ?? {};
-  const hashtags = (post.hashtags_pt ?? []).join(" ");
+  const { videoUrl, jobId, mock, post, hashtags, onCopy, copied } = props;
   return (
-    <div className="space-y-4">
-      <div className="card p-6 text-center">
-        <div className="text-4xl mb-2">✅</div>
-        <h2 className="text-xl font-bold mb-1">Reel pronto</h2>
-        <p className="text-xs text-viral-muted">
-          Job: <code className="font-mono">{jobId}</code>
-          {mock && (
-            <span className="ml-2 px-2 py-0.5 rounded-full bg-viral-accent2/20 text-viral-accent2 text-[10px] uppercase font-semibold">
-              Mock
-            </span>
-          )}
-        </p>
-      </div>
-
-      <div className="grid md:grid-cols-[280px_1fr] gap-4">
-        {/* Mobile-style 9:16 frame */}
-        <div className="card p-2 mx-auto md:mx-0 w-full max-w-[280px]">
-          <div className="rounded-xl overflow-hidden bg-black aspect-video-9-16 relative">
-            <video
-              controls
-              src={videoUrl}
-              className="w-full h-full object-cover"
-            >
-              Seu navegador não suporta vídeo.
-            </video>
-          </div>
-          <div className="mt-2 flex gap-2">
-            <a
-              href={videoUrl}
-              download={`viralobj-${jobId ?? "reel"}.mp4`}
-              className="btn-primary text-xs flex-1 text-center"
-            >
-              ⬇️ Download
-            </a>
-            <button
-              type="button"
-              onClick={() => onCopy("video-url", videoUrl)}
-              className="btn-secondary text-xs flex-1"
-            >
-              {copied === "video-url" ? "✓ Copiado" : "📋 URL"}
-            </button>
-          </div>
-        </div>
-
-        {/* Package summary */}
-        <div className="card p-4 space-y-3 text-sm">
-          <div className="eyebrow">Post pronto pro Instagram</div>
-          {post.hook_pt && (
-            <div>
-              <div className="text-[10px] uppercase tracking-wider text-viral-muted">Hook</div>
-              <p className="font-bold">{post.hook_pt}</p>
-            </div>
-          )}
-          {post.body_pt && (
-            <div>
-              <div className="text-[10px] uppercase tracking-wider text-viral-muted">Body</div>
-              <p className="whitespace-pre-line text-viral-muted">{post.body_pt}</p>
-            </div>
-          )}
-          {hashtags && (
-            <div>
-              <div className="text-[10px] uppercase tracking-wider text-viral-muted">Hashtags</div>
-              <p className="text-xs text-viral-muted break-all">{hashtags}</p>
-            </div>
-          )}
+    <div className="grid md:grid-cols-[280px_1fr] gap-4">
+      <div className="card p-2 mx-auto md:mx-0 w-full max-w-[280px]">
+        <video
+          controls
+          autoPlay
+          src={videoUrl}
+          className="w-full rounded-lg shadow-lg"
+          style={{ aspectRatio: "9/16" }}
+        >
+          Seu navegador não suporta vídeo.
+        </video>
+        <div className="mt-2 flex gap-2">
+          <a
+            href={videoUrl}
+            download={`viralobj-${jobId ?? "reel"}.mp4`}
+            className="btn-primary text-xs flex-1 text-center"
+          >
+            ⬇️ Download
+          </a>
           <button
             type="button"
-            onClick={() => onCopy("post-final", `${post.hook_pt ?? ""}\n\n${post.body_pt ?? ""}\n\n${post.cta_pt ?? ""}\n\n${hashtags}`)}
-            className="btn-secondary text-xs w-full"
+            onClick={() => onCopy("video-url", videoUrl)}
+            className="btn-secondary text-xs flex-1"
           >
-            {copied === "post-final" ? "✓ Post copiado" : "📋 Copiar post completo"}
+            {copied === "video-url" ? "✓ Copiado" : "📋 URL"}
           </button>
         </div>
+        {mock && (
+          <p className="text-[10px] text-center text-viral-accent2 mt-2 uppercase tracking-wider">
+            mock render
+          </p>
+        )}
       </div>
 
-      {/* Quick actions */}
-      <div className="grid grid-cols-3 gap-2">
-        <button type="button" onClick={onDuplicate} className="btn-secondary text-xs">
-          ↻ Duplicar ideia
-        </button>
-        <button type="button" onClick={onChangeTone} className="btn-secondary text-xs">
-          🎭 Variar tom
-        </button>
-        <button type="button" onClick={onNew} className="btn-primary text-xs">
-          ＋ Novo reel
+      <div className="card p-4 space-y-3 text-sm">
+        <div className="eyebrow">Post pronto pro Instagram</div>
+        {post.hook_pt && (
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-viral-muted">Hook</div>
+            <p className="font-bold">{post.hook_pt}</p>
+          </div>
+        )}
+        {post.body_pt && (
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-viral-muted">Body</div>
+            <p className="whitespace-pre-line text-viral-muted">{post.body_pt}</p>
+          </div>
+        )}
+        {hashtags && (
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-viral-muted">Hashtags</div>
+            <p className="text-xs text-viral-muted break-all">{hashtags}</p>
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={() => onCopy("post-final", `${post.hook_pt ?? ""}\n\n${post.body_pt ?? ""}\n\n${post.cta_pt ?? ""}\n\n${hashtags}`)}
+          className="btn-secondary text-xs w-full"
+        >
+          {copied === "post-final" ? "✓ Post copiado" : "📋 Copiar post completo"}
         </button>
       </div>
     </div>

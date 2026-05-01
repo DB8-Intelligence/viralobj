@@ -168,6 +168,19 @@
     aspect-ratio: 9 / 16;
   }
 
+  /* Render stage lines — staggered cinematic loading (Sprint 30) */
+  @keyframes renderStage {
+    0%   { opacity: 0; transform: translateY(4px); }
+    25%  { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0.4; transform: translateY(0); }
+  }
+  .render-stage-line {
+    animation: renderStage 2.4s ease-in-out infinite;
+  }
+  .render-stage-1 { animation-delay: 0s; }
+  .render-stage-2 { animation-delay: 0.4s; }
+  .render-stage-3 { animation-delay: 0.8s; }
+
   /* Premium character card — gives the wizard package preview a "produto pago"
      feel instead of a flat list (Sprint 29). */
   .character-card {
