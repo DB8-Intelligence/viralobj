@@ -256,6 +256,35 @@ export default function AppGeneratePage() {
     setHistory(loadHistory());
   }, []);
 
+  // Sprint 32 — pull real credit balance from the bridge on mount and
+  // again after returning from a Stripe checkout (URL flag). Falls back
+  // to 0 silently on any error so the paywall flow still works.
+  async function refreshCredits() {
+    try {
+      const res = await fetch("/api/app/billing/credits", { cache: "no-store" });
+      if (!res.ok) return;
+      const data = (await res.json()) as { credits?: number };
+      if (typeof data.credits === "number") {
+        setCredits(data.credits);
+      }
+    } catch {
+      /* network error — keep current state */
+    }
+  }
+  useEffect(() => {
+    refreshCredits();
+    // Stripe redirects back here with ?checkout=success when configured
+    // to use this page as success_url. Refresh balance again after
+    // webhook race + show a light confirmation.
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("checkout") === "success") {
+        // small delay so the webhook has time to land
+        setTimeout(refreshCredits, 1500);
+      }
+    }
+  }, []);
+
   // Sprint 28b — auto-fill objects when niche changes (only if user hasn't
   // typed something distinct from the previous niche's defaults). Avoids
   // wiping a curated list the user is mid-editing.
@@ -452,15 +481,57 @@ export default function AppGeneratePage() {
 
   const nicheLabel = NICHES.find((n) => n.id === niche)?.label ?? niche;
 
-  // Sprint 31 — mock purchase. Adds 1 credit + closes paywall after a
-  // 700ms delay so the button feedback feels real. Replace with a fetch
-  // to /api/app/billing/checkout when Stripe is wired (Sprint 32).
+  // Sprint 32 — real Stripe checkout. Hits the webapp proxy that calls
+  // bridge /api/billing/create-checkout, which returns a Stripe-hosted
+  // URL we redirect to. Stripe then sends a webhook back to the bridge
+  // with the user_id metadata; that increments credits in Firestore.
+  // On success Stripe redirects the user back to /app/billing or
+  // /app/generate (depending on STRIPE_CHECKOUT_SUCCESS_URL on bridge).
+  //
+  // While Stripe is NOT yet configured on the bridge, the proxy returns
+  // 503 STRIPE_NOT_CONFIGURED and we surface a helpful message instead
+  // of a blank screen. No mock credit is added in that case — operator
+  // sees that monetization is gated until they wire Stripe.
   async function handleBuy() {
     setPurchasing(true);
-    await new Promise((r) => setTimeout(r, 700));
-    setCredits((c) => c + 1);
-    setShowPaywall(false);
-    setPurchasing(false);
+    setError(null);
+    try {
+      const res = await fetch("/api/app/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ product: "prod_1_scene" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && (data as { checkout_url?: string }).checkout_url) {
+        // Hard redirect — Stripe takes over from here.
+        window.location.href = (data as { checkout_url: string }).checkout_url;
+        return;
+      }
+      const code = (data as { code?: string }).code;
+      if (code === "STRIPE_NOT_CONFIGURED" || code === "STRIPE_PRICE_NOT_CONFIGURED") {
+        setError({
+          title: "Pagamento ainda indisponível",
+          hint: "O time está finalizando a integração Stripe. Tenta de novo em alguns minutos ou fale com o suporte.",
+          raw: code,
+        });
+      } else {
+        setError({
+          title: "Falha ao abrir checkout",
+          hint: "Não consegui criar a sessão de pagamento. Tenta novamente.",
+          raw: (data as { error?: string }).error ?? `HTTP ${res.status}`,
+        });
+      }
+      setShowPaywall(false);
+    } catch (e) {
+      setError({
+        title: "Erro de rede",
+        hint: "Não consegui contactar o checkout.",
+        raw: String(e),
+      });
+      setShowPaywall(false);
+    } finally {
+      setPurchasing(false);
+    }
   }
 
   // ─── Render ──────────────────────────────────────────────────────────
