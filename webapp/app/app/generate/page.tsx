@@ -228,7 +228,13 @@ export default function AppGeneratePage() {
   // Sprint 30 — flat render state, lives alongside the package
   const [isRendering, setIsRendering] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [credits] = useState<number>(999);
+  // Sprint 31 — credit wallet & paywall gate. Starts at 0 to force the
+  // monetization flow on first render. Real billing wires through the
+  // bridge (/api/billing/credits + Stripe webhook) but we keep the mock
+  // local to avoid network calls during dev.
+  const [credits, setCredits] = useState<number>(0);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [purchasing, setPurchasing] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [hintIdx, setHintIdx] = useState(0);
   const [copied, setCopied] = useState<string | null>(null);
@@ -325,6 +331,13 @@ export default function AppGeneratePage() {
 
   // ─── Sprint 30: in-place render — never leaves the package screen ────
   async function handleRenderReel() {
+    // Sprint 31 — paywall gate. Bridge also enforces this server-side
+    // (PAYMENT_REQUIRED 402), but we surface a friendlier UX upfront so
+    // a customer sees the offer instead of an HTTP error code.
+    if (credits <= 0) {
+      setShowPaywall(true);
+      return;
+    }
     setError(null);
     setIsRendering(true);
     setStatusResp(null);
@@ -378,6 +391,8 @@ export default function AppGeneratePage() {
           const url = data.scenes?.find((s) => s.status === "completed")?.public_url ?? null;
           setVideoUrl(url);
           setIsRendering(false);
+          // Sprint 31 — debit one credit per successful render.
+          setCredits((c) => Math.max(0, c - 1));
           // Persist to history once we have a public URL.
           const entry: HistoryEntry = {
             id: id,
@@ -437,6 +452,17 @@ export default function AppGeneratePage() {
 
   const nicheLabel = NICHES.find((n) => n.id === niche)?.label ?? niche;
 
+  // Sprint 31 — mock purchase. Adds 1 credit + closes paywall after a
+  // 700ms delay so the button feedback feels real. Replace with a fetch
+  // to /api/app/billing/checkout when Stripe is wired (Sprint 32).
+  async function handleBuy() {
+    setPurchasing(true);
+    await new Promise((r) => setTimeout(r, 700));
+    setCredits((c) => c + 1);
+    setShowPaywall(false);
+    setPurchasing(false);
+  }
+
   // ─── Render ──────────────────────────────────────────────────────────
   return (
     <div className="grid lg:grid-cols-[1fr_280px] gap-6">
@@ -448,10 +474,27 @@ export default function AppGeneratePage() {
               Pacote (Gemini) → render (Veo) → vídeo final.
             </p>
           </div>
-          <div className="card px-4 py-2 text-right">
+          <button
+            type="button"
+            onClick={credits <= 0 ? () => setShowPaywall(true) : undefined}
+            className={`card px-4 py-2 text-right transition ${
+              credits <= 0
+                ? "border-viral-accent2/40 hover:border-viral-accent2 cursor-pointer"
+                : "cursor-default"
+            }`}
+          >
             <div className="text-[10px] uppercase tracking-wider text-viral-muted">Créditos</div>
-            <div className="text-xl font-bold">{credits}</div>
-          </div>
+            <div
+              className={`text-xl font-bold ${
+                credits <= 0 ? "text-viral-accent2" : ""
+              }`}
+            >
+              {credits}
+            </div>
+            {credits <= 0 && (
+              <div className="text-[10px] text-viral-accent2/80 mt-0.5">comprar →</div>
+            )}
+          </button>
         </header>
 
         <Stepper step={step} hasVideo={!!videoUrl} isRendering={isRendering} />
@@ -551,6 +594,77 @@ export default function AppGeneratePage() {
           </p>
         </div>
       </aside>
+
+      {/* Sprint 31 — paywall modal. Renders on top of the grid via fixed
+          positioning. Click outside (overlay) closes; "Agora não" closes
+          too. Mock purchase fires handleBuy() which adds 1 credit. */}
+      {showPaywall && (
+        <Paywall
+          credits={credits}
+          purchasing={purchasing}
+          onClose={() => setShowPaywall(false)}
+          onBuy={handleBuy}
+        />
+      )}
+    </div>
+  );
+}
+
+function Paywall(props: {
+  credits: number;
+  purchasing: boolean;
+  onClose: () => void;
+  onBuy: () => void;
+}) {
+  const { credits, purchasing, onClose, onBuy } = props;
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className="card max-w-sm w-full p-6 space-y-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div>
+          <div className="text-3xl mb-2">🚀</div>
+          <h2 className="text-xl font-bold mb-1">Desbloqueie seu vídeo</h2>
+          <p className="text-sm text-viral-muted">
+            Você tem <strong className="text-viral-accent2">{credits}</strong> crédito{credits === 1 ? "" : "s"}.
+            Cada vídeo viral consome 1 crédito.
+          </p>
+        </div>
+
+        <ul className="space-y-1 text-sm text-viral-muted border-t border-viral-border/40 pt-3">
+          <li className="flex items-center gap-2"><span className="text-viral-accent">✔</span> Render Veo de 8s · 9:16</li>
+          <li className="flex items-center gap-2"><span className="text-viral-accent">✔</span> Voz, áudio e captions sincronizados</li>
+          <li className="flex items-center gap-2"><span className="text-viral-accent">✔</span> Post pronto pro Instagram (hook · body · hashtags)</li>
+          <li className="flex items-center gap-2"><span className="text-viral-accent">✔</span> Download MP4 imediato</li>
+        </ul>
+
+        <button
+          type="button"
+          onClick={onBuy}
+          disabled={purchasing}
+          className="btn-primary w-full"
+        >
+          {purchasing ? "Processando…" : "Comprar 1 vídeo · R$ 19"}
+        </button>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-full text-xs text-viral-muted/70 hover:text-viral-muted py-1"
+        >
+          Agora não
+        </button>
+
+        <p className="text-[10px] text-center text-viral-muted/50">
+          🔒 Pagamento seguro via Stripe · cobrança única
+        </p>
+      </div>
     </div>
   );
 }
