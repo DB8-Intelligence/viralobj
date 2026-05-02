@@ -108,8 +108,9 @@ export default function PrivacidadePage() {
           dados pessoais identificáveis
         </li>
         <li>
-          <strong>Infraestrutura</strong>: Supabase (banco de dados), Vercel
-          (hosting), ambos com cláusulas contratuais adequadas à LGPD
+          <strong>Infraestrutura</strong>: Supabase (banco de dados), Google
+          Cloud (hosting via Cloud Run, Cloud Storage, Cloud DNS, Vertex AI),
+          ambos com cláusulas contratuais adequadas à LGPD
         </li>
         <li>
           <strong>Pagamentos</strong>: Kiwify, Stripe ou outro processador
@@ -126,7 +127,7 @@ export default function PrivacidadePage() {
 
       <h2>5. Transferência Internacional</h2>
       <p>
-        Alguns provedores (Vercel, Supabase, Anthropic, OpenAI, Google)
+        Alguns provedores (Google Cloud, Supabase, Anthropic, OpenAI)
         possuem infraestrutura fora do Brasil, principalmente nos Estados
         Unidos. Todas as transferências ocorrem sob cláusulas contratuais que
         garantem nível de proteção adequado conforme o art. 33 da LGPD.

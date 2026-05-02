@@ -1,9 +1,22 @@
 # ViralObj — Session Handoff para ChatGPT
-**Data:** 2026-04-15
+**Data:** 2026-04-15 (snapshot — produção migrou para Google Cloud em Sprint 22)
 **Autor:** Douglas Bonânzza (DB8 Intelligence)
 **Produto:** viralobj.com — SaaS de geração de reels virais com objetos 3D falantes (Talking Objects)
-**Deploy:** https://viralobj.vercel.app
-**Repo:** github.com/DB8-Intelligence/viralobj (branch `main`, commit atual `d4553e7`)
+**Repo:** <https://github.com/DB8-Intelligence/viralobj> (branch `main`, commit atual `d4553e7`)
+
+---
+
+## Produção oficial (atual)
+
+- Landing: <https://viralobj.com>
+- Dashboard: <https://www.viralobj.app>
+- API: <https://api.viralobj.app>
+- DNS: Google Cloud DNS
+- Hosting: Google Cloud Run
+- Vercel: não utilizado
+
+> Comandos `vercel --prod` e a URL `viralobj.vercel.app` abaixo são registro
+> histórico — não usar.
 
 ---
 

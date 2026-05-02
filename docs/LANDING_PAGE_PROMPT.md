@@ -3,7 +3,7 @@
 **Uso:** Cole este documento inteiro em Figma AI, Miro AI, WeWeb, ou qualquer ferramenta de design. Auto-contido com todo o conteúdo, estrutura, design tokens e prompts de imagem.
 
 **Idioma da landing:** Português BR (público-alvo brasileiro)
-**Estilo:** Dark neon SaaS moderno (inspirações: Linear, Vercel, Cursor, Arc)
+**Estilo:** Dark neon SaaS moderno (inspirações: Linear, Cursor, Arc)
 
 ---
 

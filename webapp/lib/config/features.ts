@@ -2,11 +2,11 @@
  * Feature flags centralizadas para ViralObj.
  * Leitura de env vars com defaults seguros — tudo desligado até ativação explícita.
  *
- * Ativar em .env.local (dev) ou Vercel Dashboard (prod).
+ * Ativar em .env.local (dev) ou via `gcloud run services update --update-env-vars` (prod).
  */
 
-// Tolera espaços/newlines acidentais em env vars (Vercel UI cola "true\n"
-// quando o usuário copia com line ending, e comparação strict quebra).
+// Tolera espaços/newlines acidentais em env vars (consoles costumam colar
+// "true\n" quando o usuário copia com line ending, e comparação strict quebra).
 function envBool(key: string, fallback = false): boolean {
   const v = process.env[key]?.trim();
   if (!v) return fallback;

@@ -1,5 +1,17 @@
 # ViralObj — Session Handoff (2026-04-21)
 
+> **Snapshot histórico — produção migrou para Google Cloud em Sprint 22.**
+>
+> ## Produção oficial (atual)
+>
+> - Landing: <https://viralobj.com>
+> - Dashboard: <https://www.viralobj.app>
+> - API: <https://api.viralobj.app>
+> - DNS: Google Cloud DNS · Hosting: Google Cloud Run · Vercel: não utilizado
+>
+> Comandos `vercel --prod` e referências a `viralobj.vercel.app` abaixo
+> são registro de estado pré-migração; **não usar.**
+
 ## O Que É o ViralObj
 SaaS que gera reels virais com "Talking Objects" (objetos 3D estilo Pixar que falam em primeira pessoa). Pipeline completo: tema → imagens → scripts → áudio → vídeo com voz/lip-sync → música.
 

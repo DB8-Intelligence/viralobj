@@ -12,7 +12,7 @@
 # Node modules (rebuilt inside container via npm ci)
 node_modules
 
-# Next.js webapp (separate deploy on Vercel — not part of the bridge image)
+# Next.js webapp (separate Cloud Run service `viralobj-dashboard` — not part of the bridge image)
 webapp
 
 # Build artifacts / caches

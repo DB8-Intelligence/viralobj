@@ -1,7 +1,7 @@
 /**
  * Niches + Formats data — mirrored from mcp/tools/niches.js
- * Kept as a standalone module so Vercel build doesn't need to import
- * from outside the webapp/ directory.
+ * Kept as a standalone module so the Cloud Run dashboard build doesn't
+ * need to import from outside the webapp/ directory.
  */
 
 export interface NicheSummary {

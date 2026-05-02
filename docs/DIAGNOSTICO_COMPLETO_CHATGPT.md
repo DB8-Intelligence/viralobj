@@ -3,9 +3,22 @@
 
 **Projeto:** ViralObj (viralobj.com)
 **Autor:** Douglas Bonanzza / DB8 Intelligence (Salvador/BA)
-**Data:** 2026-04-16
-**Producao:** viralobj.vercel.app | Supabase dnqqxnwiwaqxtruvizgz
-**Repo:** github.com/DB8-Intelligence/viralobj
+**Data:** 2026-04-16 (snapshot — produção migrou para Google Cloud em Sprint 22)
+**Repo:** <https://github.com/DB8-Intelligence/viralobj>
+
+---
+
+## Produção oficial (atual)
+
+- Landing: <https://viralobj.com>
+- Dashboard: <https://www.viralobj.app>
+- API: <https://api.viralobj.app>
+- DNS: Google Cloud DNS
+- Hosting: Google Cloud Run
+- Vercel: não utilizado
+
+> Diagnóstico abaixo é um snapshot Vercel/Supabase/AI-externa pré-migração.
+> Para o estado atual da infra, ver `docs/LOCAL_DEV_AND_DEPLOY_CHECKLIST.md`.
 
 ---
 

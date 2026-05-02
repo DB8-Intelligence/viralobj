@@ -68,7 +68,7 @@ viralobj/
 ├── outputs/                         # HTML dashboards, packages, videos
 ├── scripts/
 │   ├── 1_setup.sh                   # Setup automático
-│   └── 2_deploy.sh                  # Deploy Vercel
+│   └── 2_deploy.sh                  # Deploy Cloud Run (bridge + dashboard)
 ├── docs/
 │   ├── 00_README_START_HERE.md      # Este guia
 │   └── INDEX_MASTER.md              # Este índice

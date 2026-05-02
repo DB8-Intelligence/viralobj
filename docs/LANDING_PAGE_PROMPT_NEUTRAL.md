@@ -4,7 +4,7 @@
 Use esta versão em Miro AI, ChatGPT com content filter, Claude.ai, ou qualquer tool que bloqueie referências a IP proprietário.
 
 **Idioma:** Português BR
-**Estilo visual:** Dark neon SaaS moderno (Linear / Vercel / Cursor / Arc vibes)
+**Estilo visual:** Dark neon SaaS moderno (Linear / Cursor / Arc vibes)
 
 ---
 
@@ -688,7 +688,7 @@ elegant, cinematic, no text, no logos
 >    - Pricing grid itera sobre pricing_plans
 >    - Niches grid itera sobre niches
 > 7. Responsive: breakpoints desktop/tablet/mobile usando grid columns
-> 8. Conectar ao endpoint https://viralobj.vercel.app/api/niches para
+> 8. Conectar ao endpoint <https://api.viralobj.app/api/niches> para
 >    popular o grid de nichos dinamicamente (opcional)"
 
 ---

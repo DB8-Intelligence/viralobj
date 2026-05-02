@@ -5,13 +5,24 @@ DB8 Intelligence · Salvador/BA
 
 ---
 
+## Produção oficial
+
+- Landing: <https://viralobj.com>
+- Dashboard: <https://www.viralobj.app>
+- API: <https://api.viralobj.app>
+- DNS: Google Cloud DNS
+- Hosting: Google Cloud Run
+- Vercel: não utilizado
+
+---
+
 ## Pré-requisitos
 
 - Node.js 20+
 - npm 10+
 - Git
 - Conta Supabase com projeto criado
-- Conta Vercel (para deploy)
+- gcloud CLI autenticado em `viralreel-ai-493701` (para deploy)
 
 ---
 
@@ -102,10 +113,13 @@ Acesse: http://localhost:3000
 ### 7. Deploy
 
 ```bash
-bash scripts/2_deploy.sh
+APROVO_DEPLOY=true bash scripts/2_deploy.sh
 ```
 
-Faz deploy no Vercel com as env vars do `.env.local`.
+Faz deploy do bridge (`viralobj-bridge`) e do dashboard (`viralobj-dashboard`)
+no Cloud Run em `viralreel-ai-493701/us-central1`. Env vars vêm da revisão
+anterior + Secret Manager. Ver `docs/LOCAL_DEV_AND_DEPLOY_CHECKLIST.md`
+para o checklist completo.
 
 ---
 
@@ -143,5 +157,5 @@ Todos geram URLs mock determinísticas. Para ativar um provider real: implementa
 
 ## Suporte
 
-- Issues: https://github.com/DB8-Intelligence/viralobj/issues
-- Stack: Next.js 14 + Supabase + Vercel + Tailwind
+- Issues: <https://github.com/DB8-Intelligence/viralobj/issues>
+- Stack: Next.js 14 + Supabase + Google Cloud Run + Tailwind

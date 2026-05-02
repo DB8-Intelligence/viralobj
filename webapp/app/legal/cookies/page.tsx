@@ -129,8 +129,8 @@ export default function CookiesPage() {
           <strong>Supabase</strong>: autenticação (essencial)
         </li>
         <li>
-          <strong>Vercel</strong>: infraestrutura e analytics de performance
-          (essencial)
+          <strong>Google Cloud</strong>: infraestrutura (Cloud Run) e
+          observabilidade essencial à operação
         </li>
       </ul>
       <p>

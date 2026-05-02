@@ -4,6 +4,15 @@
 **Escopo:** auditoria pós-migração Vercel/Supabase/AI-externa → Google Cloud (Cloud Run + Cloud DNS + Vertex AI + Firestore + Stripe-em-espera).
 **Método:** smoke tests de produção via curl contra os 3 hostnames live (`viralobj.com`, `www.viralobj.app`, `api.viralobj.app`). Auth Supabase não foi exercida com user real (curl não tem sessão); rotas protegidas foram avaliadas no nível do gate (302/401).
 
+## Produção oficial
+
+- Landing: <https://viralobj.com>
+- Dashboard: <https://www.viralobj.app>
+- API: <https://api.viralobj.app>
+- DNS: Google Cloud DNS
+- Hosting: Google Cloud Run
+- Vercel: não utilizado (a coluna "Antes da migração" da tabela abaixo é registro histórico)
+
 ## Tabela mestra
 
 | # | Funcionalidade | Antes da migração | Estado atual | Status | Observação | Próxima ação |

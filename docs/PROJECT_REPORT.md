@@ -1,10 +1,23 @@
 # ViralObj — Relatório Completo do Projeto
 
-**Data:** 2026-04-12
+**Data:** 2026-04-12 (snapshot — produção migrou para Google Cloud em Sprint 22)
 **Versão:** Fase 1 (Auth + Dashboard) em produção
-**Produção:** https://viralobj.vercel.app
 **Repositório:** https://github.com/DB8-Intelligence/viralobj
 **Owner:** DB8 Intelligence
+
+---
+
+## Produção oficial
+
+- Landing: <https://viralobj.com>
+- Dashboard: <https://www.viralobj.app>
+- API: <https://api.viralobj.app>
+- DNS: Google Cloud DNS
+- Hosting: Google Cloud Run
+- Vercel: não utilizado
+
+> Snapshot histórico abaixo descreve a stack pré-migração Vercel→Cloud Run.
+> Para o estado atual da infra, ver `docs/LOCAL_DEV_AND_DEPLOY_CHECKLIST.md`.
 
 ---
 

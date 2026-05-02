@@ -2,9 +2,19 @@
 
 **Uso:** Cole este documento inteiro em qualquer LLM (Claude, GPT-4, Gemini) para que ele atue como revisor sênior do projeto ViralObj. Auto-contido — não precisa acesso ao repositório.
 
-**Gerado em:** 2026-04-12
+**Gerado em:** 2026-04-12 (snapshot — produção migrou para Google Cloud em Sprint 22)
 **Versão do projeto:** Fase 1 (Auth + Dashboard deployed)
-**URL produção:** https://viralobj.vercel.app
+
+---
+
+## Produção oficial
+
+- Landing: <https://viralobj.com>
+- Dashboard: <https://www.viralobj.app>
+- API: <https://api.viralobj.app>
+- DNS: Google Cloud DNS
+- Hosting: Google Cloud Run
+- Vercel: não utilizado
 
 ---
 

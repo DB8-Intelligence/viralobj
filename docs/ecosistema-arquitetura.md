@@ -2,6 +2,12 @@
 **Referência:** DB8-ECOSYSTEM-MASTER.md v4.0
 **Data:** Março 2026
 
+> **Nota ViralObj (2026-05):** Este documento descreve a arquitetura do
+> ecossistema DB8 (NexoPro / db8-api). Para o ViralObj especificamente,
+> a stack é 100% Google Cloud (Cloud Run + Cloud DNS + Cloud Storage +
+> Vertex AI / Veo). Vercel não é utilizado em ViralObj. Referências a
+> "deploy Vercel" abaixo são para o projeto separado db8-api.
+
 ---
 
 ## 🗺️ MAPEAMENTO: Código Atual → Destino Final

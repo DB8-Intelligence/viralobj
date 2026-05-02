@@ -16,7 +16,7 @@ export const COMPANY = {
   product: {
     name: "ViralObj",
     domain: "viralobj.com",
-    url: "https://viralobj.vercel.app",
+    url: "https://www.viralobj.app",
     tagline: "Objetos que viralizam sozinhos",
   },
   jurisdiction: "Comarca de [Cidade/UF]", // Placeholder — foro de resolução de disputas
