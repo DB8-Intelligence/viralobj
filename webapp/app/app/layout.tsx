@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSessionContext } from "@/lib/auth-helpers";
 import { PLAN_LABELS, formatLimit, formatUsagePct } from "@/lib/supabase/types";
 import { logoutAction } from "../login/actions";
+import BugReporterWidget from "@/components/app/BugReporterWidget";
 
 export default async function AppLayout({
   children,
@@ -58,6 +59,7 @@ export default async function AppLayout({
         {/* Main */}
         <section>{children}</section>
       </div>
+      <BugReporterWidget userEmail={ctx.email} />
     </div>
   );
 }

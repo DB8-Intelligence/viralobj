@@ -214,6 +214,28 @@ export const NICHE_CONFIGS: Record<string, NicheConfig> = {
       { id: "comida-afetiva", label: "Comida afetiva: sabor de infância" },
     ],
   },
+  "chas-funcionais": {
+    objects: [
+      { id: "canela-cha", name: "Canela em Pau", emoji: "🪵" },
+      { id: "gengibre-cha", name: "Gengibre", emoji: "🫚" },
+      { id: "hortela-cha", name: "Hortelã", emoji: "🌿" },
+      { id: "camomila-cha", name: "Camomila", emoji: "🌼" },
+      { id: "hibisco-cha", name: "Hibisco", emoji: "🌺" },
+      { id: "dente-de-leao-cha", name: "Dente-de-Leão", emoji: "🌾" },
+      { id: "cha-verde-cha", name: "Chá Verde", emoji: "🍃" },
+      { id: "lavanda-cha", name: "Lavanda", emoji: "💜" },
+    ],
+    topics: [
+      { id: "glicemia", label: "Controle de glicemia e metabolismo" },
+      { id: "digestao-imunidade", label: "Digestão e fortalecimento da imunidade" },
+      { id: "relaxamento-digestivo", label: "Relaxamento digestivo e alívio de cólicas" },
+      { id: "anti-estresse", label: "Anti-estresse e relaxamento muscular" },
+      { id: "circulacao", label: "Circulação e saúde cardiovascular" },
+      { id: "diuretico-renal", label: "Diurético natural e saúde renal" },
+      { id: "antioxidante-metabolismo", label: "Antioxidantes e metabolismo" },
+      { id: "sono-ansiedade", label: "Sono e controle da ansiedade" },
+    ],
+  },
 };
 
 export const TONE_OPTIONS = [

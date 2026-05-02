@@ -1,8 +1,5 @@
 # Vídeos e frames (muito pesados para git)
-downloads/instagram/*.mp4
-downloads/tiktok/*.mp4
-downloads/youtube/*.mp4
-downloads/uploaded/*.mp4
+downloads/
 frames/
 .viralobj_frames_*
 
@@ -23,3 +20,17 @@ outputs/*.mp4
 # Misc
 files/
 files.zip
+*.zip
+viralobj.zip
+
+# Planilhas internas (não versionar)
+docs/*.xlsx
+
+# Supabase CLI temp
+supabase/.temp/
+
+# Local agent / Claude Code config
+.claude/
+
+.vercel
+.env*.local

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getSessionContext } from "@/lib/auth-helpers";
 import { PLAN_LABELS, formatLimit, formatUsagePct } from "@/lib/supabase/types";
 import { PRICING_PLANS } from "@/lib/landing-data";
+import { BuyCreditButton } from "@/components/app/BuyCreditButton";
 
 export const metadata = {
   title: "Assinatura — ViralObj",
@@ -81,6 +82,16 @@ export default async function BillingPage() {
         <div className="text-xs text-viral-muted">
           Uso resetado no primeiro dia de cada mês.
         </div>
+      </div>
+
+      {/* Buy single render credit (Sprint 21) */}
+      <div className="card p-6 bg-gradient-to-br from-viral-accent2/10 via-transparent to-viral-accent/5 border-viral-accent2/40">
+        <div className="eyebrow text-viral-accent2 mb-2">Crédito avulso</div>
+        <h2 className="text-2xl font-bold mb-2">Comprar 1 cena</h2>
+        <p className="text-sm text-viral-muted mb-5 max-w-xl">
+          Render Veo de 8 segundos, voz e imagem 9:16 prontos para Instagram. Cobrança única — não é assinatura.
+        </p>
+        <BuyCreditButton />
       </div>
 
       {/* Upgrade CTA section */}

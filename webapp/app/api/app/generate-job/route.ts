@@ -1,20 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { JobService } from '@/lib/jobs/job.service';
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: NextRequest) {
-  const body = await req.json();
+export const runtime = "nodejs";
 
-  const jobService = new JobService();
-
-  const job = await jobService.createJob({
-    tenant_id: body.tenantId,
-    user_id: body.userId,
-    status: 'queued',
-    progress: 0,
-    input: body
-  });
-
-  return NextResponse.json({
-    jobId: job.id
-  });
+/**
+ * Sprint 17/18 — gated.
+ *
+ * Reel render jobs are tracked in Firestore by the bridge now. The legacy
+ * Supabase JobService + JobOrchestrator pipeline (FAL / ElevenLabs) was
+ * removed in Sprint 18.
+ */
+export async function POST(_req: NextRequest) {
+  return NextResponse.json(
+    {
+      error:
+        "Job creation moved to the bridge. Trigger renders via /api/app/generate-package which calls api.viralobj.app under the hood.",
+      code: "JOB_VIA_BRIDGE",
+    },
+    { status: 501 }
+  );
 }

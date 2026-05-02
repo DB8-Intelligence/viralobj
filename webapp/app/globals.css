@@ -143,4 +143,56 @@
   .animate-float {
     animation: float 4s ease-in-out infinite;
   }
+
+  /* Slow spin for the rendering gear (Sprint 28) */
+  @keyframes spinSlow {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  .animate-spin-slow {
+    animation: spinSlow 3s linear infinite;
+    display: inline-block;
+  }
+
+  /* Three-dot pulse, staggered (Sprint 28) */
+  @keyframes pulseStaggered {
+    0%, 80%, 100% { opacity: 0.2; }
+    40%           { opacity: 1; }
+  }
+  .animate-pulse-dot-1 { animation: pulseStaggered 1.4s ease-in-out infinite; animation-delay: 0s; }
+  .animate-pulse-dot-2 { animation: pulseStaggered 1.4s ease-in-out infinite; animation-delay: 0.2s; }
+  .animate-pulse-dot-3 { animation: pulseStaggered 1.4s ease-in-out infinite; animation-delay: 0.4s; }
+
+  /* Vertical 9:16 aspect frame for mobile-style video preview (Sprint 28) */
+  .aspect-video-9-16 {
+    aspect-ratio: 9 / 16;
+  }
+
+  /* Render stage lines — staggered cinematic loading (Sprint 30) */
+  @keyframes renderStage {
+    0%   { opacity: 0; transform: translateY(4px); }
+    25%  { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0.4; transform: translateY(0); }
+  }
+  .render-stage-line {
+    animation: renderStage 2.4s ease-in-out infinite;
+  }
+  .render-stage-1 { animation-delay: 0s; }
+  .render-stage-2 { animation-delay: 0.4s; }
+  .render-stage-3 { animation-delay: 0.8s; }
+
+  /* Premium character card — gives the wizard package preview a "produto pago"
+     feel instead of a flat list (Sprint 29). */
+  .character-card {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.005));
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+  .character-card:hover {
+    transform: scale(1.02);
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 6px 24px -8px rgba(0, 0, 0, 0.5);
+  }
 }

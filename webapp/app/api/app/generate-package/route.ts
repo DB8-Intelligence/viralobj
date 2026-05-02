@@ -1,21 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generatePackage, ProviderChainError } from "@/lib/generator";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { PLAN_LIMITS, type PlanType } from "@/lib/supabase/types";
 import { checkIpRateLimit } from "@/lib/ip-rate-limit";
 import { normalizeTone } from "@/lib/viral-objects/normalize-tone";
-import { JobService } from "@/lib/jobs/job.service";
-import { JobOrchestrator } from "@/lib/jobs/orchestrator";
+import {
+  generateReelDryRun,
+  generateReelFull,
+  BridgeError,
+  type ReelPayload,
+} from "@/lib/bridgeClient";
 
 export const runtime = "nodejs";
-export const maxDuration = 300; // 5min — sincrono (LLM + FLUX + TTS + timeline + render)
+export const maxDuration = 120;
 
 /**
  * Protected generate endpoint.
- * - Requires auth (via session cookie)
- * - Enforces per-plan monthly rate limit
- * - Persists generation to viralobj.generations
- * - Increments usage counter atomically
+ *
+ * Sprint 17: AI now runs through the ViralObj Bridge on Cloud Run.
+ *   webapp → POST https://api.viralobj.app/api/generate-reel
+ *
+ * Auth + tenant/quota stays here (Supabase). The bridge owns Gemini, Veo,
+ * Cloud Storage and Firestore — no Anthropic / FAL / ElevenLabs from this
+ * process anymore.
+ *
+ * Body forwards `dry_run` to the bridge:
+ *   - dry_run=true (default for the wizard step 1) → text-only package
+ *   - dry_run=false → full render; bridge replies 403 VEO_DISABLED until
+ *     ENABLE_VEO_GENERATION=true is set on the bridge service.
  */
 export async function POST(req: NextRequest) {
   const reqId = crypto.randomUUID().slice(0, 8);
@@ -65,7 +76,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Trial expiry check
     if (tenant.plan === "trial" && tenant.trial_ends_at) {
       if (new Date(tenant.trial_ends_at).getTime() < Date.now()) {
         return NextResponse.json(
@@ -93,10 +103,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const dryRun = body.dry_run !== false; // default to dry_run for safety
+    const isWizardMode = body.wizardMode === true;
+
     // ─── 4. Atomic quota reservation (prevents race condition) ──────────────
     const svc = createServiceClient();
     const limit = PLAN_LIMITS[tenant.plan].packages;
-    const isAdmin = profile.role === 'owner' && tenant.plan === 'enterprise';
+    const isAdmin = profile.role === "owner" && tenant.plan === "enterprise";
 
     let used = 0;
     if (!isAdmin) {
@@ -132,31 +145,51 @@ export async function POST(req: NextRequest) {
       used = ((usageRow?.packages_count as number) ?? 1) - 1;
     }
 
-    // ─── 5. Generate (reservation rolls back on failure) ────────────────────
+    // ─── 5. Call the bridge (Vertex AI Gemini) ───────────────────────────────
     const normalizedTone = normalizeTone(body.tone as string | undefined);
-    let pkg;
+    const payload: ReelPayload = {
+      niche: body.niche as string,
+      objects: Array.isArray(body.objects) ? (body.objects as string[]) : [],
+      topic: body.topic as string,
+      tone: normalizedTone,
+      duration: body.duration as number | undefined,
+      lang: ((body.lang as "pt" | "en" | "both") ?? "both"),
+      provider: "auto",
+      user_email: user.email ?? null,
+      user_name:
+        (profile as { full_name?: string | null }).full_name ?? null,
+    };
+
+    let bridgeResp;
     try {
-      pkg = await generatePackage({
-        niche: body.niche as string,
-        objects: Array.isArray(body.objects) ? (body.objects as string[]) : [],
-        topic: body.topic as string,
-        tone: normalizedTone,
-        duration: body.duration as number | undefined,
-        lang: (body.lang as "pt" | "en" | "both") ?? "both",
-        provider: (body.provider as "auto" | "anthropic" | "openai" | "gemini") ?? "auto",
-      });
-    } catch (genErr) {
+      bridgeResp = dryRun
+        ? await generateReelDryRun(payload)
+        : await generateReelFull(payload);
+    } catch (e) {
       await svc.rpc("release_quota", { p_tenant_id: tenant.id, p_counter: "packages" });
-      console.error(`[generate-package ${reqId}] generation failed:`, genErr);
-      if (genErr instanceof ProviderChainError) {
+      if (e instanceof BridgeError) {
+        // Forward VEO_DISABLED / PAYMENT_REQUIRED / etc. with the bridge's status.
         return NextResponse.json(
-          { error: "Todos os provedores de IA falharam. Tente novamente em instantes.", reqId, code: "ALL_PROVIDERS_FAILED" },
-          { status: 503 }
+          {
+            error: e.message,
+            code: e.code ?? "BRIDGE_ERROR",
+            reqId,
+            details: e.details,
+          },
+          { status: e.status }
         );
       }
-      throw genErr;
+      console.error(`[generate-package ${reqId}] bridge call failed:`, e);
+      return NextResponse.json(
+        { error: "Falha ao chamar o bridge.", reqId, code: "BRIDGE_UNAVAILABLE" },
+        { status: 503 }
+      );
     }
 
+    const pkg = (bridgeResp as { package?: unknown }).package ?? bridgeResp;
+    const providerUsed = (bridgeResp as { provider_used?: string }).provider_used ?? null;
+
+    // ─── 6. Persist (Supabase still owns generations until Sprint 18) ────────
     const { data: saved, error: insertErr } = await svc
       .from("generations")
       .insert({
@@ -168,12 +201,12 @@ export async function POST(req: NextRequest) {
         tone: normalizedTone,
         duration: body.duration ?? 30,
         lang: body.lang ?? "both",
-        provider_used: (pkg as { provider_used?: string }).provider_used ?? null,
+        provider_used: providerUsed,
         package: pkg,
         object_bibles: (pkg as { object_bibles?: unknown }).object_bibles ?? null,
         scene_blueprints: (pkg as { scene_blueprints?: unknown }).scene_blueprints ?? null,
         scene_image_prompts: (pkg as { scene_image_prompts?: unknown }).scene_image_prompts ?? null,
-        scene_images: (pkg as { scene_images?: unknown }).scene_images ?? null,
+        scene_images: null, // images come from full render only
       })
       .select("id")
       .single();
@@ -187,43 +220,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ─── 6. Run orchestrator inline (sync) ──────────────────────────────────
-    // Roda sincrono para garantir que Vercel serverless nao mate o processo.
-    // maxDuration=90s e suficiente para mock providers + FLUX + ElevenLabs.
-    let jobId: string | null = null;
-    let jobStatus: string = "pending";
-    try {
-      const jobService = new JobService();
-      const job = await jobService.createJob({
-        tenant_id: tenant.id,
-        user_id: user.id,
-        status: "queued",
-        progress: 0,
-        input: {
-          generation_id: saved.id,
-          scene_image_prompts:
-            (pkg as { scene_image_prompts?: unknown }).scene_image_prompts ?? [],
-          scene_blueprints:
-            (pkg as { scene_blueprints?: unknown }).scene_blueprints ?? [],
-          scene_texts:
-            (pkg as { scene_texts?: Record<string, string> }).scene_texts ?? null,
-        },
-      });
-      jobId = job?.id ?? null;
-      if (jobId) {
-        await new JobOrchestrator().run(jobId);
-        jobStatus = "completed";
-      }
-    } catch (jobErr) {
-      jobStatus = "failed";
-      console.error(`[generate-package ${reqId}] orchestrator failed:`, jobErr);
-    }
-
+    // ─── 7. Response ─────────────────────────────────────────────────────────
     return NextResponse.json({
       package: pkg,
       generation_id: saved.id,
-      job_id: jobId,
-      job_status: jobStatus,
+      provider_used: providerUsed,
+      mode: dryRun ? "dry_run" : "full",
+      bridge_summary: (bridgeResp as { summary?: string }).summary ?? null,
+      cost_guard: (bridgeResp as { cost_guard?: unknown }).cost_guard ?? null,
+      job_id: (bridgeResp as { job_id?: string }).job_id ?? null,
+      status_url: (bridgeResp as { status_url?: string }).status_url ?? null,
+      scene_images: [],
+      wizard_step: isWizardMode ? "script_review" : null,
       usage: {
         used: used + 1,
         max: limit,
