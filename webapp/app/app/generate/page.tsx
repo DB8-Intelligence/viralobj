@@ -228,11 +228,12 @@ export default function AppGeneratePage() {
   // Sprint 30 — flat render state, lives alongside the package
   const [isRendering, setIsRendering] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  // Sprint 31 — credit wallet & paywall gate. Starts at 0 to force the
-  // monetization flow on first render. Real billing wires through the
-  // bridge (/api/billing/credits + Stripe webhook) but we keep the mock
-  // local to avoid network calls during dev.
-  const [credits, setCredits] = useState<number>(0);
+  // Sprint 33 — temporary test credit. The bridge runs with
+  // BILLING_BYPASS_GATE=true during the validation phase, so the wallet
+  // is informational. Real billing returns in Sprint 34 (Stripe). We
+  // keep showPaywall around (don't remove the modal UI) so re-enabling
+  // the paywall is a one-line revert.
+  const [credits, setCredits] = useState<number>(1);
   const [showPaywall, setShowPaywall] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -271,19 +272,20 @@ export default function AppGeneratePage() {
       /* network error — keep current state */
     }
   }
-  useEffect(() => {
-    refreshCredits();
-    // Stripe redirects back here with ?checkout=success when configured
-    // to use this page as success_url. Refresh balance again after
-    // webhook race + show a light confirmation.
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("checkout") === "success") {
-        // small delay so the webhook has time to land
-        setTimeout(refreshCredits, 1500);
-      }
-    }
-  }, []);
+  // Sprint 33 — refreshCredits() is intentionally NOT called on mount
+  // while BILLING_BYPASS_GATE=true on the bridge. The bridge proxy returns
+  // the system:gemini-agent wallet (likely 0 credits), which would
+  // overwrite our locally-seeded credits=1 and re-trigger the paywall.
+  // Re-enable in Sprint 34 once Stripe + per-user wallets ship.
+  // useEffect(() => {
+  //   refreshCredits();
+  //   if (typeof window !== "undefined") {
+  //     const params = new URLSearchParams(window.location.search);
+  //     if (params.get("checkout") === "success") {
+  //       setTimeout(refreshCredits, 1500);
+  //     }
+  //   }
+  // }, []);
 
   // Sprint 28b — auto-fill objects when niche changes (only if user hasn't
   // typed something distinct from the previous niche's defaults). Avoids

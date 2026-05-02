@@ -46,6 +46,36 @@ if (process.env.NODE_ENV === "production") {
     );
     process.exit(1);
   }
+
+  // Sprint 33 — BILLING_BYPASS_GATE safety. When the operator wants to
+  // run paid Veo renders without a credit balance (validation phase),
+  // they MUST also keep all the cost guards on. Misconfiguring this
+  // would let the bridge spend without bound. Refuse to boot otherwise.
+  if (process.env.BILLING_BYPASS_GATE === "true") {
+    const enableVeo = process.env.ENABLE_VEO_GENERATION === "true";
+    const budget = parseFloat(process.env.DAILY_VEO_BUDGET_USD || "0");
+    const maxScenes = parseInt(process.env.MAX_SCENES_PER_REEL || "999", 10);
+    const violations = [];
+    if (!enableVeo) violations.push("ENABLE_VEO_GENERATION must be true");
+    if (!(budget > 0 && budget <= 10))
+      violations.push(`DAILY_VEO_BUDGET_USD must be in (0, 10], got ${budget}`);
+    if (maxScenes !== 1)
+      violations.push(`MAX_SCENES_PER_REEL must be 1, got ${maxScenes}`);
+    if (violations.length > 0) {
+      console.error(
+        "[BOOT_GUARD] Refusing to start: BILLING_BYPASS_GATE=true requires:",
+        violations,
+      );
+      process.exit(1);
+    }
+    console.warn(
+      "[BOOT_GUARD] BILLING_BYPASS_GATE=true — credits gate disabled, cost guards remain active (budget=$" +
+        budget +
+        ", scenes/reel=" +
+        maxScenes +
+        ").",
+    );
+  }
 }
 
 import express from "express";
@@ -576,30 +606,41 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
       }
 
       // ─── Credit balance gate ───────────────────────────────────────────
-      try {
-        const balance = await getCreditsBalance(userIdForBilling);
-        if ((balance?.credits ?? 0) < 1) {
-          return res.status(402).json({
+      // Sprint 33 — BILLING_BYPASS_GATE skips the balance read + 402.
+      // Cost guards above (USER_DAILY_SCENE_LIMIT + DAILY_VEO_BUDGET_USD)
+      // remain authoritative for runaway protection. Boot guard verifies
+      // both are configured tight when bypass is on.
+      const billingBypass = process.env.BILLING_BYPASS_GATE === "true";
+      if (billingBypass) {
+        console.log(
+          `[BILLING_BYPASS] enabled for test render user=${userIdForBilling}`,
+        );
+      } else {
+        try {
+          const balance = await getCreditsBalance(userIdForBilling);
+          if ((balance?.credits ?? 0) < 1) {
+            return res.status(402).json({
+              ok: false,
+              success: false,
+              error: "PAYMENT_REQUIRED",
+              message:
+                "Insufficient credits. Purchase via /api/billing/webhook to credit this user.",
+              user_id: userIdForBilling,
+              credits: balance?.credits ?? 0,
+            });
+          }
+          creditPriceContext.price_per_scene = balance?.price_per_scene ?? null;
+        } catch (err) {
+          console.error(
+            "[/api/generate-reel] credit balance read failed:",
+            err?.message ?? err,
+          );
+          return res.status(500).json({
             ok: false,
-            success: false,
-            error: "PAYMENT_REQUIRED",
-            message:
-              "Insufficient credits. Purchase via /api/billing/webhook to credit this user.",
-            user_id: userIdForBilling,
-            credits: balance?.credits ?? 0,
+            error: "BILLING_READ_FAILED",
+            message: err?.message ?? String(err),
           });
         }
-        creditPriceContext.price_per_scene = balance?.price_per_scene ?? null;
-      } catch (err) {
-        console.error(
-          "[/api/generate-reel] credit balance read failed:",
-          err?.message ?? err,
-        );
-        return res.status(500).json({
-          ok: false,
-          error: "BILLING_READ_FAILED",
-          message: err?.message ?? String(err),
-        });
       }
     }
 
@@ -689,36 +730,47 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
       Math.min(charactersForBilling.length || 1, cap),
     );
 
+    // Sprint 33 — bypass also disables reserve/refund. Cost guards above
+    // are still authoritative; we just don't move credits in/out of the
+    // user's wallet during this sprint's validation phase.
+    const billingBypassFull = process.env.BILLING_BYPASS_GATE === "true";
+
     // Transactional debit. If the balance dropped between the early
     // read above and now (concurrent renders), this is what catches it.
-    try {
-      const reservation = await reserveCredits(
-        userIdForBilling,
-        sceneCountToCharge,
-      );
-      creditPriceContext.price_per_scene =
-        reservation.price_per_scene ?? creditPriceContext.price_per_scene;
-      console.log(
-        `[BILLING] reserved user_id=${userIdForBilling} -${sceneCountToCharge} credits (remaining=${reservation.credits_remaining})`,
-      );
-    } catch (err) {
-      if (err instanceof InsufficientCreditsError) {
-        return res.status(402).json({
+    if (!billingBypassFull) {
+      try {
+        const reservation = await reserveCredits(
+          userIdForBilling,
+          sceneCountToCharge,
+        );
+        creditPriceContext.price_per_scene =
+          reservation.price_per_scene ?? creditPriceContext.price_per_scene;
+        console.log(
+          `[BILLING] reserved user_id=${userIdForBilling} -${sceneCountToCharge} credits (remaining=${reservation.credits_remaining})`,
+        );
+      } catch (err) {
+        if (err instanceof InsufficientCreditsError) {
+          return res.status(402).json({
+            ok: false,
+            success: false,
+            error: "PAYMENT_REQUIRED",
+            message: err.message,
+            user_id: userIdForBilling,
+            required: err.required,
+            available: err.currentBalance,
+          });
+        }
+        console.error("[/api/generate-reel] reserveCredits failed:", err);
+        return res.status(500).json({
           ok: false,
-          success: false,
-          error: "PAYMENT_REQUIRED",
-          message: err.message,
-          user_id: userIdForBilling,
-          required: err.required,
-          available: err.currentBalance,
+          error: "BILLING_RESERVE_FAILED",
+          message: err?.message ?? String(err),
         });
       }
-      console.error("[/api/generate-reel] reserveCredits failed:", err);
-      return res.status(500).json({
-        ok: false,
-        error: "BILLING_RESERVE_FAILED",
-        message: err?.message ?? String(err),
-      });
+    } else {
+      console.log(
+        `[BILLING_BYPASS] skipping reserve user=${userIdForBilling} would_be -${sceneCountToCharge}`,
+      );
     }
 
     let job;
@@ -736,7 +788,9 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
     } catch (err) {
       // Job creation itself blew up — the customer hasn't received any
       // value, so refund every credit we reserved.
-      await refundCredits(userIdForBilling, sceneCountToCharge, "createJob_failed");
+      if (!billingBypassFull) {
+        await refundCredits(userIdForBilling, sceneCountToCharge, "createJob_failed");
+      }
       console.error("[/api/generate-reel] reelJobs.createJobAndSubmitScenes:", err);
       return res.status(500).json({
         ok: false,
@@ -748,21 +802,23 @@ app.post("/api/generate-reel", dualAuth, async (req, res) => {
     }
 
     const allFailed = job.scenes.every((s) => s.status === "failed");
-    if (allFailed) {
-      // Every scene's submit failed — the user hasn't and won't receive
-      // anything billable. Refund the full reservation.
-      await refundCredits(userIdForBilling, sceneCountToCharge, "all_scenes_failed_at_submit");
-    } else if (sceneCountToCharge > job.sceneCount) {
-      // We capped MAX_SCENES_PER_REEL above, but if the actual sceneCount
-      // ended up lower than what we charged (Gemini returned fewer
-      // characters than the cap), refund the difference.
-      const overcharge = sceneCountToCharge - job.sceneCount;
-      if (overcharge > 0) {
-        await refundCredits(
-          userIdForBilling,
-          overcharge,
-          "scene_count_smaller_than_cap",
-        );
+    if (!billingBypassFull) {
+      if (allFailed) {
+        // Every scene's submit failed — the user hasn't and won't receive
+        // anything billable. Refund the full reservation.
+        await refundCredits(userIdForBilling, sceneCountToCharge, "all_scenes_failed_at_submit");
+      } else if (sceneCountToCharge > job.sceneCount) {
+        // We capped MAX_SCENES_PER_REEL above, but if the actual sceneCount
+        // ended up lower than what we charged (Gemini returned fewer
+        // characters than the cap), refund the difference.
+        const overcharge = sceneCountToCharge - job.sceneCount;
+        if (overcharge > 0) {
+          await refundCredits(
+            userIdForBilling,
+            overcharge,
+            "scene_count_smaller_than_cap",
+          );
+        }
       }
     }
     saveGenerationHistoryToFirestore({
