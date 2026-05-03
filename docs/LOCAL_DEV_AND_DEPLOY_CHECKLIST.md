@@ -15,11 +15,35 @@ deploy só quando feature estiver pronta, validada localmente e aprovada.
 - Quando precisar testar contra serviços reais (raro), apontar para staging
   manualmente — nunca alterar produção.
 - **Não fazer deploy a cada mudança.**
-- Deploy para Cloud Run só após aprovação explícita do operador humano.
 
-## 1.1. Gate de release (Sprint 26)
+## 1.1. Regra atual de execução (Sprint 38, atualiza Sprint 26)
 
-Fluxo formalizado:
+O operador/agente tem **autonomia para deploys técnicos de baixo risco** quando:
+
+- não ativam Veo (`ENABLE_VEO_GENERATION=true`)
+- não geram custo variável (`DAILY_VEO_BUDGET_USD > 0`)
+- não alteram billing (Stripe / cobrança real)
+- não mexem em banco (criar/deletar)
+- não expõem secrets
+- apenas corrigem bugs, DNS, middleware, dashboard, rotas ou documentação
+
+Ainda exige **aprovação explícita** (operador digita "aprovo deploy" ou
+similar no canal) quando:
+
+- `ENABLE_VEO_GENERATION=true`
+- `DAILY_VEO_BUDGET_USD > 0`
+- billing/Stripe real for alterado
+- banco for criado/deletado
+- operação destrutiva irreversível for feita
+- render pago for disparado
+
+Em caso de dúvida → **não deploya.** Pergunta primeiro. Para mudanças
+arquiteturais grandes (não cobertas pela lista acima), use o gate Sprint 26
+abaixo como referência.
+
+### 1.1a. Gate de release Sprint 26 (referência para mudanças críticas)
+
+Fluxo formalizado para deploys que tocam Veo, billing, banco ou cost guards:
 
 ```text
 1. branch:   git checkout -b dev/<feature>      ← parte do main
@@ -33,13 +57,6 @@ Fluxo formalizado:
 7. APROVA:   operador digita literalmente "aprovo deploy" no canal.
 8. deploy:   só agora gcloud run deploy é executado.
 ```
-
-**Trigger explícito de deploy:** o operador precisa dizer `aprovo deploy`
-(ou variantes como `pode deployar`, `release agora`). Sem isso, ninguém
-roda `gcloud run deploy`. Em particular, automações e agents NÃO devem
-deployar de forma autônoma — esta é uma decisão sempre humana.
-
-Em caso de dúvida → **não deploya.** Pergunta primeiro.
 
 ---
 
