@@ -36,7 +36,12 @@ export type Blueprint = {
   description: string;
 };
 
-export const VIRALOBJ_BLUEPRINTS: Blueprint[] = [
+// Sprint 41 — thumbnails 9:16 geradas via Vertex AI Imagen 3 fast e
+// salvas em webapp/public/blueprints/{id}.jpg. O `thumbnail` default abaixo
+// (no `.map`) aponta pra esse caminho; basta adicionar um arquivo novo
+// matchando o id pra ele aparecer no card. Se o JPG não carregar, o card
+// faz fallback pro emoji+gradiente.
+const RAW_BLUEPRINTS: Blueprint[] = [
   {
     id: "sponge-bacteria",
     title: "Esponja vs Bactérias",
@@ -168,6 +173,11 @@ export const VIRALOBJ_BLUEPRINTS: Blueprint[] = [
     description: "Um haltere desfaz o mito do ciclo de creatina em 15s.",
   },
 ];
+
+export const VIRALOBJ_BLUEPRINTS: Blueprint[] = RAW_BLUEPRINTS.map((b) => ({
+  ...b,
+  thumbnail: b.thumbnail ?? `/blueprints/${b.id}.jpg`,
+}));
 
 const BY_ID: Record<string, Blueprint> = Object.fromEntries(
   VIRALOBJ_BLUEPRINTS.map((b) => [b.id, b]),

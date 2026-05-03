@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { NICHES } from "@/lib/niches-data";
 import {
   VIRALOBJ_BLUEPRINTS,
@@ -120,38 +121,68 @@ function FilterChip({
 function BlueprintCard({ blueprint: b }: { blueprint: Blueprint }) {
   const nicheLabel = NICHES.find((n) => n.id === b.niche)?.label ?? b.niche;
   return (
-    <article className="character-card rounded-xl p-5 flex flex-col gap-3">
-      <div className="aspect-video rounded-lg flex items-center justify-center text-6xl bg-gradient-to-br from-viral-accent/15 via-viral-accent2/10 to-viral-bg">
-        {b.emoji}
-      </div>
-      <div className="flex items-start justify-between gap-2">
-        <h3 className="font-semibold leading-snug">{b.title}</h3>
-        <span className="text-[10px] uppercase tracking-wider text-viral-accent font-bold whitespace-nowrap">
-          {b.metric}
-        </span>
-      </div>
-      <p className="text-sm text-viral-muted leading-relaxed">{b.description}</p>
-      <div className="flex flex-wrap gap-1.5 text-[10px]">
-        <span className="px-2 py-0.5 rounded-full bg-viral-border/30 text-viral-muted">
-          {nicheLabel}
-        </span>
-        {b.objects.slice(0, 3).map((o) => (
-          <span key={o} className="px-2 py-0.5 rounded-full bg-viral-border/30 text-viral-muted">
-            {o}
+    <article className="character-card rounded-xl overflow-hidden flex flex-col group">
+      <BlueprintThumb blueprint={b} />
+      <div className="p-5 flex flex-col gap-3 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-semibold leading-snug">{b.title}</h3>
+          <span className="text-[10px] uppercase tracking-wider text-viral-accent font-bold whitespace-nowrap">
+            {b.metric}
           </span>
-        ))}
-        {b.tags.map((t) => (
-          <span key={t} className="px-2 py-0.5 rounded-full text-viral-accent/80 border border-viral-accent/30">
-            #{t}
+        </div>
+        <p className="text-sm text-viral-muted leading-relaxed">{b.description}</p>
+        <div className="flex flex-wrap gap-1.5 text-[10px]">
+          <span className="px-2 py-0.5 rounded-full bg-viral-border/30 text-viral-muted">
+            {nicheLabel}
           </span>
-        ))}
+          {b.objects.slice(0, 3).map((o) => (
+            <span key={o} className="px-2 py-0.5 rounded-full bg-viral-border/30 text-viral-muted">
+              {o}
+            </span>
+          ))}
+          {b.tags.map((t) => (
+            <span key={t} className="px-2 py-0.5 rounded-full text-viral-accent/80 border border-viral-accent/30">
+              #{t}
+            </span>
+          ))}
+        </div>
+        <Link
+          href={`/app/generate?blueprint=${encodeURIComponent(b.id)}`}
+          className="btn-primary !py-2 !text-sm mt-auto"
+        >
+          🎬 Remixar
+        </Link>
       </div>
-      <Link
-        href={`/app/generate?blueprint=${encodeURIComponent(b.id)}`}
-        className="btn-primary !py-2 !text-sm mt-auto"
-      >
-        🎬 Remixar
-      </Link>
     </article>
+  );
+}
+
+// Sprint 41 — thumbnail real (9:16) com fallback gracioso pro emoji+gradiente
+// quando a imagem falha em carregar (404, network, etc.). O hover dá um zoom
+// sutil só na imagem, mantendo o texto estável.
+function BlueprintThumb({ blueprint: b }: { blueprint: Blueprint }) {
+  const [errored, setErrored] = useState(false);
+  if (b.thumbnail && !errored) {
+    return (
+      <div className="relative aspect-[9/16] bg-viral-bg overflow-hidden">
+        <Image
+          src={b.thumbnail}
+          alt={b.title}
+          fill
+          sizes="(min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw"
+          className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+          onError={() => setErrored(true)}
+          priority={false}
+        />
+        {/* overlay sutil pro título ficar legível em qualquer thumb */}
+        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+      </div>
+    );
+  }
+  // Fallback — mesmo visual do Sprint 40 quando ainda não havia thumbs reais.
+  return (
+    <div className="aspect-[9/16] flex items-center justify-center text-7xl bg-gradient-to-br from-viral-accent/20 via-viral-accent2/10 to-viral-bg">
+      {b.emoji}
+    </div>
   );
 }
