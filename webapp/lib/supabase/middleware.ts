@@ -51,8 +51,14 @@ export async function updateSession(request: NextRequest) {
 
   if (isProtectedRoute && !user) {
     const url = request.nextUrl.clone();
+    // Sprint 40 — preserve query string in `next` para que fluxos como
+    // /app/generate?blueprint=<id> sobrevivam ao desvio pelo /login.
+    // searchParams.set faz encode automático, então o `?` interno vira
+    // `%3F` na URL final e a action de login dá redirect("/app/generate?blueprint=…").
+    const search = request.nextUrl.search ?? "";
     url.pathname = "/login";
-    url.searchParams.set("next", pathname);
+    url.search = "";
+    url.searchParams.set("next", pathname + search);
     return NextResponse.redirect(url);
   }
 

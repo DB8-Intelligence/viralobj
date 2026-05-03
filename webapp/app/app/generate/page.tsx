@@ -1,8 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { NICHES } from "@/lib/niches-data";
 import { NICHE_CONFIGS, TONE_OPTIONS } from "@/lib/niche-objects-data";
+import { VIRALOBJ_BLUEPRINTS, getBlueprintById } from "@/lib/viralobj-blueprints";
+
+const LAST_VIDEO_KEY = "viralobj:lastVideoUrl";
 
 // Topic suggestion chips per niche — operator can extend per nicho.
 const TOPIC_SUGGESTIONS: Record<string, string[]> = {
@@ -239,6 +243,10 @@ export default function AppGeneratePage() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [hintIdx, setHintIdx] = useState(0);
   const [copied, setCopied] = useState<string | null>(null);
+  // Sprint 40 — persistir último vídeo gerado para que o usuário não perca
+  // acesso ao MP4 ao recarregar ou navegar de volta. Lido do localStorage
+  // no mount, escrito quando uma render completa retorna `public_url`.
+  const [lastVideoUrl, setLastVideoUrl] = useState<string | null>(null);
 
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const hintTimer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -255,6 +263,14 @@ export default function AppGeneratePage() {
 
   useEffect(() => {
     setHistory(loadHistory());
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem(LAST_VIDEO_KEY);
+        if (cached) setLastVideoUrl(cached);
+      } catch {
+        /* localStorage disabled — degrade silently */
+      }
+    }
   }, []);
 
   // Sprint 32 — pull real credit balance from the bridge on mount and
@@ -287,21 +303,54 @@ export default function AppGeneratePage() {
   //   }
   // }, []);
 
-  // Sprint 28b — auto-fill objects when niche changes (only if user hasn't
-  // typed something distinct from the previous niche's defaults). Avoids
-  // wiping a curated list the user is mid-editing.
-  const lastNicheRef = useRef<string>(niche);
+  // Sprint 40 — trocar nicho é um reset duro: objetos, tema, tom, package,
+  // render, jobId, vídeo, erro e step voltam ao default do nicho selecionado.
+  // Substitui a heurística "preserva se o usuário editou" do Sprint 28b, que
+  // criava o bug de "esponja, celular" persistir entre nichos.
+  function handleNicheChange(nextNiche: string) {
+    if (nextNiche === niche) return;
+    clearPoll();
+    setNiche(nextNiche);
+    setObjects(getDefaultObjectsFor(nextNiche));
+    setTopic(getTopicSuggestions(nextNiche)[0] ?? "");
+    setTone("dramatic");
+    setPkg(null);
+    setStatusResp(null);
+    setJobId(null);
+    setVideoUrl(null);
+    setIsRendering(false);
+    setError(null);
+    setBusy(false);
+    setStep("input");
+  }
+
+  // Sprint 40 — remix de blueprint via ?blueprint=<id> na URL. Procura o
+  // blueprint pelo id e preenche o wizard. Se o id não bate com nenhum
+  // blueprint, ignora silenciosamente (o usuário continua no estado default).
+  const searchParams = useSearchParams();
+  const appliedBlueprintRef = useRef<string | null>(null);
   useEffect(() => {
-    const prev = lastNicheRef.current;
-    if (prev === niche) return;
-    const prevDefault = getDefaultObjectsFor(prev);
-    const curObjs = objects.trim();
-    if (!curObjs || curObjs === prevDefault) {
-      const next = getDefaultObjectsFor(niche);
-      if (next) setObjects(next);
-    }
-    lastNicheRef.current = niche;
-  }, [niche, objects]);
+    const id = searchParams?.get("blueprint");
+    if (!id) return;
+    if (appliedBlueprintRef.current === id) return;
+    const bp = getBlueprintById(id);
+    if (!bp) return;
+    appliedBlueprintRef.current = id;
+    clearPoll();
+    setNiche(bp.niche);
+    setObjects(bp.objects.join(", "));
+    setTopic(bp.topic);
+    setTone(bp.tone);
+    setDuration(bp.duration);
+    setPkg(null);
+    setStatusResp(null);
+    setJobId(null);
+    setVideoUrl(null);
+    setIsRendering(false);
+    setError(null);
+    setBusy(false);
+    setStep("input");
+  }, [searchParams]);
 
   // Drive rotating hints when busy.
   useEffect(() => {
@@ -422,6 +471,12 @@ export default function AppGeneratePage() {
           const url = data.scenes?.find((s) => s.status === "completed")?.public_url ?? null;
           setVideoUrl(url);
           setIsRendering(false);
+          // Sprint 40 — persistir o último vídeo no localStorage para que o
+          // usuário consiga voltar a abrir/copiar/baixar mesmo após recarregar.
+          if (url && typeof window !== "undefined") {
+            try { localStorage.setItem(LAST_VIDEO_KEY, url); } catch { /* ignore */ }
+            setLastVideoUrl(url);
+          }
           // Sprint 31 — debit one credit per successful render.
           setCredits((c) => Math.max(0, c - 1));
           // Persist to history once we have a public URL.
@@ -582,9 +637,23 @@ export default function AppGeneratePage() {
           </div>
         )}
 
+        {step === "input" && lastVideoUrl && !videoUrl && (
+          <LastVideoBlock
+            url={lastVideoUrl}
+            onCopy={(u) => copy("last-video", u)}
+            copied={copied === "last-video"}
+            onClear={() => {
+              setLastVideoUrl(null);
+              if (typeof window !== "undefined") {
+                try { localStorage.removeItem(LAST_VIDEO_KEY); } catch { /* ignore */ }
+              }
+            }}
+          />
+        )}
+
         {step === "input" && (
           <InputForm
-            niche={niche} setNiche={setNiche}
+            niche={niche} setNiche={handleNicheChange}
             objects={objects} setObjects={setObjects}
             topic={topic} setTopic={setTopic}
             tone={tone} setTone={setTone}
@@ -1263,6 +1332,53 @@ function FinalVideoBlock(props: {
   );
 }
 
+// Sprint 40 — bloco "último vídeo gerado". Mostra um card compacto no topo
+// do step "input" com link, copiar URL e download direto. Sai da tela quando
+// uma render nova começa (videoUrl truthy) — aí o usuário vê o vídeo novo
+// inline e este bloco volta a aparecer só depois que ele cria um pacote
+// novo / troca de nicho / dá refresh.
+function LastVideoBlock({
+  url,
+  onCopy,
+  copied,
+  onClear,
+}: {
+  url: string;
+  onCopy: (url: string) => void;
+  copied: boolean;
+  onClear: () => void;
+}) {
+  return (
+    <div className="card p-4 border-viral-accent/30 bg-viral-accent/5 flex flex-col sm:flex-row sm:items-center gap-3">
+      <div className="flex-1 min-w-0">
+        <div className="text-xs uppercase tracking-wider text-viral-accent font-semibold mb-1">
+          🎬 Último vídeo gerado
+        </div>
+        <div className="text-xs text-viral-muted truncate" title={url}>{url}</div>
+      </div>
+      <div className="flex flex-wrap gap-2 text-xs">
+        <a href={url} target="_blank" rel="noopener noreferrer" className="btn-secondary !py-1.5 !px-3 !text-xs">
+          ▶ Abrir
+        </a>
+        <button type="button" onClick={() => onCopy(url)} className="btn-secondary !py-1.5 !px-3 !text-xs">
+          {copied ? "✓ Copiado" : "📋 Copiar URL"}
+        </button>
+        <a href={url} download className="btn-secondary !py-1.5 !px-3 !text-xs">
+          ⬇ Baixar
+        </a>
+        <button
+          type="button"
+          onClick={onClear}
+          title="Remover do localStorage"
+          className="text-viral-muted hover:text-viral-text text-[10px] px-2 self-center"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function SpeakButton({ text, lang = "pt-BR" }: { text: string; lang?: string }) {
   const [supported, setSupported] = useState(false);
   const [speaking, setSpeaking] = useState(false);
@@ -1292,15 +1408,22 @@ function SpeakButton({ text, lang = "pt-BR" }: { text: string; lang?: string }) 
     synth.speak(utter);
   }
 
+  // Sprint 40 — esse botão é puramente UX local. Áudio de produção sai
+  // na render real do Veo. Quando speechSynthesis não existe no navegador,
+  // o botão fica oculto pra não prometer algo que não vai funcionar.
   if (!supported) return null;
+  const tooltip = speaking
+    ? "Parar prévia"
+    : "Prévia local usando voz do navegador. O áudio final será gerado na renderização real.";
   return (
     <button
       type="button"
       onClick={toggle}
-      title={speaking ? "Parar" : "Ouvir voz (browser TTS)"}
-      className="text-[10px] text-viral-accent hover:underline flex-shrink-0"
+      title={tooltip}
+      aria-label={tooltip}
+      className="text-[10px] text-viral-accent hover:underline flex-shrink-0 inline-flex items-center gap-1"
     >
-      {speaking ? "⏹️" : "🔊"}
+      {speaking ? "⏹️ Parar" : "🔊 Prévia de voz"}
     </button>
   );
 }

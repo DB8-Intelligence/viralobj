@@ -31,6 +31,7 @@ export default async function AppLayout({
           <nav className="card p-2 text-sm">
             <SidebarLink href="/app" label="Dashboard" />
             <SidebarLink href="/app/generate" label="Nova geração" />
+            <SidebarLink href="/app/blueprints" label="Blueprints" />
             <SidebarLink href="/app/history" label="Histórico" />
             <SidebarLink href="/app/billing" label="Assinatura" />
             <SidebarLink href="/app/catalog" label="Catálogo" />
